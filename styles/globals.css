@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap");
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: "Noto Sans", sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-afghan-green hover:bg-afghan-green/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105;
+  }
+
+  .btn-secondary {
+    @apply bg-afghan-red hover:bg-afghan-red/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+  }
+
+  .gradient-bg {
+    background: linear-gradient(135deg, #009639 0%, #d32011 50%, #ffd700 100%);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #009639, #d32011);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-xl {
+    text-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+  }
+}

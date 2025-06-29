@@ -1,0 +1,58 @@
+{
+  "name": "afghanview",
+  "version": "1.0.0",
+  "description": "A cloud-based visual display platform designed for Afghan restaurants across the US. It turns any Smart TV into an auto-playing cultural slideshow that showcases Afghanistan's natural beauty, history, poetry, cuisine, and more.",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "@supabase/supabase-js": "^2.50.2",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.2",
+    "clsx": "^2.1.0",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.400.0",
+    "next": "^15.0.0",
+    "next-auth": "^5.0.0-beta.29",
+    "prisma": "^6.10.1",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "tailwind-merge": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^15.0.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SHIVEHTEAM/afghanview.git"
+  },
+  "keywords": [
+    "afghanistan",
+    "restaurant",
+    "display",
+    "slideshow",
+    "nextjs",
+    "react",
+    "typescript"
+  ],
+  "author": "SHIVEHTEAM",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SHIVEHTEAM/afghanview/issues"
+  },
+  "homepage": "https://github.com/SHIVEHTEAM/afghanview#readme"
+}

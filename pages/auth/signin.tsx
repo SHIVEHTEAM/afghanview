@@ -130,7 +130,7 @@ export default function SignIn() {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="Enter your email"
                   />
                 </div>
@@ -156,7 +156,7 @@ export default function SignIn() {
                     required
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="Enter your password"
                   />
                   <button
@@ -201,9 +201,9 @@ export default function SignIn() {
               <motion.button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-afghan-green hover:bg-afghan-green/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-afghan-green to-afghan-green/90 hover:from-afghan-green/90 hover:to-afghan-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {loading ? (
                   <div className="flex items-center">
@@ -213,80 +213,24 @@ export default function SignIn() {
                 ) : (
                   <div className="flex items-center">
                     Sign in
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </div>
                 )}
               </motion.button>
-            </form>
 
-            {/* Divider */}
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
-                    Or continue with
-                  </span>
-                </div>
+              {/* Sign Up Link */}
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Don't have an account?{" "}
+                  <Link
+                    href="/auth/signup"
+                    className="font-medium text-afghan-green hover:text-afghan-green/80 transition-colors"
+                  >
+                    Sign up here
+                  </Link>
+                </p>
               </div>
-            </div>
-
-            {/* Demo Accounts */}
-            <div className="mt-6 space-y-3">
-              <p className="text-sm text-gray-600 text-center">
-                Demo accounts:
-              </p>
-
-              <motion.button
-                onClick={() => {
-                  setFormData({
-                    email: "admin@afghanview.com",
-                    password: "admin123",
-                  });
-                }}
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <User className="w-4 h-4 mr-2" />
-                Admin Account
-              </motion.button>
-
-              <motion.button
-                onClick={() => {
-                  setFormData({
-                    email: "owner@afghanpalace.com",
-                    password: "owner123",
-                  });
-                }}
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Building className="w-4 h-4 mr-2" />
-                Restaurant Owner
-              </motion.button>
-            </div>
-          </motion.div>
-
-          {/* Sign Up Link */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-center"
-          >
-            <p className="text-white/80">
-              Don't have an account?{" "}
-              <Link
-                href="/auth/signup"
-                className="font-medium text-white hover:text-white/80 transition-colors"
-              >
-                Sign up here
-              </Link>
-            </p>
+            </form>
           </motion.div>
         </div>
       </div>

@@ -165,7 +165,7 @@ export default function SignUp() {
                       required
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                       placeholder="John"
                     />
                   </div>
@@ -185,7 +185,7 @@ export default function SignUp() {
                     required
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="Doe"
                   />
                 </div>
@@ -211,7 +211,7 @@ export default function SignUp() {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="john@example.com"
                   />
                 </div>
@@ -234,7 +234,7 @@ export default function SignUp() {
                     type="tel"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="(555) 123-4567"
                   />
                 </div>
@@ -255,7 +255,7 @@ export default function SignUp() {
                   required
                   value={formData.restaurantName}
                   onChange={handleInputChange}
-                  className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                  className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                   placeholder="Afghan Palace"
                 />
               </div>
@@ -277,8 +277,8 @@ export default function SignUp() {
                     type="text"
                     value={formData.restaurantAddress}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
-                    placeholder="123 Main Street, New York"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
+                    placeholder="123 Main St, City, State"
                   />
                 </div>
               </div>
@@ -303,7 +303,7 @@ export default function SignUp() {
                     required
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="Create a password"
                   />
                   <button
@@ -339,7 +339,7 @@ export default function SignUp() {
                     required
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors"
+                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="Confirm your password"
                   />
                   <button

@@ -17,6 +17,8 @@ import {
   Copy,
   ExternalLink,
   ArrowLeft,
+  Menu,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import ProtectedRoute from "../../components/ProtectedRoute";
@@ -34,6 +36,7 @@ interface Slide {
 }
 
 export default function ClientDashboard() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [slides, setSlides] = useState<Slide[]>([
     {
       id: 1,
@@ -144,7 +147,9 @@ export default function ClientDashboard() {
                     Afghan Palace Dashboard
                   </h1>
                 </div>
-                <div className="flex items-center space-x-4">
+
+                {/* Desktop Actions */}
+                <div className="hidden md:flex items-center space-x-4">
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -169,8 +174,71 @@ export default function ClientDashboard() {
                     View Display
                   </Link>
                 </div>
+
+                {/* Mobile menu button */}
+                <div className="md:hidden">
+                  <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-afghan-green hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-afghan-green"
+                  >
+                    <span className="sr-only">Open main menu</span>
+                    {mobileMenuOpen ? (
+                      <X className="block h-6 w-6" />
+                    ) : (
+                      <Menu className="block h-6 w-6" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
+
+            {/* Mobile Navigation Menu */}
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="md:hidden bg-white border-t border-gray-200"
+              >
+                <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                  <button
+                    onClick={() => {
+                      setIsPlaying(!isPlaying);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      isPlaying
+                        ? "bg-red-100 text-red-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-4 h-4 mr-2 inline" />
+                    ) : (
+                      <Play className="w-4 h-4 mr-2 inline" />
+                    )}
+                    {isPlaying ? "Pause Slideshow" : "Play Slideshow"}
+                  </button>
+                  <Link
+                    href="/restaurant/afghan-palace"
+                    target="_blank"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="bg-afghan-green text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-afghan-green/90"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2 inline" />
+                    View Display
+                  </Link>
+                  <Link
+                    href="/"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-afghan-green block px-3 py-2 rounded-md text-base font-medium"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2 inline" />
+                    Back to Home
+                  </Link>
+                </div>
+              </motion.div>
+            )}
           </header>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

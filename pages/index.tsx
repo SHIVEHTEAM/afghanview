@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -19,9 +19,13 @@ import {
   Clock,
   TrendingUp,
   Quote,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const features = [
     {
       icon: <Tv className="w-8 h-8" />,
@@ -167,6 +171,8 @@ export default function Home() {
                 <h1 className="text-2xl font-bold text-gradient">AfghanView</h1>
               </div>
             </div>
+
+            {/* Desktop Navigation */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 <a
@@ -201,8 +207,71 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-afghan-green hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-afghan-green"
+              >
+                <span className="sr-only">Open main menu</span>
+                {mobileMenuOpen ? (
+                  <X className="block h-6 w-6" />
+                ) : (
+                  <Menu className="block h-6 w-6" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="md:hidden bg-white border-t border-gray-200"
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              <a
+                href="#features"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-afghan-green block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Features
+              </a>
+              <a
+                href="#pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-afghan-green block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Pricing
+              </a>
+              <Link
+                href="/client"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-afghan-green block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Client Dashboard
+              </Link>
+              <Link
+                href="/auth/signin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-afghan-green block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className="bg-afghan-green text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-afghan-green/90"
+              >
+                Get Started
+              </Link>
+            </div>
+          </motion.div>
+        )}
       </nav>
 
       {/* Hero Section */}

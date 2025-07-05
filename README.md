@@ -1,6 +1,6 @@
-# 🇦🇫 AfghanView – Visual Display for Afghan Restaurants
+# 🇦🇫 ShivehView – Visual Display for Afghan Restaurants
 
-**AfghanView** is a cloud-based visual display platform designed for Afghan restaurants across the US. It turns any Smart TV into an auto-playing cultural slideshow that showcases Afghanistan's natural beauty, history, poetry, cuisine, and more.
+**ShivehView** is a cloud-based visual display platform designed for Afghan restaurants across the US. It turns any Smart TV into an auto-playing cultural slideshow that showcases Afghanistan's natural beauty, history, poetry, cuisine, and more.
 
 Restaurants can also customize their feed with their **own promotional content** (menus, deals, events) using a dedicated dashboard.
 
@@ -8,7 +8,7 @@ Restaurants can also customize their feed with their **own promotional content**
 
 ## 🎯 Purpose
 
-AfghanView enhances the customer experience by:
+ShivehView enhances the customer experience by:
 
 - Displaying high-quality photos of Afghanistan
 - Sharing cultural facts, poetry, and food insights
@@ -62,9 +62,9 @@ http://localhost:3000
 
 Each restaurant gets:
 
-- A private URL: `afghanview.com/display/{restaurant-id}`
+- A private URL: `shivehview.com/display/{restaurant-id}`
 - A dashboard to upload their content
-- Default AfghanView cultural feed
+- Default ShivehView cultural feed
 - Optional scheduling (e.g. menu slide every 3rd image)
 
 ### Example Display Flow:
@@ -89,7 +89,7 @@ Each restaurant gets:
   [ Supabase CDN + Edge Functions (Caching) ]
                 |
                 v
-   [ Restaurant TV opens afghanview.com/display/{id} ]
+   [ Restaurant TV opens shivehview.com/display/{id} ]
                 |
                 v
     [ Slideshow with auto-sync content ]
@@ -102,8 +102,8 @@ Each restaurant gets:
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/SHIVEHTEAM/afghanview.git
-cd afghanview
+git clone https://github.com/SHIVEHTEAM/shivehview.git
+cd shivehview
 ```
 
 2. Install dependencies:
@@ -156,7 +156,7 @@ The platform now includes a comprehensive authentication system:
 
 For testing purposes:
 
-- **Admin**: `admin@afghanview.com` / `admin123`
+- **Admin**: `admin@shivehview.com` / `admin123`
 - **Restaurant**: `owner@afghanpalace.com` / `owner123`
 
 ### Environment Setup
@@ -165,8 +165,11 @@ Create a `.env.local` file with your Supabase credentials:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
+
+- All images and videos are stored in the `slideshow-media` bucket in Supabase Storage.
 
 ---
 
@@ -213,7 +216,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 ## ✍️ License
 
-MIT — © 2025 AfghanView
+MIT — © 2025 ShivehView
 
 ---
 
@@ -228,9 +231,9 @@ MIT — © 2025 AfghanView
 
 For partnerships, custom requests, or demo access:
 
-📧 **[contact@afghanview.com](mailto:contact@afghanview.com)**
-🌐 [www.afghanview.com](https://afghanview.com)
-📱 Instagram: [@afghanview.tv](https://instagram.com/afghanview.tv)
+📧 **[contact@shivehview.com](mailto:contact@shivehview.com)**
+🌐 [www.shivehview.com](https://shivehview.com)
+📱 Instagram: [@shivehview.tv](https://instagram.com/shivehview.tv)
 
 ---
 

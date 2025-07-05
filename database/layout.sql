@@ -1,5 +1,5 @@
 -- =====================================================
--- AfghanView Production Database Schema
+-- ShivehView Production Database Schema
 -- Scalable, Secure, and Production-Ready
 -- =====================================================
 
@@ -496,7 +496,7 @@ ON CONFLICT (slug) DO NOTHING;
 
 -- Insert default system settings
 INSERT INTO system_settings (key, value, description, is_public) VALUES
-('app_name', '"AfghanView"', 'Application name', true),
+('app_name', '"ShivehView"', 'Application name', true),
 ('app_version', '"1.0.0"', 'Application version', true),
 ('maintenance_mode', 'false', 'Maintenance mode status', true),
 ('default_language', '"en"', 'Default application language', true),

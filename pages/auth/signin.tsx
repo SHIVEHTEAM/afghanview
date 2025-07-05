@@ -55,8 +55,8 @@ export default function SignIn() {
   return (
     <>
       <Head>
-        <title>Sign In - AfghanView</title>
-        <meta name="description" content="Sign in to your AfghanView account" />
+        <title>Sign In - ShivehView</title>
+        <meta name="description" content="Sign in to your ShivehView account" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -71,7 +71,7 @@ export default function SignIn() {
             className="text-center"
           >
             <Link href="/" className="inline-block">
-              <h1 className="text-4xl font-bold text-white mb-2">AfghanView</h1>
+              <h1 className="text-4xl font-bold text-white mb-2">ShivehView</h1>
             </Link>
             <h2 className="text-2xl font-semibold text-white mb-2">
               Welcome back

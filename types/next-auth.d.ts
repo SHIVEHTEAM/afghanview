@@ -5,27 +5,27 @@ declare module "next-auth" {
     user: {
       id: string;
       email: string;
-      name: string;
-      role: string;
-      type: "admin" | "restaurant";
-      restaurantId?: string;
+      name?: string;
+      role: "admin" | "client" | "viewer";
+      restaurant_id?: string;
     };
   }
 
   interface User {
     id: string;
     email: string;
-    name: string;
-    role: string;
-    type: "admin" | "restaurant";
-    restaurantId?: string;
+    name?: string;
+    role: "admin" | "client" | "viewer";
+    restaurant_id?: string;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    role: string;
-    type: "admin" | "restaurant";
-    restaurantId?: string;
+    id: string;
+    email: string;
+    name?: string;
+    role: "admin" | "client" | "viewer";
+    restaurant_id?: string;
   }
 }

@@ -5,20 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Fullscreen, Minimize2 } from "lucide-react";
 import Slideshow from "@/components/Slideshow";
 import RestaurantInfo from "@/components/RestaurantInfo";
-
-interface Slide {
-  id: number;
-  type: "image" | "menu" | "promo" | "quote" | "hours";
-  src?: string;
-  title?: string;
-  subtitle?: string;
-  content?: string;
-  quote?: string;
-  author?: string;
-  items?: string[];
-  hours?: string[];
-  duration: number;
-}
+import { Slide } from "../../lib/supabase";
 
 interface Restaurant {
   id: string;
@@ -49,57 +36,117 @@ export default function RestaurantDisplay() {
       website: "www.afghanpalace.com",
       slides: [
         {
-          id: 1,
+          id: "slide-1",
+          restaurant_id: "afghan-palace",
+          name: "Welcome Slide",
           type: "image",
-          src: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
           title: "Welcome to Afghan Palace",
           subtitle: "Authentic Afghan Cuisine & Culture",
+          content: JSON.stringify({
+            src: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
+          }),
+          order_index: 1,
+          sort_order: 1,
+          is_locked: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           duration: 6000,
         },
         {
-          id: 2,
+          id: "slide-2",
+          restaurant_id: "afghan-palace",
+          name: "Today's Specials",
           type: "menu",
           title: "Today's Specials",
           subtitle: "Fresh & Authentic",
-          items: [
-            "🍚 Kabuli Pulao - $22.99",
-            "🥟 Mantu Dumplings - $18.99",
-            "🍖 Qorma-e-Gosht - $24.99",
-            "🥖 Naan-e-Afghan - $3.99",
-          ],
+          content: JSON.stringify({
+            items: [
+              "🍚 Kabuli Pulao - $22.99",
+              "🥟 Mantu Dumplings - $18.99",
+              "🍖 Qorma-e-Gosht - $24.99",
+              "🥖 Naan-e-Afghan - $3.99",
+            ],
+          }),
+          order_index: 2,
+          sort_order: 2,
+          is_locked: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           duration: 8000,
         },
         {
-          id: 3,
+          id: "slide-3",
+          restaurant_id: "afghan-palace",
+          name: "Traditional Afghan Hospitality",
           type: "image",
-          src: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
           title: "Traditional Afghan Hospitality",
           subtitle: "Experience the warmth of Afghan culture",
+          content: JSON.stringify({
+            src: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
+          }),
+          order_index: 3,
+          sort_order: 3,
+          is_locked: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           duration: 6000,
         },
         {
-          id: 4,
+          id: "slide-4",
+          restaurant_id: "afghan-palace",
+          name: "Weekend Special",
           type: "promo",
           title: "Weekend Special",
           subtitle: "Family Feast Package",
-          content: "Get 20% off on orders over $50",
+          content: JSON.stringify({ promo: "Get 20% off on orders over $50" }),
+          order_index: 4,
+          sort_order: 4,
+          is_locked: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           duration: 7000,
         },
         {
-          id: 5,
+          id: "slide-5",
+          restaurant_id: "afghan-palace",
+          name: "Quote",
           type: "quote",
-          quote: "The best way to experience a culture is through its food.",
-          author: "Afghan Proverb",
+          title: "The best way to experience a culture is through its food.",
+          subtitle: "Afghan Proverb",
+          content: JSON.stringify({
+            quote: "The best way to experience a culture is through its food.",
+            author: "Afghan Proverb",
+          }),
+          order_index: 5,
+          sort_order: 5,
+          is_locked: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           duration: 6000,
         },
         {
-          id: 6,
+          id: "slide-6",
+          restaurant_id: "afghan-palace",
+          name: "Restaurant Hours",
           type: "hours",
           title: "Restaurant Hours",
-          hours: [
-            "Monday - Friday: 11:00 AM - 10:00 PM",
-            "Saturday - Sunday: 12:00 PM - 11:00 PM",
-          ],
+          content: JSON.stringify({
+            hours: [
+              "Monday - Friday: 11:00 AM - 10:00 PM",
+              "Saturday - Sunday: 12:00 PM - 11:00 PM",
+            ],
+          }),
+          order_index: 6,
+          sort_order: 6,
+          is_locked: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           duration: 6000,
         },
       ],
@@ -113,24 +160,44 @@ export default function RestaurantDisplay() {
       website: "www.kabulkitchen.com",
       slides: [
         {
-          id: 1,
+          id: "slide-1",
+          restaurant_id: "kabul-kitchen",
+          name: "Welcome Slide",
           type: "image",
-          src: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
           title: "Welcome to Kabul Kitchen",
           subtitle: "Traditional Afghan Flavors",
+          content: JSON.stringify({
+            src: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
+          }),
+          order_index: 1,
+          sort_order: 1,
+          is_locked: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           duration: 6000,
         },
         {
-          id: 2,
+          id: "slide-2",
+          restaurant_id: "kabul-kitchen",
+          name: "Chef's Special",
           type: "menu",
           title: "Chef's Special",
           subtitle: "Handcrafted with Love",
-          items: [
-            "🍖 Lamb Karahi - $28.99",
-            "🥘 Chicken Biryani - $24.99",
-            "🥟 Aushak - $16.99",
-            "🍚 Qabuli Pulao - $22.99",
-          ],
+          content: JSON.stringify({
+            items: [
+              "🍖 Lamb Karahi - $28.99",
+              "🥘 Chicken Biryani - $24.99",
+              "🥟 Aushak - $16.99",
+              "🍚 Qabuli Pulao - $22.99",
+            ],
+          }),
+          order_index: 2,
+          sort_order: 2,
+          is_locked: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           duration: 8000,
         },
       ],
@@ -191,7 +258,7 @@ export default function RestaurantDisplay() {
   return (
     <>
       <Head>
-        <title>{restaurant.name} - AfghanView Display</title>
+        <title>{restaurant.name} - ShivehView Display</title>
         <meta
           name="description"
           content={`${restaurant.name} - ${restaurant.description}`}

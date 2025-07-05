@@ -5,82 +5,129 @@ import { Fullscreen, Minimize2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Slideshow from "@/components/Slideshow";
 import RestaurantInfo from "@/components/RestaurantInfo";
+import { Slide } from "../lib/supabase";
 
-interface Slide {
-  id: number;
-  type: "image" | "menu" | "promo" | "quote" | "hours";
-  src?: string;
-  title?: string;
-  subtitle?: string;
-  content?: string;
-  quote?: string;
-  author?: string;
-  items?: string[];
-  hours?: string[];
-  duration: number;
-}
-
-export default function Demo() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // Demo slideshow data
-  const slides: Slide[] = [
-    {
-      id: 1,
-      type: "image",
+const slides: Slide[] = [
+  {
+    id: "slide-1",
+    restaurant_id: "demo-restaurant",
+    name: "Welcome Slide",
+    type: "image",
+    title: "Welcome to Afghan Palace",
+    subtitle: "Authentic Afghan Cuisine & Culture",
+    content: JSON.stringify({
       src: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-      title: "Welcome to Afghan Palace",
-      subtitle: "Authentic Afghan Cuisine & Culture",
-      duration: 6000,
-    },
-    {
-      id: 2,
-      type: "menu",
-      title: "Today's Specials",
-      subtitle: "Fresh & Authentic",
+    }),
+    order_index: 1,
+    sort_order: 1,
+    is_locked: false,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    duration: 6000,
+  },
+  {
+    id: "slide-2",
+    restaurant_id: "demo-restaurant",
+    name: "Today's Specials",
+    type: "menu",
+    title: "Today's Specials",
+    subtitle: "Fresh & Authentic",
+    content: JSON.stringify({
       items: [
         "🍚 Kabuli Pulao - $22.99",
         "🥟 Mantu Dumplings - $18.99",
         "🍖 Qorma-e-Gosht - $24.99",
         "🥖 Naan-e-Afghan - $3.99",
       ],
-      duration: 8000,
-    },
-    {
-      id: 3,
-      type: "image",
+    }),
+    order_index: 2,
+    sort_order: 2,
+    is_locked: false,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    duration: 8000,
+  },
+  {
+    id: "slide-3",
+    restaurant_id: "demo-restaurant",
+    name: "Traditional Afghan Hospitality",
+    type: "image",
+    title: "Traditional Afghan Hospitality",
+    subtitle: "Experience the warmth of Afghan culture",
+    content: JSON.stringify({
       src: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-      title: "Traditional Afghan Hospitality",
-      subtitle: "Experience the warmth of Afghan culture",
-      duration: 6000,
-    },
-    {
-      id: 4,
-      type: "promo",
-      title: "Weekend Special",
-      subtitle: "Family Feast Package",
-      content: "Get 20% off on orders over $50",
-      duration: 7000,
-    },
-    {
-      id: 5,
-      type: "quote",
+    }),
+    order_index: 3,
+    sort_order: 3,
+    is_locked: false,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    duration: 6000,
+  },
+  {
+    id: "slide-4",
+    restaurant_id: "demo-restaurant",
+    name: "Weekend Special",
+    type: "promo",
+    title: "Weekend Special",
+    subtitle: "Family Feast Package",
+    content: "Get 20% off on orders over $50",
+    order_index: 4,
+    sort_order: 4,
+    is_locked: false,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    duration: 7000,
+  },
+  {
+    id: "slide-5",
+    restaurant_id: "demo-restaurant",
+    name: "Quote",
+    type: "quote",
+    title: "Quote",
+    subtitle: "",
+    content: JSON.stringify({
       quote: "The best way to experience a culture is through its food.",
       author: "Afghan Proverb",
-      duration: 6000,
-    },
-    {
-      id: 6,
-      type: "hours",
-      title: "Restaurant Hours",
+    }),
+    order_index: 5,
+    sort_order: 5,
+    is_locked: false,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    duration: 6000,
+  },
+  {
+    id: "slide-6",
+    restaurant_id: "demo-restaurant",
+    name: "Restaurant Hours",
+    type: "hours",
+    title: "Restaurant Hours",
+    subtitle: "",
+    content: JSON.stringify({
       hours: [
         "Monday - Friday: 11:00 AM - 10:00 PM",
         "Saturday - Sunday: 12:00 PM - 11:00 PM",
       ],
-      duration: 6000,
-    },
-  ];
+    }),
+    order_index: 6,
+    sort_order: 6,
+    is_locked: false,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    duration: 6000,
+  },
+];
+
+export default function Demo() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -103,10 +150,10 @@ export default function Demo() {
   return (
     <>
       <Head>
-        <title>Demo - AfghanView Restaurant Display</title>
+        <title>Demo - ShivehView Restaurant Display</title>
         <meta
           name="description"
-          content="See AfghanView in action - Live demo of our restaurant display platform"
+          content="See ShivehView in action - Live demo of our restaurant display platform"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -146,7 +193,7 @@ export default function Demo() {
         >
           <h3 className="text-lg font-bold mb-2">Live Demo</h3>
           <p className="text-sm opacity-90 mb-3">
-            This is how AfghanView looks in your restaurant. Auto-playing
+            This is how ShivehView looks in your restaurant. Auto-playing
             slideshows with your content.
           </p>
           <Link

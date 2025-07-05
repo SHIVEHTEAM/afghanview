@@ -1,54 +1,66 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (req.method !== "GET") {
-    return res.status(405).json({ message: "Method not allowed" });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    // Test database connection
-    const { data: restaurants, error: restaurantsError } = await supabase
-      .from("restaurants")
-      .select("count")
-      .limit(1);
+    console.log("=== TESTING DATABASE ===");
 
-    if (restaurantsError) {
-      return res.status(500).json({
-        error: "Database connection failed",
-        details: restaurantsError.message,
-      });
+    // Test 1: Count all slides
+    const { count, error: countError } = await supabase
+      .from("slides")
+      .select("*", { count: "exact", head: true });
+
+    if (countError) {
+      console.error("Error counting slides:", countError);
+      return res.status(500).json({ error: countError.message });
     }
 
-    // Test admin table
-    const { data: admins, error: adminsError } = await supabase
-      .from("admins")
-      .select("count")
-      .limit(1);
+    console.log("Total slides in database:", count);
 
-    if (adminsError) {
-      return res.status(500).json({
-        error: "Admin table access failed",
-        details: adminsError.message,
-      });
+    // Test 2: Get all slides with basic info
+    const { data: slides, error: slidesError } = await supabase
+      .from("slides")
+      .select("id, name, title, type, created_at, restaurant_id")
+      .order("created_at", { ascending: false });
+
+    if (slidesError) {
+      console.error("Error fetching slides:", slidesError);
+      return res.status(500).json({ error: slidesError.message });
+    }
+
+    console.log("Slides found:", slides?.length || 0);
+    if (slides && slides.length > 0) {
+      console.log("First few slides:", slides.slice(0, 3));
+    }
+
+    // Test 3: Check if there are any restaurants
+    const { data: restaurants, error: restaurantsError } = await supabase
+      .from("restaurants")
+      .select("id, name, slug")
+      .limit(5);
+
+    if (restaurantsError) {
+      console.error("Error fetching restaurants:", restaurantsError);
+    } else {
+      console.log("Restaurants found:", restaurants?.length || 0);
     }
 
     return res.status(200).json({
-      message: "Database connection successful",
-      tables: {
-        restaurants: "Connected",
-        admins: "Connected",
-        slides: "Available",
-      },
+      totalSlides: count,
+      slides: slides || [],
+      restaurants: restaurants || [],
     });
   } catch (error) {
-    console.error("Database test error:", error);
+    console.error("Test error:", error);
     return res.status(500).json({
-      error: "Internal server error",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 }

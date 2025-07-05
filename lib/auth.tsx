@@ -6,6 +6,9 @@ import React, {
   ReactNode,
 } from "react";
 import { useRouter } from "next/router";
+import { supabase } from "./supabase";
+import type { NextAuthConfig } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 interface User {
   id: string;
@@ -38,6 +41,87 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const authOptions: NextAuthConfig = {
+  providers: [
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        try {
+          const {
+            data: { user },
+            error,
+          } = await supabase.auth.signInWithPassword({
+            email: String(credentials.email ?? ""),
+            password: String(credentials.password ?? ""),
+          });
+
+          if (error || !user) {
+            return null;
+          }
+
+          // Get user profile with role and restaurant info
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
+          if (profileError || !profile) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email!,
+            name: profile.full_name,
+            role: profile.role,
+            restaurant_id: profile.restaurant_id,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
+        }
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }: any) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.role = user.role;
+        token.restaurant_id = user.restaurant_id;
+      }
+      return token;
+    },
+    async session({ session, token }: any) {
+      if (token) {
+        (session.user as any).id = token.id;
+        (session.user as any).email = token.email;
+        (session.user as any).name = token.name;
+        (session.user as any).role = token.role;
+        (session.user as any).restaurant_id = token.restaurant_id;
+      }
+      return session;
+    },
+  },
+  pages: {
+    signIn: "/auth/signin",
+  },
+  session: {
+    strategy: "jwt",
+  },
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

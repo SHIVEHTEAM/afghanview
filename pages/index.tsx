@@ -116,7 +116,7 @@ export default function Home() {
       restaurant: "Afghan Palace",
       location: "New York",
       content:
-        "AfghanView transformed our restaurant experience. Our customers love seeing Afghan culture on display while they dine.",
+        "ShivehView transformed our restaurant experience. Our customers love seeing Afghan culture on display while they dine.",
       rating: 5,
       image:
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
@@ -153,10 +153,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>AfghanView - Restaurant Display Platform</title>
+        <title>ShivehView - Restaurant Display Platform</title>
         <meta
           name="description"
-          content="Transform your restaurant with AfghanView - The ultimate display platform for Afghan restaurants"
+          content="Transform your restaurant with ShivehView - The ultimate display platform for Afghan restaurants"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -168,7 +168,7 @@ export default function Home() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-2xl font-bold text-gradient">AfghanView</h1>
+                <h1 className="text-2xl font-bold text-gradient">ShivehView</h1>
               </div>
             </div>
 
@@ -310,7 +310,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              AfghanView turns any Smart TV into an auto-playing cultural
+              ShivehView turns any Smart TV into an auto-playing cultural
               slideshow showcasing Afghanistan's beauty, history, poetry, and
               cuisine.
             </motion.p>
@@ -378,7 +378,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              From beautiful slideshows to interactive menus, AfghanView
+              From beautiful slideshows to interactive menus, ShivehView
               provides everything to create an immersive dining experience.
             </motion.p>
           </div>
@@ -505,7 +505,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              See what our customers have to say about AfghanView
+              See what our customers have to say about ShivehView
             </motion.p>
           </div>
 
@@ -656,7 +656,7 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            Join hundreds of Afghan restaurants already using AfghanView to
+            Join hundreds of Afghan restaurants already using ShivehView to
             create unforgettable dining experiences.
           </motion.p>
           <motion.div
@@ -681,7 +681,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4">AfghanView</h3>
+              <h3 className="text-2xl font-bold mb-4">ShivehView</h3>
               <p className="text-gray-400">
                 Transforming restaurants into cultural experiences through
                 beautiful digital displays.
@@ -766,7 +766,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 AfghanView. All rights reserved.</p>
+            <p>&copy; 2024 ShivehView. All rights reserved.</p>
           </div>
         </div>
       </footer>

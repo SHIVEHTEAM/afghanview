@@ -40,11 +40,26 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply bg-afghan-green hover:bg-afghan-green/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105;
+    @apply bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105;
+  }
+
+  /* Input field styling */
+  input,
+  select,
+  textarea {
+    @apply text-gray-900 bg-white;
+  }
+
+  input::placeholder {
+    @apply text-gray-500;
+  }
+
+  input:focus::placeholder {
+    @apply text-gray-400;
   }
 
   .btn-secondary {
-    @apply bg-afghan-red hover:bg-afghan-red/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105;
+    @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105;
   }
 
   .card {
@@ -68,5 +83,355 @@ body {
 
   .text-shadow-xl {
     text-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* Custom transition effects */
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: ease-in-out;
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: ease-in-out;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: ease-in-out;
+}
+
+/* 3D transform support */
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Transition states for different effects */
+.transition-fade-enter {
+  opacity: 0;
+}
+
+.transition-fade-enter-active {
+  opacity: 1;
+}
+
+.transition-slide-enter {
+  transform: translateX(100%);
+}
+
+.transition-slide-enter-active {
+  transform: translateX(0);
+}
+
+.transition-zoom-enter {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.transition-zoom-enter-active {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.transition-flip-enter {
+  transform: rotateY(-90deg);
+}
+
+.transition-flip-enter-active {
+  transform: rotateY(0deg);
+}
+
+.transition-bounce-enter {
+  transform: scale(0.3);
+  opacity: 0;
+}
+
+.transition-bounce-enter-active {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.transition-cube-enter {
+  transform: rotateY(-90deg) translateZ(100px);
+}
+
+.transition-cube-enter-active {
+  transform: rotateY(0deg) translateZ(0);
+}
+
+.transition-page-enter {
+  transform: rotateY(-180deg);
+}
+
+.transition-page-enter-active {
+  transform: rotateY(0deg);
+}
+
+.transition-wipe-enter {
+  clip-path: inset(0 100% 0 0);
+}
+
+.transition-wipe-enter-active {
+  clip-path: inset(0 0 0 0);
+}
+
+/* 3D Transforms for Slideshow Viewer */
+.slideshow-3d-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.slideshow-3d-flip {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.slideshow-3d-cube {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.slideshow-3d-page {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+/* Custom scrollbar for thumbnails */
+.thumbnails-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+
+.thumbnails-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.thumbnails-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.thumbnails-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Slideshow transition animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes flipIn {
+  from {
+    transform: rotateY(90deg);
+    opacity: 0;
+  }
+  to {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cubeIn {
+  from {
+    transform: rotateY(90deg) translateZ(100px);
+    opacity: 0;
+  }
+  to {
+    transform: rotateY(0deg) translateZ(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pageIn {
+  from {
+    transform: translateX(100%) rotateY(-15deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes wipeIn {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0% 0 0);
+    opacity: 1;
+  }
+}
+
+/* Slideshow viewer specific styles */
+.slideshow-viewer {
+  perspective: 1000px;
+}
+
+.slideshow-image {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Control animations */
+.control-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.control-fade-out {
+  animation: fadeOut 0.3s ease-in;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Progress bar animation */
+.progress-bar {
+  background: linear-gradient(90deg, #10b981, #059669);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+/* Loading spinner */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Hover effects for controls */
+.control-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.control-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+/* Fullscreen optimizations */
+.fullscreen-optimized {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Backdrop blur fallback */
+.backdrop-blur-fallback {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+@supports (backdrop-filter: blur(10px)) {
+  .backdrop-blur-fallback {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+  }
+}
+
+/* Responsive design for slideshow */
+@media (max-width: 768px) {
+  .slideshow-controls {
+    padding: 0.5rem;
+  }
+
+  .slideshow-controls button {
+    padding: 0.5rem;
+  }
+
+  .slideshow-controls .icon {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .slideshow-viewer {
+    border: 2px solid white;
+  }
+
+  .control-button {
+    border: 1px solid white;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .slideshow-viewer * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

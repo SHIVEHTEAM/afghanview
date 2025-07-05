@@ -1,5 +1,5 @@
 {
-  "name": "afghanview",
+  "name": "shivehview",
   "version": "1.0.0",
   "description": "A cloud-based visual display platform designed for Afghan restaurants across the US. It turns any Smart TV into an auto-playing cultural slideshow that showcases Afghanistan's natural beauty, history, poetry, cuisine, and more.",
   "private": true,
@@ -8,21 +8,31 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "add-is-locked-column": "node scripts/add-is-locked-column.js",
+    "run-migrations": "node scripts/run-migrations.js"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@prisma/client": "^6.10.1",
     "@supabase/supabase-js": "^2.50.2",
     "@types/bcryptjs": "^2.4.6",
+    "@types/formidable": "^3.4.5",
+    "@types/react-beautiful-dnd": "^13.1.8",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.0",
-    "framer-motion": "^11.0.0",
+    "dotenv": "^17.0.0",
+    "formidable": "^3.5.4",
+    "framer-motion": "^12.22.0",
     "lucide-react": "^0.400.0",
     "next": "^15.0.0",
     "next-auth": "^5.0.0-beta.29",
     "prisma": "^6.10.1",
     "react": "^18.3.0",
+    "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.3.0",
+    "react-dropzone": "^14.3.8",
     "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
@@ -38,7 +48,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SHIVEHTEAM/afghanview.git"
+    "url": "git+https://github.com/SHIVEHTEAM/shivehview.git"
   },
   "keywords": [
     "afghanistan",
@@ -52,7 +62,7 @@
   "author": "SHIVEHTEAM",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SHIVEHTEAM/afghanview/issues"
+    "url": "https://github.com/SHIVEHTEAM/shivehview/issues"
   },
-  "homepage": "https://github.com/SHIVEHTEAM/afghanview#readme"
+  "homepage": "https://github.com/SHIVEHTEAM/shivehview#readme"
 }

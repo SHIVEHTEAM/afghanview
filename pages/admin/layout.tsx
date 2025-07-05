@@ -1,47 +1,122 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { motion } from "framer-motion";
 import { useAuth } from "../../lib/auth";
+import { supabase } from "../../lib/supabase";
 import {
-  LayoutDashboard,
-  Building,
-  Image,
-  Users,
-  Settings,
-  BarChart3,
-  LogOut,
   Menu,
   X,
-  ChevronDown,
   Home,
-  Package,
-  AlertTriangle,
-  CheckCircle,
-  TrendingUp,
-  Globe,
+  Image as ImageIcon,
+  Building,
+  Users,
+  BarChart3,
+  Settings,
+  LogOut,
+  Bell,
+  Search,
+  ChevronDown,
+  Eye,
 } from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
-  const router = useRouter();
-  const { user, signOut } = useAuth();
+interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  time: string;
+  read: boolean;
+}
 
-  const handleSignOut = async () => {
-    await signOut();
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [stats, setStats] = useState({
+    totalRestaurants: 0,
+    activeRestaurants: 0,
+    totalSlides: 0,
+    totalViews: 0,
+  });
+
+  useEffect(() => {
+    fetchStats();
+    fetchNotifications();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const [restaurantsResult, slidesResult, viewsResult] = await Promise.all([
+        supabase.from("restaurants").select("id, is_active"),
+        supabase.from("slides").select("id"),
+        supabase.from("slide_views").select("id"),
+      ]);
+
+      const totalRestaurants = restaurantsResult.data?.length || 0;
+      const activeRestaurants =
+        restaurantsResult.data?.filter((r) => r.is_active).length || 0;
+      const totalSlides = slidesResult.data?.length || 0;
+      const totalViews = viewsResult.data?.length || 0;
+
+      setStats({
+        totalRestaurants,
+        activeRestaurants,
+        totalSlides,
+        totalViews,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    // Mock notifications - in real app, fetch from API
+    setNotifications([
+      {
+        id: "1",
+        type: "restaurant_added",
+        message: "New restaurant 'Afghan Palace' registered",
+        time: "2 minutes ago",
+        read: false,
+      },
+      {
+        id: "2",
+        type: "subscription_upgraded",
+        message: "Kabul Kitchen upgraded to Premium plan",
+        time: "1 hour ago",
+        read: false,
+      },
+      {
+        id: "3",
+        type: "system_alert",
+        message: "System backup completed successfully",
+        time: "3 hours ago",
+        read: true,
+      },
+    ]);
   };
 
   const navigation = [
     {
       name: "Dashboard",
       href: "/admin",
-      icon: LayoutDashboard,
+      icon: Home,
       current: router.pathname === "/admin",
+    },
+    {
+      name: "Slides",
+      href: "/admin/slides",
+      icon: ImageIcon,
+      current: router.pathname.startsWith("/admin/slides"),
+      children: [
+        { name: "All Slides", href: "/admin/slides" },
+        { name: "Create Slide", href: "/admin/slides/create" },
+        { name: "Templates", href: "/admin/slides/templates" },
+      ],
     },
     {
       name: "Restaurants",
@@ -51,29 +126,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       children: [
         { name: "All Restaurants", href: "/admin/restaurants" },
         { name: "Add Restaurant", href: "/admin/restaurants/add" },
-        { name: "Package Management", href: "/admin/restaurants/packages" },
-      ],
-    },
-    {
-      name: "Slides Management",
-      href: "/admin/slides",
-      icon: Image,
-      current: router.pathname.startsWith("/admin/slides"),
-      children: [
-        { name: "All Slides", href: "/admin/slides" },
-        { name: "Templates", href: "/admin/slides/templates" },
-        { name: "Bulk Upload", href: "/admin/slides/bulk" },
-      ],
-    },
-    {
-      name: "Analytics",
-      href: "/admin/analytics",
-      icon: BarChart3,
-      current: router.pathname.startsWith("/admin/analytics"),
-      children: [
-        { name: "Overview", href: "/admin/analytics" },
-        { name: "Restaurant Stats", href: "/admin/analytics/restaurants" },
-        { name: "Revenue", href: "/admin/analytics/revenue" },
+        { name: "Packages", href: "/admin/restaurants/packages" },
       ],
     },
     {
@@ -83,56 +136,27 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       current: router.pathname.startsWith("/admin/users"),
       children: [
         { name: "All Users", href: "/admin/users" },
-        { name: "Admins", href: "/admin/users/admins" },
-        { name: "Restaurant Owners", href: "/admin/users/owners" },
+        { name: "Add User", href: "/admin/users/add" },
+        { name: "Roles", href: "/admin/users/roles" },
       ],
+    },
+    {
+      name: "Analytics",
+      href: "/admin/analytics",
+      icon: BarChart3,
+      current: router.pathname.startsWith("/admin/analytics"),
     },
     {
       name: "Settings",
       href: "/admin/settings",
       icon: Settings,
       current: router.pathname.startsWith("/admin/settings"),
-      children: [
-        { name: "General", href: "/admin/settings" },
-        { name: "Billing", href: "/admin/settings/billing" },
-        { name: "Integrations", href: "/admin/settings/integrations" },
-      ],
     },
   ];
 
-  const stats = [
-    {
-      name: "Total Restaurants",
-      value: "24",
-      change: "+2",
-      changeType: "positive",
-      icon: Building,
-    },
-    {
-      name: "Active Slides",
-      value: "156",
-      change: "+12",
-      changeType: "positive",
-      icon: Image,
-    },
-    {
-      name: "Monthly Revenue",
-      value: "$12,847",
-      change: "+8.2%",
-      changeType: "positive",
-      icon: TrendingUp,
-    },
-    {
-      name: "Active Users",
-      value: "89",
-      change: "+5",
-      changeType: "positive",
-      icon: Users,
-    },
-  ];
-
-  const toggleDropdown = (name: string) => {
-    setDropdownOpen(dropdownOpen === name ? null : name);
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
   };
 
   return (
@@ -147,212 +171,195 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           className="fixed inset-0 bg-gray-600 bg-opacity-75"
           onClick={() => setSidebarOpen(false)}
         />
-        <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
+        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
+          <div className="flex h-16 items-center justify-between px-4">
+            <h1 className="text-xl font-bold text-afghan-green">
+              ShivehView Admin
+            </h1>
             <button
-              type="button"
-              className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
               onClick={() => setSidebarOpen(false)}
+              className="text-gray-400 hover:text-gray-600"
             >
-              <X className="h-6 w-6 text-white" />
+              <X className="h-6 w-6" />
             </button>
           </div>
-
-          {/* Mobile sidebar content */}
-          <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-            <div className="flex-shrink-0 flex items-center px-4">
-              <h1 className="text-2xl font-bold text-gradient">
-                AfghanView Admin
-              </h1>
-            </div>
-            <nav className="mt-5 px-2 space-y-1">
-              {navigation.map((item) => (
-                <div key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                      item.current
-                        ? "bg-afghan-green text-white"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <item.icon className="mr-4 h-6 w-6" />
-                    {item.name}
-                  </Link>
-                  {item.children && (
-                    <div className="ml-6 mt-2 space-y-1">
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.name}
-                          href={child.href}
-                          className="group flex items-center px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:text-gray-900 hover:bg-gray-50"
-                          onClick={() => setSidebarOpen(false)}
-                        >
-                          {child.name}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </nav>
-          </div>
+          <nav className="flex-1 space-y-1 px-2 py-4">
+            {navigation.map((item) => (
+              <div key={item.name}>
+                <Link
+                  href={item.href}
+                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                    item.current
+                      ? "bg-afghan-green text-white"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <item.icon className="mr-3 h-5 w-5" />
+                  {item.name}
+                </Link>
+                {item.children && item.current && (
+                  <div className="ml-8 mt-2 space-y-1">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.name}
+                        href={child.href}
+                        className={`block px-2 py-1 text-sm rounded-md ${
+                          router.pathname === child.href
+                            ? "text-afghan-green font-medium"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
         </div>
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
-          <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4">
-              <h1 className="text-2xl font-bold text-gradient">
-                AfghanView Admin
-              </h1>
-            </div>
-            <nav className="mt-5 flex-1 px-2 space-y-1">
-              {navigation.map((item) => (
-                <div key={item.name}>
-                  <button
-                    onClick={() =>
-                      item.children ? toggleDropdown(item.name) : null
-                    }
-                    className={`group w-full flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md ${
-                      item.current
-                        ? "bg-afghan-green text-white"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <item.icon className="mr-3 h-5 w-5" />
-                      {item.name}
-                    </div>
-                    {item.children && (
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${
-                          dropdownOpen === item.name ? "rotate-180" : ""
-                        }`}
-                      />
-                    )}
-                  </button>
-                  {item.children && dropdownOpen === item.name && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="ml-6 mt-2 space-y-1"
-                    >
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.name}
-                          href={child.href}
-                          className="group flex items-center px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:text-gray-900 hover:bg-gray-50"
-                        >
-                          {child.name}
-                        </Link>
-                      ))}
-                    </motion.div>
-                  )}
-                </div>
-              ))}
-            </nav>
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+          <div className="flex h-16 items-center px-4">
+            <h1 className="text-xl font-bold text-afghan-green">
+              ShivehView Admin
+            </h1>
           </div>
-
-          {/* Admin profile */}
-          <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
+          <nav className="flex-1 space-y-1 px-2 py-4">
+            {navigation.map((item) => (
+              <div key={item.name}>
+                <Link
+                  href={item.href}
+                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                    item.current
+                      ? "bg-afghan-green text-white"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <item.icon className="mr-3 h-5 w-5" />
+                  {item.name}
+                </Link>
+                {item.children && item.current && (
+                  <div className="ml-8 mt-2 space-y-1">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.name}
+                        href={child.href}
+                        className={`block px-2 py-1 text-sm rounded-md ${
+                          router.pathname === child.href
+                            ? "text-afghan-green font-medium"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+          <div className="flex-shrink-0 border-t border-gray-200 p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-afghan-green flex items-center justify-center">
-                  <span className="text-white font-semibold">
-                    {user?.first_name?.charAt(0) || "A"}
-                  </span>
+                <div className="h-8 w-8 rounded-full bg-afghan-green flex items-center justify-center text-white font-semibold">
+                  {user?.first_name?.charAt(0)}
+                  {user?.last_name?.charAt(0)}
                 </div>
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
-                  {user ? `${user.first_name} ${user.last_name}` : "Admin User"}
+                  {user?.first_name} {user?.last_name}
                 </p>
-                <p className="text-xs text-gray-500">
-                  {user?.email || "admin@afghanview.com"}
-                </p>
+                <p className="text-xs text-gray-500">Admin</p>
               </div>
             </div>
+            <button
+              onClick={handleSignOut}
+              className="mt-3 w-full flex items-center px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900"
+            >
+              <LogOut className="mr-3 h-4 w-4" />
+              Sign Out
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
+      <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white shadow">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <button
             type="button"
-            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-afghan-green lg:hidden"
+            className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-6 w-6" />
           </button>
 
-          <div className="flex-1 px-4 flex justify-between">
-            <div className="flex-1 flex items-center">
-              <h2 className="text-2xl font-semibold text-gray-900">
-                {navigation.find((item) => item.current)?.name || "Dashboard"}
-              </h2>
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div className="relative flex flex-1">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search..."
+                className="block h-full w-full border-0 py-0 pl-10 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-x-4 lg:gap-x-6">
+            {/* Quick Stats */}
+            <div className="hidden md:flex items-center space-x-4 text-sm text-gray-500">
+              <div className="flex items-center space-x-1">
+                <Building className="h-4 w-4" />
+                <span>{stats.totalRestaurants}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <ImageIcon className="h-4 w-4" />
+                <span>{stats.totalSlides}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Eye className="h-4 w-4" />
+                <span>{stats.totalViews.toLocaleString()}</span>
+              </div>
             </div>
 
-            <div className="ml-4 flex items-center md:ml-6 space-x-4">
-              {/* Quick stats */}
-              <div className="hidden md:flex items-center space-x-4">
-                {stats.slice(0, 2).map((stat) => {
-                  const Icon = stat.icon;
-                  return (
-                    <div
-                      key={stat.name}
-                      className="flex items-center space-x-2 text-sm"
-                    >
-                      <Icon className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-900 font-medium">
-                        {stat.value}
-                      </span>
-                      <span
-                        className={`text-xs ${
-                          stat.changeType === "positive"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {stat.change}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+            {/* Notifications */}
+            <button className="relative p-2 text-gray-400 hover:text-gray-500">
+              <Bell className="h-6 w-6" />
+              {notifications.filter((n) => !n.read).length > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                  {notifications.filter((n) => !n.read).length}
+                </span>
+              )}
+            </button>
 
-              <Link
-                href="/"
-                className="text-gray-400 hover:text-gray-500"
-                title="Go to website"
-              >
-                <Globe className="h-6 w-6" />
-              </Link>
-
-              <button
-                onClick={handleSignOut}
-                className="text-gray-400 hover:text-gray-500"
-                title="Sign out"
-              >
-                <LogOut className="h-6 w-6" />
+            {/* Profile dropdown */}
+            <div className="relative">
+              <button className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900">
+                <div className="h-8 w-8 rounded-full bg-afghan-green flex items-center justify-center text-white font-semibold">
+                  {user?.first_name?.charAt(0)}
+                  {user?.last_name?.charAt(0)}
+                </div>
+                <span className="hidden lg:block">
+                  {user?.first_name} {user?.last_name}
+                </span>
+                <ChevronDown className="h-4 w-4" />
               </button>
             </div>
           </div>
         </div>
 
         {/* Page content */}
-        <main className="flex-1">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {children}
-            </div>
+        <main className="py-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {children}
           </div>
         </main>
       </div>

@@ -1,20 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-
-interface Slide {
-  id: number;
-  type: "image" | "menu" | "promo" | "quote" | "hours";
-  src?: string;
-  title?: string;
-  subtitle?: string;
-  content?: string;
-  quote?: string;
-  author?: string;
-  items?: string[];
-  hours?: string[];
-  duration: number;
-}
+import { Slide } from "../lib/supabase";
 
 interface SlideshowProps {
   slides: Slide[];
@@ -24,14 +11,29 @@ interface SlideshowProps {
 const Slideshow: React.FC<SlideshowProps> = ({ slides, currentSlide }) => {
   const slide = slides[currentSlide];
 
+  if (!slide) {
+    return (
+      <div className="w-full h-screen bg-gradient-to-br from-afghan-green to-afghan-red flex items-center justify-center">
+        <div className="text-center text-white">
+          <h1 className="text-4xl font-bold mb-4">No Slides Available</h1>
+          <p className="text-xl">Please add some slides to your slideshow</p>
+        </div>
+      </div>
+    );
+  }
+
   const renderSlide = () => {
     switch (slide.type) {
       case "image":
+        const imageUrl =
+          slide.images && slide.images.length > 0
+            ? slide.images[0].image_url
+            : null;
         return (
           <div className="relative w-full h-screen">
-            {slide.src && (
+            {imageUrl && (
               <Image
-                src={slide.src}
+                src={imageUrl}
                 alt={slide.title || "Afghan cuisine"}
                 fill
                 className="object-cover"
@@ -48,83 +50,174 @@ const Slideshow: React.FC<SlideshowProps> = ({ slides, currentSlide }) => {
               >
                 {slide.title}
               </motion.h1>
-              <motion.p
-                className="text-3xl text-shadow-lg"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+              {slide.subtitle && (
+                <motion.p
+                  className="text-3xl text-shadow-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {slide.subtitle}
+                </motion.p>
+              )}
+            </div>
+          </div>
+        );
+
+      case "custom":
+        return (
+          <div className="w-full h-screen bg-gradient-to-br from-afghan-green to-afghan-red flex items-center justify-center">
+            <div className="text-center text-white max-w-4xl mx-auto px-8">
+              <motion.h1
+                className="text-6xl font-bold mb-6 text-shadow-lg"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
               >
-                {slide.subtitle}
-              </motion.p>
+                {slide.title}
+              </motion.h1>
+              {slide.subtitle && (
+                <motion.p
+                  className="text-3xl mb-8 text-shadow-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {slide.subtitle}
+                </motion.p>
+              )}
+              {slide.content &&
+                typeof slide.content === "object" &&
+                slide.content.text && (
+                  <motion.div
+                    className="text-2xl bg-black/30 backdrop-blur-sm rounded-2xl p-8 inline-block text-white border border-white/20"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    {slide.content.text}
+                  </motion.div>
+                )}
+              {slide.content && typeof slide.content === "string" && (
+                <motion.div
+                  className="text-2xl bg-black/30 backdrop-blur-sm rounded-2xl p-8 inline-block text-white border border-white/20"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  {slide.content}
+                </motion.div>
+              )}
             </div>
           </div>
         );
 
       case "menu":
         return (
-          <div className="w-full h-screen bg-gradient-to-br from-afghan-green via-afghan-red to-afghan-gold flex items-center justify-center">
+          <div className="w-full h-screen bg-gradient-to-br from-afghan-green to-afghan-red flex items-center justify-center">
             <div className="text-center text-white max-w-4xl mx-auto px-8">
               <motion.h1
-                className="text-6xl font-bold mb-4"
+                className="text-5xl font-bold mb-8 text-shadow-lg"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
               >
                 {slide.title}
               </motion.h1>
-              <motion.p
-                className="text-3xl mb-12 opacity-90"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                {slide.subtitle}
-              </motion.p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {slide.items?.map((item, index) => (
-                  <motion.div
-                    key={index}
-                    className="text-2xl font-medium bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:bg-white/20 transition-all duration-300"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 + index * 0.1 }}
-                  >
-                    {item}
-                  </motion.div>
-                ))}
-              </div>
+              {slide.subtitle && (
+                <motion.p
+                  className="text-2xl mb-8 text-shadow-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {slide.subtitle}
+                </motion.p>
+              )}
+              {slide.content && typeof slide.content === "string" && (
+                <motion.div
+                  className="text-xl bg-black/30 backdrop-blur-sm rounded-2xl p-8 inline-block text-white border border-white/20 max-w-2xl"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <pre className="text-left font-sans whitespace-pre-wrap">
+                    {slide.content}
+                  </pre>
+                </motion.div>
+              )}
             </div>
           </div>
         );
 
       case "promo":
         return (
-          <div className="w-full h-screen bg-gradient-to-br from-afghan-gold via-afghan-red to-afghan-green flex items-center justify-center">
+          <div className="w-full h-screen bg-gradient-to-br from-afghan-green to-afghan-red flex items-center justify-center">
             <div className="text-center text-white max-w-4xl mx-auto px-8">
               <motion.h1
-                className="text-6xl font-bold mb-6"
+                className="text-5xl font-bold mb-8 text-shadow-lg"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
               >
                 {slide.title}
               </motion.h1>
-              <motion.p
-                className="text-4xl mb-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                {slide.subtitle}
-              </motion.p>
-              <motion.div
-                className="text-5xl font-bold bg-white/20 backdrop-blur-sm rounded-2xl p-8 inline-block"
+              {slide.subtitle && (
+                <motion.p
+                  className="text-2xl mb-8 text-shadow-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {slide.subtitle}
+                </motion.p>
+              )}
+              {slide.content && typeof slide.content === "string" && (
+                <motion.div
+                  className="text-3xl font-bold bg-yellow-500/90 text-black rounded-2xl p-8 inline-block border-4 border-yellow-300 shadow-2xl"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  {slide.content}
+                </motion.div>
+              )}
+            </div>
+          </div>
+        );
+
+      case "quote":
+        return (
+          <div className="w-full h-screen bg-gradient-to-br from-afghan-green to-afghan-red flex items-center justify-center">
+            <div className="text-center text-white max-w-4xl mx-auto px-8">
+              <motion.h1
+                className="text-5xl font-bold mb-8 text-shadow-lg"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 }}
+                transition={{ delay: 0.2 }}
               >
-                {slide.content}
-              </motion.div>
+                {slide.title}
+              </motion.h1>
+              {slide.content && typeof slide.content === "string" && (
+                <motion.div
+                  className="text-3xl italic bg-black/30 backdrop-blur-sm rounded-2xl p-8 inline-block text-white border border-white/20 max-w-3xl"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  "{slide.content}"
+                </motion.div>
+              )}
+              {slide.subtitle && (
+                <motion.p
+                  className="text-2xl mt-6 text-shadow-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  — {slide.subtitle}
+                </motion.p>
+              )}
             </div>
           </div>
         );
@@ -134,71 +227,56 @@ const Slideshow: React.FC<SlideshowProps> = ({ slides, currentSlide }) => {
           <div className="w-full h-screen bg-gradient-to-br from-afghan-green to-afghan-red flex items-center justify-center">
             <div className="text-center text-white max-w-4xl mx-auto px-8">
               <motion.h1
-                className="text-6xl font-bold mb-12"
+                className="text-5xl font-bold mb-8 text-shadow-lg"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
               >
                 {slide.title}
               </motion.h1>
-              <div className="space-y-6">
-                {slide.hours?.map((hour, index) => (
-                  <motion.div
-                    key={index}
-                    className="text-3xl font-medium bg-white/10 backdrop-blur-sm rounded-lg p-6"
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.2 }}
-                  >
-                    {hour}
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case "quote":
-        return (
-          <div className="w-full h-screen bg-gradient-to-br from-afghan-gold to-afghan-red flex items-center justify-center">
-            <div className="text-center text-white max-w-5xl mx-auto px-8">
-              <motion.blockquote
-                className="text-5xl font-light italic mb-12 leading-relaxed"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                "{slide.quote}"
-              </motion.blockquote>
-              <motion.cite
-                className="text-3xl font-medium"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                — {slide.author}
-              </motion.cite>
+              {slide.subtitle && (
+                <motion.p
+                  className="text-2xl mb-8 text-shadow-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {slide.subtitle}
+                </motion.p>
+              )}
+              {slide.content && typeof slide.content === "string" && (
+                <motion.div
+                  className="text-2xl bg-black/30 backdrop-blur-sm rounded-2xl p-8 inline-block text-white border border-white/20 max-w-2xl"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <pre className="text-left font-sans whitespace-pre-wrap">
+                    {slide.content}
+                  </pre>
+                </motion.div>
+              )}
             </div>
           </div>
         );
 
       default:
-        return null;
+        return (
+          <div className="w-full h-screen bg-gradient-to-br from-afghan-green to-afghan-red flex items-center justify-center">
+            <div className="text-center text-white">
+              <h1 className="text-4xl font-bold mb-4 text-shadow-lg">
+                {slide.title}
+              </h1>
+              {slide.subtitle && (
+                <p className="text-2xl text-shadow-lg">{slide.subtitle}</p>
+              )}
+            </div>
+          </div>
+        );
     }
   };
 
-  return (
-    <motion.div
-      className="relative w-full h-screen overflow-hidden"
-      key={currentSlide}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      {renderSlide()}
-    </motion.div>
-  );
+  return <div className="w-full h-screen overflow-hidden">{renderSlide()}</div>;
 };
 
 export default Slideshow;

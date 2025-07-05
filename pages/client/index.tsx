@@ -1,532 +1,741 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { motion } from "framer-motion";
 import {
   Plus,
+  Play,
   Edit,
   Trash2,
-  Eye,
-  Play,
-  Pause,
-  Settings,
-  Image as ImageIcon,
-  FileText,
-  Quote,
+  Power,
+  PowerOff,
   Clock,
-  Tag,
+  Music,
+  Palette,
+  Eye,
+  TrendingUp,
+  BarChart3,
+  Users,
+  Building,
+  Image,
+  Link,
   Copy,
   ExternalLink,
-  ArrowLeft,
-  Menu,
+  Sparkles,
+  Calendar,
+  Heart,
+  Share2,
+  Tv,
+  Monitor,
+  Smartphone,
+  Tablet,
+  QrCode,
   X,
+  Star,
+  Award,
+  Activity,
+  Target,
+  Zap,
+  Check,
 } from "lucide-react";
-import Link from "next/link";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import ImageSlideshowEditor from "../../components/ImageSlideshowEditor";
+import SimpleImageViewer from "../../components/slideshow/SimpleImageViewer";
+import ClientLayout from "./layout";
+import { useAuth } from "../../lib/auth";
+import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
+import TvManager from "../../components/TvManager";
+import TvQrCode from "../../components/TvQrCode";
 
-interface Slide {
-  id: number;
-  type: "image" | "menu" | "promo" | "quote" | "hours";
-  title: string;
-  subtitle?: string;
-  content?: string;
-  src?: string;
-  duration: number;
+import {
+  SlideMedia,
+  SlideshowSettings,
+} from "../../components/slideshow/types";
+
+interface SlideImage extends SlideMedia {
+  base64?: string;
+}
+
+interface SavedSlideshow {
+  id: string;
+  images: SlideImage[];
+  settings: SlideshowSettings;
+  createdAt: Date;
+  name: string;
   isActive: boolean;
-  order: number;
+  playCount: number;
+  lastPlayed?: Date;
+  publicLink?: string;
+  slug?: string;
+  isFavorite?: boolean;
+  isTemplate?: boolean;
 }
 
 export default function ClientDashboard() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [slides, setSlides] = useState<Slide[]>([
-    {
-      id: 1,
-      type: "image",
-      title: "Welcome to Afghan Palace",
-      subtitle: "Authentic Afghan Cuisine & Culture",
-      src: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-      duration: 6000,
-      isActive: true,
-      order: 1,
-    },
-    {
-      id: 2,
-      type: "menu",
-      title: "Today's Specials",
-      subtitle: "Fresh & Authentic",
-      content:
-        "🍚 Kabuli Pulao - $22.99\n🥟 Mantu Dumplings - $18.99\n🍖 Qorma-e-Gosht - $24.99\n🥖 Naan-e-Afghan - $3.99",
-      duration: 8000,
-      isActive: true,
-      order: 2,
-    },
-    {
-      id: 3,
-      type: "promo",
-      title: "Weekend Special",
-      subtitle: "Family Feast Package",
-      content: "Get 20% off on orders over $50",
-      duration: 7000,
-      isActive: false,
-      order: 3,
-    },
-  ]);
+  const { user } = useAuth();
+  const [savedSlideshows, setSavedSlideshows] = useState<SavedSlideshow[]>([]);
+  const [showEditor, setShowEditor] = useState(false);
+  const [showViewer, setShowViewer] = useState(false);
+  const [currentSlideshow, setCurrentSlideshow] =
+    useState<SavedSlideshow | null>(null);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [selectedSlideshowId, setSelectedSlideshowId] = useState<string | null>(
+    null
+  );
+  const [activeTab, setActiveTab] = useState<"slideshows" | "tvs">(
+    "slideshows"
+  );
+  const [showQrCode, setShowQrCode] = useState<string | null>(null);
 
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingSlide, setEditingSlide] = useState<Slide | null>(null);
+  // Load saved slideshows from API
+  useEffect(() => {
+    const loadSlideshows = async () => {
+      try {
+        const response = await fetch(
+          `/api/slideshows?restaurantId=e46a2c25-fe10-4fd2-a2bd-4c72969a898e&userId=${
+            user?.id || "default-user"
+          }`
+        );
 
-  const slideTypes = [
-    { value: "image", label: "Image Slide", icon: ImageIcon },
-    { value: "menu", label: "Menu Slide", icon: FileText },
-    { value: "promo", label: "Promotion Slide", icon: Tag },
-    { value: "quote", label: "Quote Slide", icon: Quote },
-    { value: "hours", label: "Hours Slide", icon: Clock },
-  ];
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-  const getSlideTypeIcon = (type: string) => {
-    const slideType = slideTypes.find((t) => t.value === type);
-    return slideType ? slideType.icon : ImageIcon;
+        const slideshows = await response.json();
+        console.log("[Client] Loaded slideshows:", slideshows);
+
+        // Debug: Check image types
+        slideshows.forEach((slideshow: any, index: number) => {
+          console.log(
+            `[Client] Slideshow ${index} (${slideshow.name}) images:`,
+            slideshow.images
+          );
+          slideshow.images.forEach((img: any, imgIndex: number) => {
+            console.log(`[Client] Image ${imgIndex}:`, {
+              name: img.name,
+              type: img.type,
+              file_path: img.file_path,
+              url: img.url,
+            });
+          });
+        });
+
+        // Convert date strings to Date objects
+        const slideshowsWithProperDates = slideshows.map((slideshow: any) => ({
+          ...slideshow,
+          createdAt: new Date(slideshow.createdAt),
+          lastPlayed: slideshow.lastPlayed
+            ? new Date(slideshow.lastPlayed)
+            : undefined,
+        }));
+
+        setSavedSlideshows(slideshowsWithProperDates);
+      } catch (error) {
+        console.error("Error loading slideshows:", error);
+      }
+    };
+
+    loadSlideshows();
+  }, []);
+
+  // Save slideshows to localStorage
+  const saveSlideshows = (slideshows: SavedSlideshow[]) => {
+    localStorage.setItem("client-slideshows", JSON.stringify(slideshows));
   };
 
-  const handleAddSlide = () => {
-    setShowAddModal(true);
-    setEditingSlide(null);
+  // Convert File to base64 for persistence
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
-  const handleEditSlide = (slide: Slide) => {
-    setEditingSlide(slide);
-    setShowAddModal(true);
+  // Generate unique slug for public link
+  const generateSlug = (name: string): string => {
+    return (
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "") +
+      "-" +
+      Math.random().toString(36).substr(2, 6)
+    );
   };
 
-  const handleDeleteSlide = (id: number) => {
-    if (confirm("Are you sure you want to delete this slide?")) {
-      setSlides(slides.filter((slide) => slide.id !== id));
+  const handleSaveSlideshow = async (
+    media: SlideMedia[],
+    settings: SlideshowSettings
+  ) => {
+    try {
+      const slideshowName = `Client Slideshow ${savedSlideshows.length + 1}`;
+      const slug = generateSlug(slideshowName);
+
+      // Save slideshow via API
+      const response = await fetch("/api/slideshows", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: slideshowName,
+          images: media.map((img) => ({
+            id: img.id,
+            file_path: img.file_path || img.url,
+            name: img.name,
+            type: img.type,
+          })),
+          settings: {
+            ...settings,
+            backgroundMusic:
+              settings.backgroundMusic instanceof File
+                ? await fileToBase64(settings.backgroundMusic)
+                : settings.backgroundMusic,
+          },
+          restaurantId: "e46a2c25-fe10-4fd2-a2bd-4c72969a898e", // Real restaurant ID from test data
+          userId: user?.id || "default-user", // Get from auth context
+          slug,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save slideshow: ${response.statusText}`);
+      }
+
+      const newSlideshow = await response.json();
+
+      // Convert date strings to Date objects
+      const slideshowWithProperDates = {
+        ...newSlideshow,
+        createdAt: new Date(newSlideshow.createdAt),
+        lastPlayed: newSlideshow.lastPlayed
+          ? new Date(newSlideshow.lastPlayed)
+          : undefined,
+      };
+
+      const updatedSlideshows = [...savedSlideshows, slideshowWithProperDates];
+      setSavedSlideshows(updatedSlideshows);
+      saveSlideshows(updatedSlideshows);
+      setShowEditor(false);
+    } catch (error) {
+      console.error("Error saving slideshow:", error);
+      alert("Error saving slideshow. Please try again.");
     }
   };
 
-  const handleToggleActive = (id: number) => {
-    setSlides(
-      slides.map((slide) =>
-        slide.id === id ? { ...slide, isActive: !slide.isActive } : slide
-      )
-    );
+  const handleDeleteSlideshow = (id: string) => {
+    setSelectedSlideshowId(id);
+    setShowDeleteConfirmation(true);
   };
 
-  const copyRestaurantUrl = () => {
-    navigator.clipboard.writeText(
-      "https://afghanview.com/restaurant/afghan-palace"
-    );
-    alert("Restaurant URL copied to clipboard!");
+  const handleConfirmDelete = async () => {
+    if (!selectedSlideshowId) return;
+
+    try {
+      const response = await fetch(`/api/slideshows/${selectedSlideshowId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        const updatedSlideshows = savedSlideshows.filter(
+          (slideshow) => slideshow.id !== selectedSlideshowId
+        );
+        setSavedSlideshows(updatedSlideshows);
+        saveSlideshows(updatedSlideshows);
+      } else {
+        console.error("Failed to delete slideshow");
+      }
+    } catch (error) {
+      console.error("Error deleting slideshow:", error);
+    }
+
+    setShowDeleteConfirmation(false);
+    setSelectedSlideshowId(null);
   };
 
-  const activeSlides = slides.filter((slide) => slide.isActive);
+  const handlePlaySlideshow = (slideshow: SavedSlideshow) => {
+    setCurrentSlideshow(slideshow);
+    setShowViewer(true);
+  };
+
+  const handleToggleActive = (slideshow: SavedSlideshow) => {
+    const updatedSlideshows = savedSlideshows.map((s) =>
+      s.id === slideshow.id ? { ...s, isActive: !s.isActive } : s
+    );
+    setSavedSlideshows(updatedSlideshows);
+    saveSlideshows(updatedSlideshows);
+  };
+
+  const handleCopyLink = async (slideshow: SavedSlideshow) => {
+    const link = `${window.location.origin}/slideshow/${slideshow.slug}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedLink(slideshow.id);
+      setTimeout(() => setCopiedLink(null), 2000);
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+    }
+  };
+
+  const handleToggleFavorite = (slideshow: SavedSlideshow) => {
+    const updatedSlideshows = savedSlideshows.map((s) =>
+      s.id === slideshow.id ? { ...s, isFavorite: !s.isFavorite } : s
+    );
+    setSavedSlideshows(updatedSlideshows);
+    saveSlideshows(updatedSlideshows);
+  };
+
+  const formatDate = (date: Date | undefined | null) => {
+    if (!date) return "Never";
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  };
+
+  const getActiveSlideshow = () => {
+    return savedSlideshows.find((slideshow) => slideshow.isActive);
+  };
+
+  const activeSlideshow = getActiveSlideshow();
+
+  // Calculate stats
+  const stats = {
+    total: savedSlideshows.length,
+    active: savedSlideshows.filter((s) => s.isActive).length,
+    inactive: savedSlideshows.filter((s) => !s.isActive).length,
+    totalPlays: savedSlideshows.reduce((sum, s) => sum + s.playCount, 0),
+    favorites: savedSlideshows.filter((s) => s.isFavorite).length,
+  };
 
   return (
     <ProtectedRoute requiredRole="restaurant_owner">
-      <>
+      <ClientLayout>
         <Head>
-          <title>Client Dashboard - AfghanView</title>
-          <meta name="description" content="Manage your restaurant slideshow" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <link rel="icon" href="/favicon.ico" />
+          <title>Dashboard - AfghanView</title>
+          <meta name="description" content="Manage your slideshows" />
         </Head>
 
-        <div className="min-h-screen bg-gray-50">
+        <div className="space-y-8">
           {/* Header */}
-          <header className="bg-white shadow-sm border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center h-16">
-                <div className="flex items-center space-x-4">
-                  <Link
-                    href="/"
-                    className="text-afghan-green hover:text-afghan-green/80"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </Link>
-                  <h1 className="text-xl font-semibold text-gray-900">
-                    Afghan Palace Dashboard
-                  </h1>
-                </div>
-
-                {/* Desktop Actions */}
-                <div className="hidden md:flex items-center space-x-4">
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isPlaying
-                        ? "bg-red-100 text-red-700 hover:bg-red-200"
-                        : "bg-green-100 text-green-700 hover:bg-green-200"
-                    }`}
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-4 h-4 mr-1 inline" />
-                    ) : (
-                      <Play className="w-4 h-4 mr-1 inline" />
-                    )}
-                    {isPlaying ? "Pause" : "Play"}
-                  </button>
-                  <Link
-                    href="/restaurant/afghan-palace"
-                    target="_blank"
-                    className="bg-afghan-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-afghan-green/90 transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1 inline" />
-                    View Display
-                  </Link>
-                </div>
-
-                {/* Mobile menu button */}
-                <div className="md:hidden">
-                  <button
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-afghan-green hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-afghan-green"
-                  >
-                    <span className="sr-only">Open main menu</span>
-                    {mobileMenuOpen ? (
-                      <X className="block h-6 w-6" />
-                    ) : (
-                      <Menu className="block h-6 w-6" />
-                    )}
-                  </button>
-                </div>
-              </div>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {user?.first_name || "User"}!
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Manage your slideshows and track performance
+              </p>
             </div>
-
-            {/* Mobile Navigation Menu */}
-            {mobileMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="md:hidden bg-white border-t border-gray-200"
-              >
-                <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                  <button
-                    onClick={() => {
-                      setIsPlaying(!isPlaying);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                      isPlaying
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-4 h-4 mr-2 inline" />
-                    ) : (
-                      <Play className="w-4 h-4 mr-2 inline" />
-                    )}
-                    {isPlaying ? "Pause Slideshow" : "Play Slideshow"}
-                  </button>
-                  <Link
-                    href="/restaurant/afghan-palace"
-                    target="_blank"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="bg-afghan-green text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-afghan-green/90"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2 inline" />
-                    View Display
-                  </Link>
-                  <Link
-                    href="/"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-gray-700 hover:text-afghan-green block px-3 py-2 rounded-md text-base font-medium"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2 inline" />
-                    Back to Home
-                  </Link>
-                </div>
-              </motion.div>
-            )}
-          </header>
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <motion.div
-                className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <ImageIcon className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
-                      Total Slides
-                    </p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {slides.length}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Eye className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
-                      Active Slides
-                    </p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {activeSlides.length}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Clock className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
-                      Total Duration
-                    </p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {Math.round(
-                        activeSlides.reduce(
-                          (sum, slide) => sum + slide.duration,
-                          0
-                        ) / 1000
-                      )}
-                      s
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <div className="flex items-center">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Settings className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Status</p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {isPlaying ? "Playing" : "Paused"}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Quick Actions
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button
-                  onClick={handleAddSlide}
-                  className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-afghan-green hover:bg-afghan-green/5 transition-colors"
-                >
-                  <Plus className="w-6 h-6 text-gray-400 mr-2" />
-                  <span className="text-gray-600 font-medium">
-                    Add New Slide
-                  </span>
-                </button>
-                <button
-                  onClick={copyRestaurantUrl}
-                  className="flex items-center justify-center p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                >
-                  <Copy className="w-6 h-6 text-blue-600 mr-2" />
-                  <span className="text-blue-700 font-medium">
-                    Copy Display URL
-                  </span>
-                </button>
-                <Link
-                  href="/restaurant/afghan-palace"
-                  target="_blank"
-                  className="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-                >
-                  <ExternalLink className="w-6 h-6 text-green-600 mr-2" />
-                  <span className="text-green-700 font-medium">
-                    Preview Display
-                  </span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Slides List */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Your Slides
-                </h2>
-              </div>
-              <div className="divide-y divide-gray-200">
-                {slides.map((slide, index) => (
-                  <motion.div
-                    key={slide.id}
-                    className="p-6"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-2 bg-gray-100 rounded-lg">
-                          {React.createElement(getSlideTypeIcon(slide.type), {
-                            className: "w-5 h-5 text-gray-600",
-                          })}
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900">
-                            {slide.title}
-                          </h3>
-                          {slide.subtitle && (
-                            <p className="text-sm text-gray-500">
-                              {slide.subtitle}
-                            </p>
-                          )}
-                          <div className="flex items-center space-x-4 mt-1">
-                            <span className="text-xs text-gray-400">
-                              Duration: {slide.duration / 1000}s
-                            </span>
-                            <span className="text-xs text-gray-400">
-                              Order: {slide.order}
-                            </span>
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full ${
-                                slide.isActive
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-600"
-                              }`}
-                            >
-                              {slide.isActive ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleToggleActive(slide.id)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            slide.isActive
-                              ? "bg-red-100 text-red-600 hover:bg-red-200"
-                              : "bg-green-100 text-green-600 hover:bg-green-200"
-                          }`}
-                        >
-                          {slide.isActive ? (
-                            <Pause className="w-4 h-4" />
-                          ) : (
-                            <Play className="w-4 h-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleEditSlide(slide)}
-                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSlide(slide.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+            <button
+              onClick={() => setShowEditor(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Slideshow
+            </button>
           </div>
 
-          {/* Add/Edit Modal */}
-          {showAddModal && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div className="mt-3">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    {editingSlide ? "Edit Slide" : "Add New Slide"}
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
+            >
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {stats.total}
+              </div>
+              <div className="text-sm text-gray-600 font-medium">Total</div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
+            >
+              <div className="text-3xl font-bold text-green-600 mb-1">
+                {stats.active}
+              </div>
+              <div className="text-sm text-gray-600 font-medium">Active</div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+              className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
+            >
+              <div className="text-3xl font-bold text-gray-600 mb-1">
+                {stats.inactive}
+              </div>
+              <div className="text-sm text-gray-600 font-medium">Inactive</div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
+              className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
+            >
+              <div className="text-3xl font-bold text-blue-600 mb-1">
+                {stats.totalPlays}
+              </div>
+              <div className="text-sm text-gray-600 font-medium">
+                Total Plays
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.5 }}
+              className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
+            >
+              <div className="text-3xl font-bold text-yellow-600 mb-1">
+                {stats.favorites}
+              </div>
+              <div className="text-sm text-gray-600 font-medium">Favorites</div>
+            </motion.div>
+          </div>
+
+          {/* Active Slideshow Banner */}
+          {activeSlideshow && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-2">
+                    🎬 Currently Playing: {activeSlideshow.name}
                   </h3>
-
-                  <form className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Slide Type
-                      </label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-afghan-green">
-                        {slideTypes.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Title
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-afghan-green"
-                        placeholder="Enter slide title"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Duration (seconds)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="30"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-afghan-green"
-                        placeholder="6"
-                      />
-                    </div>
-
-                    <div className="flex space-x-3 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowAddModal(false)}
-                        className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-1 bg-afghan-green text-white px-4 py-2 rounded-md hover:bg-afghan-green/90 transition-colors"
-                      >
-                        {editingSlide ? "Update" : "Create"}
-                      </button>
-                    </div>
-                  </form>
+                  <p className="text-green-100">
+                    {activeSlideshow.images.length} images •{" "}
+                    {activeSlideshow.settings.duration / 1000}s duration
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <span className="flex items-center text-green-100">
+                    <Activity className="w-4 h-4 mr-2" />
+                    {activeSlideshow.playCount} plays
+                  </span>
+                  <button
+                    onClick={() => handleToggleActive(activeSlideshow)}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-200"
+                  >
+                    Stop
+                  </button>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {/* Tabs */}
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab("slideshows")}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
+                activeTab === "slideshows"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Image className="w-4 h-4 inline mr-2" />
+              Slideshows
+            </button>
+            <button
+              onClick={() => setActiveTab("tvs")}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
+                activeTab === "tvs"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Tv className="w-4 h-4 inline mr-2" />
+              TV Displays
+            </button>
+          </div>
+
+          {/* Content */}
+          {activeTab === "slideshows" ? (
+            <div>
+              {savedSlideshows.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center py-12"
+                >
+                  <div className="text-6xl mb-4">📺</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No slideshows yet
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Create your first slideshow to get started
+                  </p>
+                  <button
+                    onClick={() => setShowEditor(true)}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Slideshow
+                  </button>
+                </motion.div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {savedSlideshows.map((slideshow, index) => (
+                    <motion.div
+                      key={slideshow.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
+                    >
+                      {/* Preview Image */}
+                      <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
+                        {slideshow.images.length > 0 ? (
+                          <img
+                            src={slideshow.images[0].url}
+                            alt={slideshow.images[0].name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-gray-400">
+                            <Eye className="w-12 h-12" />
+                          </div>
+                        )}
+
+                        {/* Status Badge */}
+                        <div className="absolute top-3 left-3">
+                          {slideshow.isActive ? (
+                            <div className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-lg">
+                              <Power className="w-3 h-3" />
+                              Active
+                            </div>
+                          ) : (
+                            <div className="bg-gray-500 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-lg">
+                              <PowerOff className="w-3 h-3" />
+                              Inactive
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Favorite Button */}
+                        <button
+                          onClick={() => handleToggleFavorite(slideshow)}
+                          className={`absolute top-3 right-3 p-1 rounded-full transition-all duration-200 ${
+                            slideshow.isFavorite
+                              ? "text-yellow-400 bg-yellow-50"
+                              : "text-gray-400 hover:text-yellow-400 hover:bg-gray-50"
+                          }`}
+                        >
+                          <Star
+                            className={`w-4 h-4 ${
+                              slideshow.isFavorite ? "fill-current" : ""
+                            }`}
+                          />
+                        </button>
+
+                        {/* Play Count */}
+                        {slideshow.playCount > 0 && (
+                          <div className="absolute bottom-3 left-3 bg-black bg-opacity-75 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
+                            {slideshow.playCount} plays
+                          </div>
+                        )}
+
+                        {/* Image Count Badge */}
+                        {slideshow.images.length > 1 && (
+                          <div className="absolute bottom-3 right-3 bg-black bg-opacity-75 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
+                            {slideshow.images.length} images
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <h4 className="font-bold text-gray-900 text-lg leading-tight flex-1">
+                            {slideshow.name}
+                          </h4>
+                          <button
+                            onClick={() => handleToggleFavorite(slideshow)}
+                            className={`p-2 rounded-xl transition-all duration-200 ${
+                              slideshow.isFavorite
+                                ? "text-yellow-400 bg-yellow-50"
+                                : "text-gray-400 hover:text-yellow-400 hover:bg-gray-50"
+                            }`}
+                          >
+                            <Star
+                              className={`w-5 h-5 ${
+                                slideshow.isFavorite ? "fill-current" : ""
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-4 h-4" />
+                            {slideshow.images.length} image
+                            {slideshow.images.length !== 1 ? "s" : ""}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {slideshow.settings.duration / 1000}s
+                          </span>
+                        </div>
+
+                        {/* Features */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {slideshow.isTemplate && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              <Star className="w-3 h-3 mr-1" />
+                              Template
+                            </span>
+                          )}
+                          {slideshow.settings.transition && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <Palette className="w-3 h-3 mr-1" />
+                              {slideshow.settings.transition}
+                            </span>
+                          )}
+                          {slideshow.settings.backgroundMusic && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              <Music className="w-3 h-3 mr-1" />
+                              Music
+                            </span>
+                          )}
+                          {slideshow.lastPlayed && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              {formatDate(slideshow.lastPlayed)}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 mb-4">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handlePlaySlideshow(slideshow)}
+                            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2.5 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                          >
+                            <Play className="w-4 h-4" />
+                            Play
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleToggleActive(slideshow)}
+                            className={`px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
+                              slideshow.isActive
+                                ? "bg-red-500 text-white hover:bg-red-600"
+                                : "bg-green-500 text-white hover:bg-green-600"
+                            }`}
+                            title={
+                              slideshow.isActive ? "Deactivate" : "Activate"
+                            }
+                          >
+                            {slideshow.isActive ? (
+                              <PowerOff className="w-4 h-4" />
+                            ) : (
+                              <Power className="w-4 h-4" />
+                            )}
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleCopyLink(slideshow)}
+                            className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                            title="Copy Link"
+                          >
+                            {copiedLink === slideshow.id ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <Link className="w-4 h-4" />
+                            )}
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleDeleteSlideshow(slideshow.id)}
+                            className="px-4 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </motion.button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
+          ) : (
+            <TvManager
+              restaurantId="e46a2c25-fe10-4fd2-a2bd-4c72969a898e"
+              slideshows={savedSlideshows.map((s) => ({
+                id: s.id,
+                name: s.name,
+                slug: s.slug || "",
+              }))}
+            />
           )}
         </div>
-      </>
+
+        {/* Slideshow Editor Modal */}
+        {showEditor && (
+          <ImageSlideshowEditor
+            onSave={handleSaveSlideshow}
+            onCancel={() => setShowEditor(false)}
+            restaurantId="e46a2c25-fe10-4fd2-a2bd-4c72969a898e"
+            userId={user?.id || "default-user"}
+          />
+        )}
+
+        {/* Slideshow Viewer Modal */}
+        {showViewer && currentSlideshow && (
+          <SimpleImageViewer
+            images={currentSlideshow.images}
+            settings={currentSlideshow.settings}
+            onClose={() => {
+              setShowViewer(false);
+              setCurrentSlideshow(null);
+            }}
+          />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={showDeleteConfirmation}
+          onClose={() => setShowDeleteConfirmation(false)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Slideshow"
+          message="Are you sure you want to delete this slideshow? This action cannot be undone."
+        />
+
+        {/* QR Code Modal */}
+        {showQrCode && (
+          <TvQrCode
+            slideshowId={showQrCode}
+            slideshowName={
+              savedSlideshows.find((s) => s.id === showQrCode)?.name ||
+              "Slideshow"
+            }
+            baseUrl={
+              typeof window !== "undefined"
+                ? window.location.origin
+                : "http://localhost:3000"
+            }
+            onClose={() => setShowQrCode(null)}
+          />
+        )}
+      </ClientLayout>
     </ProtectedRoute>
   );
 }

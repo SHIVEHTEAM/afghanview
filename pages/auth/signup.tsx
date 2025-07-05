@@ -85,10 +85,10 @@ export default function SignUp() {
   return (
     <>
       <Head>
-        <title>Sign Up - AfghanView</title>
+        <title>Sign Up - ShivehView</title>
         <meta
           name="description"
-          content="Create your AfghanView restaurant account"
+          content="Create your ShivehView restaurant account"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -104,13 +104,13 @@ export default function SignUp() {
             className="text-center"
           >
             <Link href="/" className="inline-block">
-              <h1 className="text-4xl font-bold text-white mb-2">AfghanView</h1>
+              <h1 className="text-4xl font-bold text-white mb-2">ShivehView</h1>
             </Link>
             <h2 className="text-2xl font-semibold text-white mb-2">
               Create your restaurant account
             </h2>
             <p className="text-white/80">
-              Join AfghanView to showcase your restaurant
+              Join ShivehView to showcase your restaurant
             </p>
           </motion.div>
 

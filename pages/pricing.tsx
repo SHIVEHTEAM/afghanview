@@ -151,7 +151,7 @@ export default function Pricing() {
   return (
     <>
       <Head>
-        <title>Pricing - AfghanView</title>
+        <title>Pricing - ShivehView</title>
         <meta
           name="description"
           content="Choose the perfect plan for your restaurant"
@@ -166,7 +166,7 @@ export default function Pricing() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <Link href="/" className="text-2xl font-bold text-gradient">
-                AfghanView
+                ShivehView
               </Link>
               <div className="flex items-center space-x-4">
                 <Link
@@ -363,7 +363,7 @@ export default function Pricing() {
                 Everything You Need to Succeed
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                AfghanView provides all the tools you need to create an engaging
+                ShivehView provides all the tools you need to create an engaging
                 restaurant experience.
               </p>
             </div>

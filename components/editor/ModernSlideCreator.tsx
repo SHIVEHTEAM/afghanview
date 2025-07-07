@@ -174,59 +174,35 @@ export default function ModernSlideCreator({
           throw new Error(`${file.name} is too large. Maximum size is 50MB.`);
         }
 
-        // Convert file to base64 for server-side upload
-        console.log("Converting file to base64:", {
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-        });
+        // Upload to Supabase Storage
+        const fileName = `${type}s/${Date.now()}-${file.name}`;
+        const { data, error: uploadError } = await supabase.storage
+          .from("slideshow-media")
+          .upload(fileName, file, {
+            cacheControl: "3600",
+            upsert: false,
+          });
 
-        const base64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-
-        console.log("Base64 conversion complete, length:", base64.length);
-
-        const uploadData = {
-          file: {
-            name: file.name,
-            type: file.type,
-            data: base64,
-          },
-          type,
-          userId: user.id,
-        };
-
-        console.log("Sending upload request:", {
-          type,
-          userId: user.id,
-          fileSize: base64.length,
-        });
-
-        const response = await fetch("/api/media/upload", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(uploadData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Upload failed");
+        if (uploadError) {
+          throw new Error(
+            `Failed to upload ${file.name}: ${uploadError.message}`
+          );
         }
 
-        const uploadResult = await response.json();
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from("slideshow-media")
+          .getPublicUrl(fileName);
+
+        let fileUrl = urlData?.publicUrl || "";
 
         uploadedItems.push({
-          id: uploadResult.id,
-          url: uploadResult.url,
+          id: `${Date.now()}-${i}`,
+          url: fileUrl,
           alt: file.name,
           order: mediaItems.length + i,
           type,
-          duration: uploadResult.duration,
+          duration: undefined,
         });
       }
 

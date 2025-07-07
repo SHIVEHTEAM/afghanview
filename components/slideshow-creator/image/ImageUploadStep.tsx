@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Upload, Grid, Trash2 } from "lucide-react";
 import { SlideMedia } from "../shared/types";
+import { supabase } from "../../../lib/supabase";
 
 interface ImageUploadStepProps {
   images: SlideMedia[];
@@ -30,13 +31,32 @@ export default function ImageUploadStep({
       if (!file.type.startsWith("image/")) continue;
       if (file.size > 10 * 1024 * 1024) continue;
 
-      const url = URL.createObjectURL(file);
+      // Upload to Supabase Storage
+      const fileName = `images/${Date.now()}-${file.name}`;
+      const { data, error: uploadError } = await supabase.storage
+        .from("slideshow-media")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        continue;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("slideshow-media")
+        .getPublicUrl(fileName);
+
+      let imageUrl = urlData?.publicUrl || "";
+
       newImages.push({
         id: Date.now().toString() + i,
         file,
         name: file.name,
         type: "image",
-        url,
+        url: imageUrl,
       });
     }
 

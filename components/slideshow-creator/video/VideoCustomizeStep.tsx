@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowRight, ArrowLeft, Video, Music } from "lucide-react";
+import { supabase } from "../../../lib/supabase";
 
 interface VideoFile {
   id: string;
@@ -37,6 +38,60 @@ export default function VideoCustomizeStep({
   onBack,
   formatDuration,
 }: VideoCustomizeStepProps) {
+  const handleBackgroundMusicUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("audio/")) {
+      alert("Please select a valid audio file");
+      return;
+    }
+
+    // Validate file size (max 20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      alert("Audio file size must be less than 20MB");
+      return;
+    }
+
+    // Upload to Supabase Storage
+    const fileName = `audio/${Date.now()}-${file.name}`;
+    const { data, error: uploadError } = await supabase.storage
+      .from("slideshow-media")
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      alert(`Failed to upload audio: ${uploadError.message}`);
+      return;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from("slideshow-media")
+      .getPublicUrl(fileName);
+
+    let audioUrl = urlData?.publicUrl || "";
+    // Call the parent handler with a File object and the URL
+    onBackgroundMusicUpload({
+      ...event,
+      target: {
+        ...event.target,
+        files: [
+          new File([file], file.name, {
+            type: file.type,
+            lastModified: file.lastModified,
+            audioUrl,
+          }),
+        ],
+      },
+    });
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="text-center mb-6">
@@ -89,7 +144,7 @@ export default function VideoCustomizeStep({
           <input
             type="file"
             accept="audio/*"
-            onChange={onBackgroundMusicUpload}
+            onChange={handleBackgroundMusicUpload}
             className="hidden"
             id="music-upload"
           />

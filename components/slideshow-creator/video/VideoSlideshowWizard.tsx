@@ -6,6 +6,7 @@ import WizardStepper from "../shared/WizardStepper";
 import VideoUploadStep from "./VideoUploadStep";
 import VideoCustomizeStep from "./VideoCustomizeStep";
 import VideoPreviewStep from "./VideoPreviewStep";
+import { supabase } from "../../../lib/supabase";
 
 interface VideoFile {
   id: string;
@@ -14,6 +15,7 @@ interface VideoFile {
   size: number;
   thumbnail?: string;
   duration?: number;
+  url: string;
 }
 
 interface VideoSlideshowWizardProps {
@@ -87,11 +89,33 @@ export default function VideoSlideshowWizard({
         continue;
       }
 
+      // Upload to Supabase Storage
+      const fileName = `videos/${Date.now()}-${file.name}`;
+      const { data, error: uploadError } = await supabase.storage
+        .from("slideshow-media")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        alert(`Failed to upload ${file.name}: ${uploadError.message}`);
+        continue;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("slideshow-media")
+        .getPublicUrl(fileName);
+
+      let videoUrl = urlData?.publicUrl || "";
+
       const videoFile: VideoFile = {
         id: Date.now().toString() + i,
         file,
         name: file.name,
         size: file.size,
+        url: videoUrl,
       };
 
       try {
@@ -170,51 +194,19 @@ export default function VideoSlideshowWizard({
     setIsCreating(true);
 
     try {
-      // Upload all video files to Supabase storage first
-      const videoSlides = await Promise.all(
-        videos.map(async (video, index) => {
-          // Convert video file to base64 for upload
-          const videoBase64 = await fileToBase64(video.file);
-
-          // Upload to Supabase storage
-          const uploadResponse = await fetch("/api/media/upload", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              file: {
-                name: video.name,
-                type: video.file.type,
-                data: videoBase64,
-              },
-              type: "video",
-              restaurantId: "e46a2c25-fe10-4fd2-a2bd-4c72969a898e", // Use the test restaurant ID
-              userId: "default-user",
-            }),
-          });
-
-          if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text();
-            throw new Error(`Failed to upload ${video.name}: ${errorText}`);
-          }
-
-          const uploadResult = await uploadResponse.json();
-
-          return {
-            id: uploadResult.id,
-            file_path: uploadResult.url, // Use the public URL
-            name: video.name,
-            type: "video",
-            order_index: index,
-            duration: video.duration || 5000,
-            styling: {
-              animation: settings.transition,
-            },
-            url: uploadResult.url, // Store the URL for playback
-          };
-        })
-      );
+      // Use already uploaded video URLs
+      const videoSlides = videos.map((video, index) => ({
+        id: video.id,
+        file_path: video.url, // Use the public URL
+        name: video.name,
+        type: "video",
+        order_index: index,
+        duration: video.duration || 5000,
+        styling: {
+          animation: settings.transition,
+        },
+        url: video.url, // Store the URL for playback
+      }));
 
       const slideshowData = {
         slides: videoSlides,
@@ -231,15 +223,6 @@ export default function VideoSlideshowWizard({
     } finally {
       setIsCreating(false);
     }
-  };
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
   };
 
   const canGoNext = () => {

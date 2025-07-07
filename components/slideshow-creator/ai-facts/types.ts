@@ -7,6 +7,7 @@ export interface Fact {
   backgroundColor?: string;
   fontColor?: string;
   fontSize?: number;
+  emoji?: string;
 }
 
 export interface SlideshowSettings {

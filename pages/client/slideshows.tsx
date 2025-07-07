@@ -94,41 +94,17 @@ export default function SlideshowsPage() {
 
   // Fetch slideshows from API
   const fetchSlideshows = async () => {
-    if (!user?.restaurant?.id) return;
-
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(
-        `/api/slideshows?restaurantId=${user.restaurant?.id}&userId=${user.id}`
-      );
-
+      const response = await fetch("/api/slideshows");
       if (!response.ok) {
         throw new Error("Failed to fetch slideshows");
       }
-
       const data = await response.json();
-      console.log("Fetched slideshows:", data);
-
-      // Transform API data to match our interface
-      const transformedSlideshows = data.map((slideshow: any) => ({
-        ...slideshow,
-        isActive: true, // Default to active
-        playCount: 0, // Default play count
-        isFavorite: false, // Default favorite status
-        tags: [], // Default empty tags
-        mediaType: "image", // Default media type
-      }));
-
-      setSavedSlideshows(transformedSlideshows);
+      setSavedSlideshows(data || []);
     } catch (err) {
-      console.error("Error fetching slideshows:", err);
       setError(
         err instanceof Error ? err.message : "Failed to fetch slideshows"
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -145,78 +121,14 @@ export default function SlideshowsPage() {
 
   const handleSaveSlideshow = async (slideshowData: any) => {
     try {
-      if (showEditor && currentSlideshow) {
-        // Update existing slideshow
-        const { media, settings } = slideshowData;
-
-        const response = await fetch(`/api/slideshows/${currentSlideshow.id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: currentSlideshow.name,
-            images: media,
-            settings: settings,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to update slideshow");
-        }
-
-        const updatedSlideshow = await response.json();
-        console.log("Updated slideshow:", updatedSlideshow);
-
-        // Refresh the slideshows list
-        await fetchSlideshows();
-        setShowEditor(false);
-        setCurrentSlideshow(null);
-        return;
-      }
-
-      // Create new slideshow
-      const { slides, settings, name, type } = slideshowData;
-
-      // Ensure slides is always an array
-      const slidesArray = Array.isArray(slides) ? slides : [];
-
-      // Extract images from slides for API compatibility
-      const images = slidesArray.flatMap((slide: any) => {
-        if (slide.content?.images) {
-          return slide.content.images;
-        }
-        if (slide.images) {
-          return slide.images;
-        }
-        if (slide.file || slide.url) {
-          return [slide];
-        }
-        return [];
-      });
-
-      // Create slideshow via API
       const response = await fetch("/api/slideshows", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name:
-            name ||
-            `My ${type.charAt(0).toUpperCase() + type.slice(1)} Slideshow`,
-          images: images,
-          settings: {
-            duration: settings.duration || 6000,
-            transition: settings.transition || "fade",
-            autoPlay: settings.autoPlay !== false,
-            showControls: settings.showControls !== false,
-            backgroundMusic: settings.backgroundMusic,
-          },
-          restaurantId: user?.restaurant?.id,
-          userId: user?.id || "default-user",
-          type: type || "image",
-          slug: `${type}-${Date.now()}`,
+          ...slideshowData,
+          restaurant_id: user?.restaurant?.id,
         }),
       });
 
@@ -225,13 +137,9 @@ export default function SlideshowsPage() {
       }
 
       const newSlideshow = await response.json();
-      console.log("Created slideshow:", newSlideshow);
-
-      // Refresh the slideshows list
-      await fetchSlideshows();
-      setShowWizard(false);
+      setSavedSlideshows([newSlideshow, ...savedSlideshows]);
+      setShowCreator(false);
     } catch (err) {
-      console.error("Error creating slideshow:", err);
       setError(
         err instanceof Error ? err.message : "Failed to create slideshow"
       );
@@ -255,7 +163,6 @@ export default function SlideshowsPage() {
         throw new Error("Failed to delete slideshow");
       }
 
-      // Refresh the slideshows list
       await fetchSlideshows();
       setSelectedSlideshows(
         selectedSlideshows.filter((s) => s !== selectedSlideshowId)
@@ -263,7 +170,6 @@ export default function SlideshowsPage() {
       setShowDeleteConfirmation(false);
       setSelectedSlideshowId(null);
     } catch (err) {
-      console.error("Error deleting slideshow:", err);
       setError(
         err instanceof Error ? err.message : "Failed to delete slideshow"
       );
@@ -294,7 +200,6 @@ export default function SlideshowsPage() {
 
   const handleDuplicateSlideshow = async (slideshow: SavedSlideshow) => {
     try {
-      // Create a copy via API
       const response = await fetch("/api/slideshows", {
         method: "POST",
         headers: {
@@ -303,7 +208,6 @@ export default function SlideshowsPage() {
         body: JSON.stringify({
           name: `${slideshow.name} (Copy)`,
           restaurant_id: user?.restaurant?.id,
-          // TODO: Copy slides and settings from original
         }),
       });
 
@@ -313,7 +217,6 @@ export default function SlideshowsPage() {
 
       await fetchSlideshows();
     } catch (err) {
-      console.error("Error duplicating slideshow:", err);
       setError(
         err instanceof Error ? err.message : "Failed to duplicate slideshow"
       );
@@ -331,21 +234,18 @@ export default function SlideshowsPage() {
     try {
       switch (action) {
         case "activate":
-          // Update local state for now - TODO: Implement API call
           const activatedSlideshows = savedSlideshows.map((s) =>
             selectedSlideshows.includes(s.id) ? { ...s, isActive: true } : s
           );
           setSavedSlideshows(activatedSlideshows);
           break;
         case "deactivate":
-          // Update local state for now - TODO: Implement API call
           const deactivatedSlideshows = savedSlideshows.map((s) =>
             selectedSlideshows.includes(s.id) ? { ...s, isActive: false } : s
           );
           setSavedSlideshows(deactivatedSlideshows);
           break;
         case "delete":
-          // Delete selected slideshows
           for (const id of selectedSlideshows) {
             const response = await fetch(`/api/slideshows/${id}`, {
               method: "DELETE",
@@ -360,7 +260,6 @@ export default function SlideshowsPage() {
 
       setSelectedSlideshows([]);
     } catch (err) {
-      console.error("Error performing bulk action:", err);
       setError(
         err instanceof Error ? err.message : "Failed to perform bulk action"
       );

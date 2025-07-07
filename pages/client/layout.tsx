@@ -13,7 +13,7 @@ import {
   BarChart3,
   Users,
   Building,
-  Sparkles,
+  Eye,
 } from "lucide-react";
 
 interface ClientLayoutProps {
@@ -83,8 +83,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 flex items-center px-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Eye className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-xl font-bold text-gray-900">ShivehView</h1>
               </div>
@@ -96,7 +96,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                   href={item.href}
                   className={`group flex items-center px-3 py-3 text-base font-medium rounded-xl transition-all duration-200 ${
                     item.current
-                      ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
+                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   }`}
                   onClick={() => setSidebarOpen(false)}
@@ -139,8 +139,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Eye className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-xl font-bold text-gray-900">ShivehView</h1>
               </div>
@@ -152,7 +152,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                   href={item.href}
                   className={`group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                     item.current
-                      ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
+                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   }`}
                 >
@@ -194,7 +194,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
           <button
             type="button"
-            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-600 lg:hidden"
+            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-600 lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-6 w-6" />

@@ -16,6 +16,9 @@ export { default as AiFactsSettingsPanel } from "./ai-facts/SettingsPanel";
 export { default as PromptSelector } from "./ai-facts/PromptSelector";
 export { default as FactCard } from "./ai-facts/FactCard";
 
+// AI All-in-One slideshow
+export { default as AiAllInOneWizard } from "./ai-all-in-one/AiAllInOneWizard";
+
 // Menu slideshow
 export { default as MenuSlideshowWizard } from "./menu/MenuSlideshowWizard";
 export { default as AISuggestions } from "./menu/AISuggestions";

@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { authenticateRequest } from "../../../lib/auth-middleware";
+import { rateLimit, getClientIdentifier } from "../../../lib/rate-limit";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -10,63 +12,76 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Apply rate limiting
+  const identifier = getClientIdentifier(req);
+  const rateLimitResult = rateLimit(identifier, 100, 15 * 60 * 1000); // 100 requests per 15 minutes
+
+  if (!rateLimitResult.allowed) {
+    res.setHeader(
+      "X-RateLimit-Remaining",
+      rateLimitResult.remaining.toString()
+    );
+    res.setHeader("X-RateLimit-Reset", rateLimitResult.resetTime.toString());
+    return res.status(429).json({ error: "Too many requests" });
+  }
+
+  res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining.toString());
+  res.setHeader("X-RateLimit-Reset", rateLimitResult.resetTime.toString());
+
+  // Authenticate all requests
+  const authenticatedReq = await authenticateRequest(req, res);
+  if (!authenticatedReq) return;
+
   if (req.method === "GET") {
     try {
-      console.log("=== FETCHING ALL SLIDES ===");
-
-      const { data, error } = await supabase
-        .from("slides")
-        .select(
-          `
+      // Only admins can see all slides, restaurant owners see only their slides
+      let query = supabase.from("slides").select(
+        `
           *,
           restaurant:restaurants(id, name, slug)
         `
-        )
-        .order("created_at", { ascending: false });
+      );
+
+      if (authenticatedReq.user?.role === "restaurant_owner") {
+        query = query.eq("restaurant_id", authenticatedReq.user.restaurant_id);
+      }
+
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
 
       if (error) {
-        console.error("Database error fetching slides:", error);
         return res.status(500).json({
-          error: `Database error: ${error.message}`,
-          details: error,
+          error: "Database error",
         });
       }
 
-      console.log(`✅ Fetched ${data?.length || 0} slides successfully`);
       return res.status(200).json(data || []);
     } catch (error) {
-      console.error("Error fetching slides:", error);
       return res.status(500).json({
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: "Internal server error",
       });
     }
   } else if (req.method === "POST") {
-    return handlePost(req, res);
+    return handlePost(authenticatedReq, res);
   } else {
     res.setHeader("Allow", ["GET", "POST"]);
     return res.status(405).json({ error: "Method not allowed" });
   }
 }
 
-async function handlePost(req: NextApiRequest, res: NextApiResponse) {
+async function handlePost(req: any, res: NextApiResponse) {
   try {
-    console.log("=== SLIDE CREATION REQUEST RECEIVED ===");
-    console.log("Request method:", req.method);
-    console.log("Request headers:", req.headers);
-    console.log("Request body keys:", Object.keys(req.body || {}));
-
     const slideData = req.body;
-
-    console.log("=== SLIDE CREATION REQUEST ===");
-    console.log(
-      "Creating slide with data:",
-      JSON.stringify(slideData, null, 2)
-    );
 
     // Validate required fields
     if (!slideData.name || !slideData.title) {
-      console.log("Validation failed: Missing name or title");
       return res.status(400).json({ error: "Name and title are required" });
+    }
+
+    // Ensure restaurant owners can only create slides for their restaurant
+    if (req.user?.role === "restaurant_owner") {
+      slideData.restaurant_id = req.user.restaurant_id;
     }
 
     // Map the data to match the database schema
@@ -86,14 +101,9 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       is_locked: slideData.is_locked ?? false,
       published_at: slideData.published_at || null,
       published_by: slideData.published_by || null,
-      created_by: slideData.created_by,
-      updated_by: slideData.created_by, // Set updated_by to same as created_by initially
+      created_by: req.user?.id,
+      updated_by: req.user?.id,
     };
-
-    console.log(
-      "Clean slide data for database:",
-      JSON.stringify(cleanSlideData, null, 2)
-    );
 
     const { data, error } = await supabase
       .from("slides")
@@ -102,20 +112,17 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       .single();
 
     if (error) {
-      console.error("Database error during slide creation:", error);
+      console.error("Supabase insert error:", error);
       return res.status(500).json({
-        error: `Database error: ${error.message}`,
-        details: error,
+        error: error.message || "Database error",
+        details: error.details || error,
       });
     }
 
-    console.log("Slide created successfully in database:", data);
-    console.log("=== SLIDE CREATION COMPLETE ===");
     return res.status(201).json(data);
   } catch (error) {
-    console.error("Unexpected error creating slide:", error);
     return res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: "Internal server error",
     });
   }
 }

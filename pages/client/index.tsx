@@ -63,6 +63,8 @@ import SuccessMessage from "../../components/ui/SuccessMessage";
 import { useToast } from "../../components/ui/Toast";
 
 import { SlideMedia, SlideshowSettings } from "../../components/slideshow";
+import { supabase } from "../../lib/supabase";
+import AiAllInOneWizard from "../../components/slideshow-creator/ai-all-in-one/AiAllInOneWizard";
 
 interface SlideImage extends SlideMedia {
   base64?: string;
@@ -82,7 +84,14 @@ interface SavedSlideshow {
   isFavorite?: boolean;
   isTemplate?: boolean;
   mediaType?: "image" | "video";
-  slideshowType?: "image" | "video" | "ai-facts" | "menu" | "deals" | "text";
+  slideshowType?:
+    | "image"
+    | "video"
+    | "ai-facts"
+    | "ai-all-in-one"
+    | "menu"
+    | "deals"
+    | "text";
   originalData?: any;
 }
 
@@ -134,14 +143,67 @@ export default function ClientDashboard() {
   const [showEditWizard, setShowEditWizard] = useState(false);
   const [editWizardType, setEditWizardType] = useState<string>("");
 
+  // Helper function to get authenticated headers with token refresh
+  const getAuthHeaders = async () => {
+    try {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("Session error:", error);
+        throw new Error("Authentication failed");
+      }
+
+      if (!session?.access_token) {
+        throw new Error("No valid session");
+      }
+
+      // Check if token is about to expire (within 5 minutes)
+      const tokenExpiry = session.expires_at;
+      const now = Math.floor(Date.now() / 1000);
+      const fiveMinutes = 5 * 60;
+
+      if (tokenExpiry && tokenExpiry - now < fiveMinutes) {
+        console.log("Token expiring soon, refreshing...");
+        const {
+          data: { session: newSession },
+          error: refreshError,
+        } = await supabase.auth.refreshSession();
+
+        if (refreshError || !newSession?.access_token) {
+          throw new Error("Token refresh failed");
+        }
+
+        return {
+          Authorization: `Bearer ${newSession.access_token}`,
+          "Content-Type": "application/json",
+        };
+      }
+
+      return {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      };
+    } catch (error) {
+      console.error("Auth headers error:", error);
+      // Redirect to login if authentication fails
+      window.location.href = "/auth/signin";
+      throw error;
+    }
+  };
+
   // Load saved slideshows from API
   useEffect(() => {
     const loadSlideshows = async () => {
       try {
+        const headers = await getAuthHeaders();
         const response = await fetch(
           `/api/slideshows?restaurantId=e46a2c25-fe10-4fd2-a2bd-4c72969a898e&userId=${
             user?.id || "default-user"
-          }`
+          }`,
+          { headers }
         );
 
         if (!response.ok) {
@@ -151,29 +213,41 @@ export default function ClientDashboard() {
         const slideshows = await response.json();
         console.log("[Client] Loaded slideshows:", slideshows);
 
-        // Debug: Check image types
+        // Debug: Check image types with safety checks
         slideshows.forEach((slideshow: any, index: number) => {
           console.log(
             `[Client] Slideshow ${index} (${slideshow.name}) images:`,
             slideshow.images
           );
-          slideshow.images.forEach((img: any, imgIndex: number) => {
-            console.log(`[Client] Image ${imgIndex}:`, {
-              name: img.name,
-              type: img.type,
-              file_path: img.file_path,
-              url: img.url,
+
+          // Safety check for images array
+          if (slideshow.images && Array.isArray(slideshow.images)) {
+            slideshow.images.forEach((img: any, imgIndex: number) => {
+              console.log(`[Client] Image ${imgIndex}:`, {
+                name: img.name,
+                type: img.type,
+                file_path: img.file_path,
+                url: img.url,
+              });
             });
-          });
+          } else {
+            console.log(
+              `[Client] Slideshow ${index} has no images array or invalid format`
+            );
+          }
         });
 
-        // Convert date strings to Date objects
+        // Convert date strings to Date objects with safety checks
         const slideshowsWithProperDates = slideshows.map((slideshow: any) => ({
           ...slideshow,
-          createdAt: new Date(slideshow.createdAt),
+          createdAt: slideshow.createdAt
+            ? new Date(slideshow.createdAt)
+            : new Date(),
           lastPlayed: slideshow.lastPlayed
             ? new Date(slideshow.lastPlayed)
             : undefined,
+          // Ensure images array exists
+          images: slideshow.images || [],
         }));
 
         setSavedSlideshows(slideshowsWithProperDates);
@@ -183,7 +257,7 @@ export default function ClientDashboard() {
     };
 
     loadSlideshows();
-  }, []);
+  }, [user?.id]);
 
   // Save slideshows to localStorage
   const saveSlideshows = (slideshows: SavedSlideshow[]) => {
@@ -219,11 +293,10 @@ export default function ClientDashboard() {
     try {
       if (isEditing && editingSlideshow) {
         // Update existing slideshow
+        const headers = await getAuthHeaders();
         const response = await fetch(`/api/slideshows/${editingSlideshow.id}`, {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers,
           body: JSON.stringify({
             name: editingSlideshow.name,
             images: media,
@@ -262,11 +335,10 @@ export default function ClientDashboard() {
       const slug = generateSlug(slideshowName);
 
       // Save slideshow via API
+      const headers = await getAuthHeaders();
       const response = await fetch("/api/slideshows", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           name: slideshowName,
           images: media.map((img) => ({
@@ -322,8 +394,10 @@ export default function ClientDashboard() {
     if (!selectedSlideshowId) return;
 
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`/api/slideshows/${selectedSlideshowId}`, {
         method: "DELETE",
+        headers,
       });
 
       if (response.ok) {
@@ -351,11 +425,10 @@ export default function ClientDashboard() {
   const handleToggleActive = async (slideshow: SavedSlideshow) => {
     try {
       // Update the database
+      const headers = await getAuthHeaders();
       const response = await fetch(`/api/slideshows/${slideshow.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           isActive: !slideshow.isActive,
         }),
@@ -814,11 +887,10 @@ export default function ClientDashboard() {
       });
 
       // Update the slideshow via API
+      const headers = await getAuthHeaders();
       const response = await fetch(`/api/slideshows/${editingSlideshow.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           name: slideshowName,
           images: mediaItems,
@@ -996,6 +1068,37 @@ export default function ClientDashboard() {
         originalData = {
           facts: data.facts || [],
         };
+      } else if (wizardType === "ai-all-in-one") {
+        // AI All-in-One wizard
+        if (!data.slides || !Array.isArray(data.slides)) {
+          throw new Error("AI All-in-One data is missing or invalid");
+        }
+        mediaItems = (data.slides || []).map((slide: any, index: number) => ({
+          id: slide.id || `ai-all-in-one-${Date.now()}-${index}`,
+          file_path: slide.file_path,
+          name: slide.name || `AI All-in-One ${index + 1}`,
+          type: "image",
+        }));
+        slideshowSettings = {
+          defaultDuration: data.settings?.slideDuration || 5000,
+          duration: data.settings?.slideDuration || 5000,
+          transition: data.settings?.transition || "fade",
+          transitionDuration: data.settings?.transitionDuration || 1000,
+          backgroundMusic: data.settings?.backgroundMusic,
+          musicVolume: data.settings?.musicVolume || 50,
+          musicLoop: data.settings?.musicLoop || true,
+          autoPlay: data.settings?.autoPlay || true,
+          showControls: data.settings?.showControls || true,
+          showProgress: data.settings?.showProgress || true,
+          loopSlideshow: data.settings?.loopSlideshow || true,
+          shuffleSlides: data.settings?.shuffleSlides || false,
+          aspectRatio: data.settings?.aspectRatio || "16:9",
+          quality: data.settings?.quality || "high",
+        };
+        // Save original AI All-in-One data
+        originalData = {
+          aiAllInOne: data.aiAllInOne || [],
+        };
       } else if (wizardType === "menu") {
         // Menu slideshow - use the improved MenuSVGGenerator
         if (!data.slides || !Array.isArray(data.slides)) {
@@ -1161,9 +1264,11 @@ export default function ClientDashboard() {
       const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
 
       try {
+        const headers = await getAuthHeaders();
         const response = await fetch("/api/slideshows", {
           method: "POST",
           headers: {
+            ...headers,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(requestBody),
@@ -1410,7 +1515,7 @@ export default function ClientDashboard() {
             <div className="flex gap-2 lg:gap-3">
               <button
                 onClick={() => setShowSlideshowCreator(true)}
-                className="inline-flex items-center px-4 lg:px-6 py-2 lg:py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 shadow-lg hover:shadow-xl transition-all duration-200"
+                className="inline-flex items-center px-4 lg:px-6 py-2 lg:py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <Plus className="h-4 w-4 lg:h-5 lg:w-5 mr-1 lg:mr-2" />
                 <span className="hidden sm:inline">Create Slideshow</span>
@@ -1570,7 +1675,7 @@ export default function ClientDashboard() {
                   </p>
                   <button
                     onClick={() => setShowEditor(true)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Create Slideshow
@@ -2509,6 +2614,12 @@ export default function ClientDashboard() {
                     onBack={() => setShowSlideshowWizard(false)}
                   />
                 )}
+                {wizardType === "ai-all-in-one" && (
+                  <AiAllInOneWizard
+                    onComplete={handleWizardComplete}
+                    onBack={() => setShowSlideshowWizard(false)}
+                  />
+                )}
                 {wizardType === "menu" && (
                   <MenuSlideshowWizard
                     step={0}
@@ -2613,6 +2724,17 @@ export default function ClientDashboard() {
                       editingSlideshow,
                       "ai-facts"
                     )}
+                  />
+                )}
+                {editWizardType === "ai-all-in-one" && editingSlideshow && (
+                  <AiAllInOneWizard
+                    onComplete={handleEditWizardComplete}
+                    onBack={() => {
+                      setShowEditWizard(false);
+                      setIsEditing(false);
+                      setEditingSlideshow(null);
+                      setEditWizardType("");
+                    }}
                   />
                 )}
                 {editWizardType === "menu" && editingSlideshow && (

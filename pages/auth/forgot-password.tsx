@@ -53,7 +53,11 @@ export default function ForgotPassword() {
             className="text-center"
           >
             <Link href="/" className="inline-block">
-              <h1 className="text-4xl font-bold text-white mb-2">ShivehView</h1>
+              <img
+                src="/Shivehview Transparent Logo.png"
+                alt="ShivehView Logo"
+                style={{ height: 48, margin: "0 auto" }}
+              />
             </Link>
             <h2 className="text-2xl font-semibold text-white mb-2">
               Forgot Password

@@ -9,6 +9,7 @@ import {
   Type,
   Plus,
   X,
+  Brain,
 } from "lucide-react";
 
 interface SlideshowCreatorProps {
@@ -43,6 +44,15 @@ const slideshowTypes = [
     color: "from-amber-500 to-amber-600",
     bgColor: "bg-amber-50",
     borderColor: "border-amber-200",
+  },
+  {
+    id: "ai-all-in-one",
+    title: "AI All-in-One",
+    description: "Generate complete slideshows from a single prompt",
+    icon: Brain,
+    color: "from-pink-500 to-purple-600",
+    bgColor: "bg-pink-50",
+    borderColor: "border-pink-200",
   },
   {
     id: "menu",

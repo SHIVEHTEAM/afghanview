@@ -81,8 +81,14 @@ export default function SignIn() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <Link href="/" className="inline-block">
-              <h1 className="text-4xl font-bold text-white mb-2">ShivehView</h1>
+            <Link
+              href="/"
+              className="inline-block flex items-center justify-center gap-2"
+            >
+              <Eye className="h-12 w-12 text-white" />
+              <span className="text-2xl font-bold text-white tracking-tight">
+                ShivehView
+              </span>
             </Link>
             <h2 className="text-2xl font-semibold text-white mb-2">
               Welcome back
@@ -141,7 +147,7 @@ export default function SignIn() {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="Enter your email"
                   />
                 </div>
@@ -167,7 +173,7 @@ export default function SignIn() {
                     required
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-afghan-green focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
+                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-colors text-gray-900 placeholder-gray-500"
                     placeholder="Enter your password"
                   />
                   <button
@@ -191,7 +197,7 @@ export default function SignIn() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-afghan-green focus:ring-afghan-green border-gray-300 rounded"
+                    className="h-4 w-4 text-purple-600 focus:ring-purple-600 border-gray-300 rounded"
                   />
                   <label
                     htmlFor="remember-me"
@@ -202,7 +208,7 @@ export default function SignIn() {
                 </div>
                 <Link
                   href="/auth/forgot-password"
-                  className="text-sm text-afghan-green hover:text-afghan-green/80 transition-colors"
+                  className="text-sm text-purple-600 hover:text-purple-700 transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -214,7 +220,7 @@ export default function SignIn() {
                 disabled={loading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-afghan-green to-afghan-green/90 hover:from-afghan-green/90 hover:to-afghan-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {loading ? (
                   <div className="flex items-center">
@@ -235,7 +241,7 @@ export default function SignIn() {
                   Don't have an account?{" "}
                   <Link
                     href="/auth/signup"
-                    className="font-medium text-afghan-green hover:text-afghan-green/80 transition-colors"
+                    className="font-medium text-purple-600 hover:text-purple-700 transition-colors"
                   >
                     Sign up here
                   </Link>

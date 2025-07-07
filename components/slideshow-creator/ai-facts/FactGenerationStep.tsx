@@ -76,6 +76,7 @@ export default function FactGenerationStep({
         backgroundColor: data.backgroundColor || "#1f2937",
         fontColor: "#ffffff",
         fontSize: 28,
+        emoji: data.emoji,
       };
       setCurrentFact(newFact);
       setFacts((prev) => [newFact, ...prev]);
@@ -125,6 +126,7 @@ export default function FactGenerationStep({
           backgroundColor: data.backgroundColor || "#1f2937",
           fontColor: "#ffffff",
           fontSize: 28,
+          emoji: data.emoji,
         };
         setCurrentFact(newFact);
         setFacts((prev) => [newFact, ...prev]);

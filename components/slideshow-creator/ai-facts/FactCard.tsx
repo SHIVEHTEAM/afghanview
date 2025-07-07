@@ -115,6 +115,10 @@ export default function FactCard({
         </div>
       </div>
 
+      {fact.emoji && (
+        <div className="text-3xl mb-3 text-center">{fact.emoji}</div>
+      )}
+
       <p
         className={`leading-relaxed mb-3 ${
           isCurrent ? "font-medium text-lg" : "text-sm"

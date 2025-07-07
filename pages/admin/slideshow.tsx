@@ -38,6 +38,7 @@ import { DeleteConfirmationModal } from "../../components/common";
 import { useAuth } from "../../lib/auth";
 import { SlideshowSettings } from "../../components/slideshow";
 import AdminLayout from "./layout";
+import { supabase } from "../../lib/supabase";
 
 interface SlideImage {
   id: string;
@@ -90,17 +91,83 @@ export default function AdminSlideshow() {
     localStorage.setItem("admin-slideshows", JSON.stringify(slideshows));
   };
 
-  const handleSaveSlideshow = (
+  const handleSaveSlideshow = async (
     images: SlideImage[],
     settings: SlideshowSettings
   ) => {
-    // Convert File to URL for the viewer
+    // Handle background music upload if it's a File
+    let backgroundMusicUrl = settings.backgroundMusic;
+
+    if (settings.backgroundMusic instanceof File) {
+      try {
+        // Check for problematic MIME types and provide guidance
+        const problematicTypes = [
+          "audio/mpeg", // MP3
+          "audio/mp3",
+          "audio/x-mpeg",
+          "audio/x-mpeg-3",
+        ];
+
+        if (problematicTypes.includes(settings.backgroundMusic.type)) {
+          alert(
+            "MP3 files are not supported. Please convert your audio to WAV, OGG, or AAC format for better compatibility."
+          );
+          return;
+        }
+
+        // Upload to Supabase Storage with explicit content type
+        const fileName = `audio/${Date.now()}-${settings.backgroundMusic.name}`;
+
+        // Use a more compatible content type if needed
+        let contentType = settings.backgroundMusic.type;
+        if (
+          settings.backgroundMusic.type === "audio/mpeg" ||
+          settings.backgroundMusic.type === "audio/mp3"
+        ) {
+          contentType = "audio/mpeg"; // Try with explicit type
+        }
+
+        const { data, error: uploadError } = await supabase.storage
+          .from("slideshow-media")
+          .upload(fileName, settings.backgroundMusic, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: contentType,
+          });
+
+        if (uploadError) {
+          console.error("Upload error details:", uploadError);
+
+          // Provide specific guidance for MIME type errors
+          if (
+            uploadError.message.includes("mime type") ||
+            uploadError.message.includes("not supported")
+          ) {
+            alert(
+              "This audio format is not supported. Please try converting your audio to WAV, OGG, or AAC format. You can use online converters or audio editing software."
+            );
+          } else {
+            alert("Failed to upload background music. Please try again.");
+          }
+          return;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from("slideshow-media")
+          .getPublicUrl(fileName);
+
+        backgroundMusicUrl = urlData?.publicUrl || "";
+      } catch (error) {
+        console.error("Background music upload error:", error);
+        alert("Failed to upload background music. Please try again.");
+        return;
+      }
+    }
+
     const viewerSettings = {
       ...settings,
-      backgroundMusic:
-        settings.backgroundMusic instanceof File
-          ? URL.createObjectURL(settings.backgroundMusic)
-          : settings.backgroundMusic,
+      backgroundMusic: backgroundMusicUrl,
     };
 
     const newSlideshow: SavedSlideshow = {

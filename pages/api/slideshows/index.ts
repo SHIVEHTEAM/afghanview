@@ -136,21 +136,46 @@ async function getSlideshows(req: any, res: NextApiResponse) {
 
 async function createSlideshow(req: any, res: NextApiResponse) {
   try {
-    const slideData = req.body;
+    const frontendData = req.body;
 
     // Validate required fields
-    if (!slideData.name) {
+    if (!frontendData.name) {
       return res.status(400).json({ error: "Name is required" });
     }
+
+    // Map frontend data to database schema
+    const slideData = {
+      name: frontendData.name,
+      type:
+        frontendData.type === "video"
+          ? "custom"
+          : frontendData.type || "custom",
+      title: frontendData.name, // Use name as title if not provided
+      subtitle: frontendData.subtitle,
+      content: {
+        slides: frontendData.slides || [],
+        settings: frontendData.settings || {},
+        mediaType: frontendData.type === "video" ? "video" : "image",
+        slideshowType: frontendData.type,
+      },
+      styling: frontendData.settings || {},
+      duration: frontendData.settings?.duration || 6000,
+      order_index: frontendData.order_index || 0,
+      is_active: frontendData.is_active !== false, // Default to true
+      is_published: frontendData.is_published || false,
+      background_music_url: frontendData.settings?.backgroundMusic,
+      original_data: frontendData.originalData || null,
+      restaurant_id: frontendData.restaurantId || frontendData.restaurant_id,
+      created_by: req.user?.id,
+      updated_by: req.user?.id,
+    };
 
     // Ensure restaurant owners can only create slides for their restaurant
     if (req.user?.role === "restaurant_owner") {
       slideData.restaurant_id = req.user.restaurant_id;
     }
 
-    // Add user info
-    slideData.created_by = req.user?.id;
-    slideData.updated_by = req.user?.id;
+    console.log("Creating slide with data:", slideData);
 
     const { data, error } = await supabase
       .from("slides")
@@ -174,7 +199,7 @@ async function createSlideshow(req: any, res: NextApiResponse) {
 
 async function updateSlideshow(req: any, res: NextApiResponse) {
   try {
-    const { id, ...updateData } = req.body;
+    const { id, ...frontendData } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Slide ID is required" });
@@ -199,8 +224,33 @@ async function updateSlideshow(req: any, res: NextApiResponse) {
       return res.status(403).json({ error: "Insufficient permissions" });
     }
 
-    updateData.updated_by = req.user?.id;
-    updateData.updated_at = new Date().toISOString();
+    // Map frontend data to database schema
+    const updateData = {
+      name: frontendData.name,
+      title: frontendData.name,
+      subtitle: frontendData.subtitle,
+      type:
+        frontendData.type === "video"
+          ? "custom"
+          : frontendData.type || "custom",
+      content: {
+        slides: frontendData.slides || [],
+        settings: frontendData.settings || {},
+        mediaType: frontendData.type === "video" ? "video" : "image",
+        slideshowType: frontendData.type,
+      },
+      styling: frontendData.settings || {},
+      duration: frontendData.settings?.duration || 6000,
+      order_index: frontendData.order_index || 0,
+      is_active: frontendData.is_active !== false,
+      is_published: frontendData.is_published || false,
+      background_music_url: frontendData.settings?.backgroundMusic,
+      original_data: frontendData.originalData || null,
+      updated_by: req.user?.id,
+      updated_at: new Date().toISOString(),
+    };
+
+    console.log("Updating slide with data:", updateData);
 
     const { data, error } = await supabase
       .from("slides")

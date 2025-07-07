@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { SlideshowSettings } from "./types";
 import { TRANSITIONS, ASPECT_RATIOS, QUALITY_OPTIONS } from "./constants";
+import { supabase } from "../../../lib/supabase";
 
 interface SettingsPanelProps {
   settings: SlideshowSettings;
@@ -68,22 +69,309 @@ export default function SettingsPanel({
   );
   const [customMusicFile, setCustomMusicFile] = useState<File | null>(null);
   const [isPlayingPreview, setIsPlayingPreview] = useState<string | null>(null);
+  const [isUploadingMusic, setIsUploadingMusic] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
 
-  const handleMusicChange = (musicId: string) => {
+  const handleMusicChange = async (musicId: string) => {
     setSelectedMusic(musicId);
     if (musicId === "custom") {
       // Handle custom music upload
       const input = document.createElement("input");
       input.type = "file";
-      input.accept = "audio/*";
-      input.onchange = (e) => {
+      input.accept = "audio/*,.mp3,.mp4,.wav,.ogg,.aac,.webm,.m4a";
+      input.onchange = async (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
-          setCustomMusicFile(file);
-          onSettingsChange({
-            ...settings,
-            backgroundMusic: URL.createObjectURL(file),
+          console.log("Selected file:", {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            lastModified: file.lastModified,
           });
+
+          setIsUploadingMusic(true);
+          setUploadProgress(0);
+          setUploadStatus("Validating file...");
+          setCustomMusicFile(file);
+
+          try {
+            // More flexible file type validation
+            const isAudioFile =
+              file.type.startsWith("audio/") ||
+              file.name
+                .toLowerCase()
+                .match(/\.(mp3|mp4|wav|ogg|aac|webm|m4a)$/);
+
+            if (!isAudioFile) {
+              setUploadStatus("Error: Invalid file type");
+              setTimeout(() => setUploadStatus(""), 3000);
+              alert(
+                "Please select a valid audio file (MP3, MP4, WAV, OGG, AAC, WebM, M4A)"
+              );
+              return;
+            }
+
+            // Validate file size (max 20MB)
+            if (file.size > 20 * 1024 * 1024) {
+              setUploadStatus("Error: File too large");
+              setTimeout(() => setUploadStatus(""), 3000);
+              alert("Audio file size must be less than 20MB");
+              return;
+            }
+
+            // Check for problematic MIME types and provide guidance
+            const problematicTypes = [
+              "audio/mpeg", // MP3
+              "audio/mp3",
+              "audio/x-mpeg",
+              "audio/x-mpeg-3",
+            ];
+
+            if (problematicTypes.includes(file.type)) {
+              setUploadStatus("Error: MP3 not supported");
+              setTimeout(() => setUploadStatus(""), 3000);
+              alert(
+                "MP3 files are not supported. Please convert your audio to WAV, OGG, or AAC format for better compatibility."
+              );
+              return;
+            }
+
+            setUploadProgress(25);
+            setUploadStatus("Preparing upload...");
+
+            // Test Supabase connection first
+            try {
+              const { data: testData, error: testError } =
+                await supabase.storage
+                  .from("slideshow-media")
+                  .list("audio", { limit: 1 });
+
+              if (testError) {
+                console.error("Supabase connection test failed:", testError);
+                setUploadStatus("Error: Cannot connect to storage");
+                setTimeout(() => setUploadStatus(""), 3000);
+                alert(
+                  "Cannot connect to storage server. Please check your internet connection and try again."
+                );
+                return;
+              }
+
+              console.log("Supabase connection test successful");
+            } catch (testError) {
+              console.error("Supabase connection test error:", testError);
+              setUploadStatus("Error: Storage connection failed");
+              setTimeout(() => setUploadStatus(""), 3000);
+              alert("Storage connection failed. Please try again.");
+              return;
+            }
+
+            console.log("Uploading file to Supabase:", {
+              fileName: file.name,
+              fileType: file.type,
+              fileSize: file.size,
+            });
+
+            // Upload to Supabase Storage with explicit content type
+            const fileName = `audio/${Date.now()}-${file.name}`;
+
+            // Use a more compatible content type if needed
+            let contentType = file.type;
+            if (file.type === "audio/mpeg" || file.type === "audio/mp3") {
+              contentType = "audio/mpeg"; // Try with explicit type
+            }
+
+            setUploadProgress(50);
+            setUploadStatus("Uploading to server...");
+
+            console.log("Starting upload with params:", {
+              fileName,
+              contentType,
+              fileSize: file.size,
+            });
+
+            // Add timeout protection for upload
+            const uploadPromise = supabase.storage
+              .from("slideshow-media")
+              .upload(fileName, file, {
+                cacheControl: "3600",
+                upsert: false,
+                contentType: contentType,
+              });
+
+            // Add timeout of 30 seconds
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(
+                () => reject(new Error("Upload timeout - took too long")),
+                30000
+              );
+            });
+
+            const { data, error: uploadError } = (await Promise.race([
+              uploadPromise,
+              timeoutPromise,
+            ])) as any;
+
+            if (uploadError) {
+              console.error("Upload error details:", uploadError);
+
+              // Try fallback upload without content type if first attempt failed
+              if (!uploadError.message.includes("timeout")) {
+                console.log("Trying fallback upload without content type...");
+                setUploadStatus("Retrying upload...");
+
+                try {
+                  const fallbackPromise = supabase.storage
+                    .from("slideshow-media")
+                    .upload(fileName, file, {
+                      cacheControl: "3600",
+                      upsert: false,
+                    });
+
+                  const fallbackTimeoutPromise = new Promise((_, reject) => {
+                    setTimeout(
+                      () => reject(new Error("Fallback upload timeout")),
+                      30000
+                    );
+                  });
+
+                  const { data: fallbackData, error: fallbackError } =
+                    (await Promise.race([
+                      fallbackPromise,
+                      fallbackTimeoutPromise,
+                    ])) as any;
+
+                  if (fallbackError) {
+                    console.error(
+                      "Fallback upload also failed:",
+                      fallbackError
+                    );
+                    setUploadProgress(0);
+
+                    if (
+                      fallbackError.message.includes("mime type") ||
+                      fallbackError.message.includes("not supported")
+                    ) {
+                      setUploadStatus("Error: Format not supported");
+                      setTimeout(() => setUploadStatus(""), 3000);
+                      alert(
+                        "This audio format is not supported. Please try converting your audio to WAV, OGG, or AAC format. You can use online converters or audio editing software."
+                      );
+                    } else {
+                      setUploadStatus(`Error: ${fallbackError.message}`);
+                      setTimeout(() => setUploadStatus(""), 3000);
+                      alert(`Failed to upload audio: ${fallbackError.message}`);
+                    }
+                    return;
+                  }
+
+                  // Fallback upload succeeded
+                  console.log("Fallback upload successful:", fallbackData);
+                  setUploadProgress(75);
+                  setUploadStatus("Getting public URL...");
+
+                  // Get public URL
+                  const { data: urlData } = supabase.storage
+                    .from("slideshow-media")
+                    .getPublicUrl(fileName);
+
+                  let audioUrl = urlData?.publicUrl || "";
+
+                  console.log(
+                    "Fallback upload successful, audio URL:",
+                    audioUrl
+                  );
+
+                  setUploadProgress(100);
+                  setUploadStatus("Upload successful! ✓");
+
+                  // Call the parent handler with the public URL
+                  onSettingsChange({
+                    ...settings,
+                    backgroundMusic: audioUrl,
+                  });
+
+                  // Clear success message after 3 seconds
+                  setTimeout(() => {
+                    setUploadStatus("");
+                    setUploadProgress(0);
+                  }, 3000);
+
+                  return;
+                } catch (fallbackCatchError) {
+                  console.error(
+                    "Fallback upload catch error:",
+                    fallbackCatchError
+                  );
+                }
+              }
+
+              setUploadProgress(0);
+
+              // Provide specific guidance for MIME type errors
+              if (
+                uploadError.message.includes("mime type") ||
+                uploadError.message.includes("not supported")
+              ) {
+                setUploadStatus("Error: Format not supported");
+                setTimeout(() => setUploadStatus(""), 3000);
+                alert(
+                  "This audio format is not supported. Please try converting your audio to WAV, OGG, or AAC format. You can use online converters or audio editing software."
+                );
+              } else if (uploadError.message.includes("timeout")) {
+                setUploadStatus("Error: Upload timeout");
+                setTimeout(() => setUploadStatus(""), 3000);
+                alert(
+                  "Upload took too long. Please try again with a smaller file or check your internet connection."
+                );
+              } else {
+                setUploadStatus(`Error: ${uploadError.message}`);
+                setTimeout(() => setUploadStatus(""), 3000);
+                alert(`Failed to upload audio: ${uploadError.message}`);
+              }
+              return;
+            }
+
+            console.log("Upload completed successfully:", data);
+            setUploadProgress(75);
+            setUploadStatus("Getting public URL...");
+
+            // Get public URL
+            const { data: urlData } = supabase.storage
+              .from("slideshow-media")
+              .getPublicUrl(fileName);
+
+            let audioUrl = urlData?.publicUrl || "";
+
+            console.log("Upload successful, audio URL:", audioUrl);
+
+            setUploadProgress(100);
+            setUploadStatus("Upload successful! ✓");
+
+            // Call the parent handler with the public URL
+            onSettingsChange({
+              ...settings,
+              backgroundMusic: audioUrl,
+            });
+
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+              setUploadStatus("");
+              setUploadProgress(0);
+            }, 3000);
+          } catch (error) {
+            console.error("Music upload error:", error);
+            setUploadProgress(0);
+            setUploadStatus(
+              `Error: ${
+                error instanceof Error ? error.message : "Upload failed"
+              }`
+            );
+            setTimeout(() => setUploadStatus(""), 3000);
+            alert("Failed to upload music file. Please try again.");
+          } finally {
+            setIsUploadingMusic(false);
+          }
         }
       };
       input.click();
@@ -237,6 +525,33 @@ export default function SettingsPanel({
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Upload Progress Indicator */}
+        {isUploadingMusic && (
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-blue-800">
+                {uploadStatus || "Uploading..."}
+              </span>
+              <span className="text-sm text-blue-600">{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-blue-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
+
+        {/* Audio Format Note */}
+        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <strong>Supported audio formats:</strong> WAV, OGG, AAC, WebM, MP4.
+            MP3 files are not supported due to storage limitations. You can
+            convert MP3 files using online converters or audio editing software.
+          </p>
         </div>
       </div>
 

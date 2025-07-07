@@ -259,6 +259,14 @@ export default function VideoSlideshowWizard({
     }
   };
 
+  // Handler for background music upload (receives public URL)
+  const handleBackgroundMusicUpload = (audioUrl: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      backgroundMusic: audioUrl,
+    }));
+  };
+
   // Render current step content
   const renderStepContent = () => {
     switch (currentStep) {
@@ -284,15 +292,7 @@ export default function VideoSlideshowWizard({
               transition: "fade" | "slide" | "zoom" | "flip" | "bounce"
             ) => setSettings({ ...settings, transition })}
             backgroundMusic={null}
-            onBackgroundMusicUpload={(event) => {
-              const file = event.target.files?.[0];
-              if (file) {
-                setSettings({
-                  ...settings,
-                  backgroundMusic: file,
-                });
-              }
-            }}
+            onBackgroundMusicUpload={handleBackgroundMusicUpload}
             onNext={handleNext}
             onBack={handleBack}
             formatDuration={formatDuration}

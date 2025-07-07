@@ -73,7 +73,7 @@ interface SlideImage extends SlideMedia {
 interface SavedSlideshow {
   id: string;
   images: SlideImage[];
-  settings: SlideshowSettings;
+  settings?: SlideshowSettings;
   createdAt: Date;
   name: string;
   isActive: boolean;
@@ -93,6 +93,12 @@ interface SavedSlideshow {
     | "deals"
     | "text";
   originalData?: any;
+  content?: {
+    slides?: any[];
+    settings?: any;
+    mediaType?: string;
+    slideshowType?: string;
+  };
 }
 
 interface TvDevice {
@@ -294,14 +300,16 @@ export default function ClientDashboard() {
       if (isEditing && editingSlideshow) {
         // Update existing slideshow
         const headers = await getAuthHeaders();
+        const payload = {
+          name: editingSlideshow.name,
+          images: media,
+          settings: settings,
+        };
+        if (payload.images) delete payload.images;
         const response = await fetch(`/api/slideshows/${editingSlideshow.id}`, {
           method: "PATCH",
           headers,
-          body: JSON.stringify({
-            name: editingSlideshow.name,
-            images: media,
-            settings: settings,
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
@@ -333,31 +341,19 @@ export default function ClientDashboard() {
       // Create new slideshow
       const slideshowName = `Client Slideshow ${savedSlideshows.length + 1}`;
       const slug = generateSlug(slideshowName);
-
+      const payload = {
+        name: slideshowName,
+        slug,
+        images: media,
+        settings,
+      };
+      if (payload.images) delete payload.images;
       // Save slideshow via API
       const headers = await getAuthHeaders();
       const response = await fetch("/api/slideshows", {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          name: slideshowName,
-          images: media.map((img) => ({
-            id: img.id,
-            file_path: img.file_path || img.url,
-            name: img.name,
-            type: img.type,
-          })),
-          settings: {
-            ...settings,
-            backgroundMusic:
-              settings.backgroundMusic instanceof File
-                ? await fileToBase64(settings.backgroundMusic)
-                : settings.backgroundMusic,
-          },
-          restaurantId: "e46a2c25-fe10-4fd2-a2bd-4c72969a898e", // Real restaurant ID from test data
-          userId: user?.id || "default-user", // Get from auth context
-          slug,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -893,9 +889,8 @@ export default function ClientDashboard() {
         headers,
         body: JSON.stringify({
           name: slideshowName,
-          images: mediaItems,
+          slides: mediaItems,
           settings: slideshowSettings,
-          originalData: originalData,
         }),
       });
 
@@ -1233,7 +1228,7 @@ export default function ClientDashboard() {
 
       const requestBody = {
         name: slideshowName,
-        images: mediaItems.map((img) => ({
+        slides: mediaItems.map((img) => ({
           id: img.id,
           file_path: img.file_path || img.url,
           name: img.name,
@@ -1250,7 +1245,6 @@ export default function ClientDashboard() {
         userId: user?.id || "default-user", // Get from auth context
         slug,
         type: wizardType,
-        originalData: originalData,
       };
 
       console.log(
@@ -1606,11 +1600,14 @@ export default function ClientDashboard() {
                     🎬 Currently Playing: {activeSlideshow.name}
                   </h3>
                   <p className="text-green-100 text-sm lg:text-base">
-                    {activeSlideshow.images.length}{" "}
+                    {activeSlideshow.images?.length ||
+                      activeSlideshow.content?.slides?.length ||
+                      0}{" "}
                     {activeSlideshow.mediaType === "video"
                       ? "videos"
                       : "images"}{" "}
-                    • {activeSlideshow.settings.duration / 1000}s duration
+                    • {(activeSlideshow.settings?.duration ?? 5000) / 1000}s
+                    duration
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 lg:gap-4">
@@ -1693,12 +1690,23 @@ export default function ClientDashboard() {
                     >
                       {/* Image Preview */}
                       <div className="relative aspect-video bg-gray-100 overflow-hidden">
-                        {slideshow.images && slideshow.images.length > 0 ? (
+                        {(slideshow.images && slideshow.images.length > 0) ||
+                        (slideshow.content?.slides &&
+                          slideshow.content.slides.length > 0) ? (
                           <img
                             src={
-                              slideshow.images[0].url ||
-                              slideshow.images[0].file_path ||
-                              slideshow.images[0].base64
+                              (slideshow.images && slideshow.images[0]?.url) ||
+                              (slideshow.images &&
+                                slideshow.images[0]?.file_path) ||
+                              (slideshow.images &&
+                                slideshow.images[0]?.base64) ||
+                              (slideshow.content?.slides &&
+                                slideshow.content.slides[0]?.url) ||
+                              (slideshow.content?.slides &&
+                                slideshow.content.slides[0]?.file_path) ||
+                              (slideshow.content?.slides &&
+                                slideshow.content.slides[0]?.base64) ||
+                              ""
                             }
                             alt={slideshow.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -1764,9 +1772,13 @@ export default function ClientDashboard() {
                         )}
 
                         {/* Media Count Badge */}
-                        {slideshow.images.length > 1 && (
+                        {(slideshow.images?.length ||
+                          slideshow.content?.slides?.length ||
+                          0) > 1 && (
                           <div className="absolute bottom-2 right-2 lg:bottom-3 lg:right-3 bg-black bg-opacity-75 backdrop-blur-sm text-white px-2 lg:px-3 py-1 lg:py-1.5 rounded-full text-xs font-medium shadow-lg">
-                            {slideshow.images.length}{" "}
+                            {slideshow.images?.length ||
+                              slideshow.content?.slides?.length ||
+                              0}{" "}
                             {slideshow.mediaType === "video"
                               ? "videos"
                               : "images"}
@@ -1782,7 +1794,9 @@ export default function ClientDashboard() {
                           </h4>
                           <div className="flex items-center gap-1 lg:gap-2">
                             <span className="text-xs lg:text-sm text-gray-500">
-                              {slideshow.images?.length || 0}{" "}
+                              {slideshow.images?.length ||
+                                slideshow.content?.slides?.length ||
+                                0}{" "}
                               {slideshow.mediaType === "video"
                                 ? "videos"
                                 : "slides"}
@@ -1808,15 +1822,21 @@ export default function ClientDashboard() {
                         <div className="flex items-center justify-between text-xs lg:text-sm text-gray-600 mb-3 lg:mb-4">
                           <span className="flex items-center gap-1">
                             <Eye className="w-3 h-3 lg:w-4 lg:h-4" />
-                            {slideshow.images.length}{" "}
+                            {slideshow.images?.length ||
+                              slideshow.content?.slides?.length ||
+                              0}{" "}
                             {slideshow.mediaType === "video"
                               ? "video"
                               : "image"}
-                            {slideshow.images.length !== 1 ? "s" : ""}
+                            {(slideshow.images?.length ||
+                              slideshow.content?.slides?.length ||
+                              0) !== 1
+                              ? "s"
+                              : ""}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3 lg:w-4 lg:h-4" />
-                            {slideshow.settings.duration / 1000}s
+                            {(slideshow.settings?.duration ?? 5000) / 1000}s
                           </span>
                         </div>
 
@@ -1828,7 +1848,7 @@ export default function ClientDashboard() {
                               <span className="hidden sm:inline">Template</span>
                             </span>
                           )}
-                          {slideshow.settings.transition && (
+                          {slideshow.settings?.transition && (
                             <span className="inline-flex items-center px-1.5 lg:px-2 py-0.5 lg:py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               <Palette className="w-3 h-3 mr-1" />
                               <span className="hidden sm:inline">
@@ -1836,7 +1856,7 @@ export default function ClientDashboard() {
                               </span>
                             </span>
                           )}
-                          {slideshow.settings.backgroundMusic && (
+                          {slideshow.settings?.backgroundMusic && (
                             <span className="inline-flex items-center px-1.5 lg:px-2 py-0.5 lg:py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               <Music className="w-3 h-3 mr-1" />
                               <span className="hidden sm:inline">Music</span>
@@ -2150,7 +2170,10 @@ export default function ClientDashboard() {
                                     Playing: {tv.currentSlideshow.name}
                                   </p>
                                   <p className="text-xs text-green-600">
-                                    {tv.currentSlideshow.images.length}{" "}
+                                    {tv.currentSlideshow.images?.length ||
+                                      tv.currentSlideshow.content?.slides
+                                        ?.length ||
+                                      0}{" "}
                                     {tv.currentSlideshow.mediaType === "video"
                                       ? "videos"
                                       : "images"}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ArrowRight, ArrowLeft, Video, Music } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 
@@ -20,7 +20,7 @@ interface VideoCustomizeStepProps {
     transition: "fade" | "slide" | "zoom" | "flip" | "bounce"
   ) => void;
   backgroundMusic: File | null;
-  onBackgroundMusicUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onBackgroundMusicUpload: (url: string) => void;
   onNext: () => void;
   onBack: () => void;
   formatDuration: (ms: number) => string;
@@ -38,37 +38,119 @@ export default function VideoCustomizeStep({
   onBack,
   formatDuration,
 }: VideoCustomizeStepProps) {
+  const [isUploadingMusic, setIsUploadingMusic] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
+
   const handleBackgroundMusicUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("audio/")) {
-      alert("Please select a valid audio file");
+    console.log("Selected file:", {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: file.lastModified,
+    });
+
+    setIsUploadingMusic(true);
+    setUploadProgress(0);
+    setUploadStatus("Validating file...");
+
+    // More flexible file type validation
+    const isAudioFile =
+      file.type.startsWith("audio/") ||
+      file.name.toLowerCase().match(/\.(mp3|mp4|wav|ogg|aac|webm|m4a)$/);
+
+    if (!isAudioFile) {
+      setUploadStatus("Error: Invalid file type");
+      setTimeout(() => setUploadStatus(""), 3000);
+      alert(
+        "Please select a valid audio file (MP3, MP4, WAV, OGG, AAC, WebM, M4A)"
+      );
       return;
     }
 
     // Validate file size (max 20MB)
     if (file.size > 20 * 1024 * 1024) {
+      setUploadStatus("Error: File too large");
+      setTimeout(() => setUploadStatus(""), 3000);
       alert("Audio file size must be less than 20MB");
       return;
     }
 
-    // Upload to Supabase Storage
+    // Check for problematic MIME types and provide guidance
+    const problematicTypes = [
+      "audio/mpeg", // MP3
+      "audio/mp3",
+      "audio/x-mpeg",
+      "audio/x-mpeg-3",
+    ];
+
+    if (problematicTypes.includes(file.type)) {
+      setUploadStatus("Error: MP3 not supported");
+      setTimeout(() => setUploadStatus(""), 3000);
+      alert(
+        "MP3 files are not supported. Please convert your audio to WAV, OGG, or AAC format for better compatibility."
+      );
+      return;
+    }
+
+    setUploadProgress(25);
+    setUploadStatus("Preparing upload...");
+
+    console.log("Uploading file to Supabase:", {
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+    });
+
+    // Upload to Supabase Storage with explicit content type
     const fileName = `audio/${Date.now()}-${file.name}`;
+
+    // Use a more compatible content type if needed
+    let contentType = file.type;
+    if (file.type === "audio/mpeg" || file.type === "audio/mp3") {
+      contentType = "audio/mpeg"; // Try with explicit type
+    }
+
+    setUploadProgress(50);
+    setUploadStatus("Uploading to server...");
+
     const { data, error: uploadError } = await supabase.storage
       .from("slideshow-media")
       .upload(fileName, file, {
         cacheControl: "3600",
         upsert: false,
+        contentType: contentType,
       });
 
     if (uploadError) {
-      alert(`Failed to upload audio: ${uploadError.message}`);
+      console.error("Upload error details:", uploadError);
+      setUploadProgress(0);
+
+      // Provide specific guidance for MIME type errors
+      if (
+        uploadError.message.includes("mime type") ||
+        uploadError.message.includes("not supported")
+      ) {
+        setUploadStatus("Error: Format not supported");
+        setTimeout(() => setUploadStatus(""), 3000);
+        alert(
+          "This audio format is not supported. Please try converting your audio to WAV, OGG, or AAC format. You can use online converters or audio editing software."
+        );
+      } else {
+        setUploadStatus(`Error: ${uploadError.message}`);
+        setTimeout(() => setUploadStatus(""), 3000);
+        alert(`Failed to upload audio: ${uploadError.message}`);
+      }
       return;
     }
+
+    setUploadProgress(75);
+    setUploadStatus("Getting public URL...");
 
     // Get public URL
     const { data: urlData } = supabase.storage
@@ -76,20 +158,20 @@ export default function VideoCustomizeStep({
       .getPublicUrl(fileName);
 
     let audioUrl = urlData?.publicUrl || "";
-    // Call the parent handler with a File object and the URL
-    onBackgroundMusicUpload({
-      ...event,
-      target: {
-        ...event.target,
-        files: [
-          new File([file], file.name, {
-            type: file.type,
-            lastModified: file.lastModified,
-            audioUrl,
-          }),
-        ],
-      },
-    });
+
+    console.log("Upload successful, audio URL:", audioUrl);
+
+    setUploadProgress(100);
+    setUploadStatus("Upload successful! ✓");
+
+    // Call the parent handler with the public URL
+    onBackgroundMusicUpload(audioUrl);
+
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setUploadStatus("");
+      setUploadProgress(0);
+    }, 3000);
   };
 
   return (
@@ -143,10 +225,10 @@ export default function VideoCustomizeStep({
           </label>
           <input
             type="file"
-            accept="audio/*"
+            id="music-upload"
+            accept="audio/*,.mp3,.mp4,.wav,.ogg,.aac,.webm,.m4a"
             onChange={handleBackgroundMusicUpload}
             className="hidden"
-            id="music-upload"
           />
           <label
             htmlFor="music-upload"
@@ -160,6 +242,32 @@ export default function VideoCustomizeStep({
               Selected: {backgroundMusic.name}
             </p>
           )}
+
+          {/* Upload Progress Indicator */}
+          {isUploadingMusic && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-800">
+                  {uploadStatus || "Uploading..."}
+                </span>
+                <span className="text-sm text-blue-600">{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {/* Audio Format Note */}
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>Supported audio formats:</strong> WAV, OGG, AAC, WebM,
+              MP4. MP3 files are not supported due to storage limitations.
+            </p>
+          </div>
         </div>
 
         {/* Video Preview */}

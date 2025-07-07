@@ -247,6 +247,8 @@ export default function AdminSlides() {
         created_by: user?.id,
         created_at: new Date().toISOString(),
       };
+      // Remove images property if present
+      if (slideshowData.images) delete slideshowData.images;
 
       // Call the slideshow creation API
       const response = await fetch("/api/slideshows", {

@@ -29,7 +29,7 @@ import {
   Unlock,
   Building,
 } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 interface SlideCreatorProps {
   onSave: (slideData: any) => void;

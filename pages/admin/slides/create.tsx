@@ -5,9 +5,9 @@ import { useRouter } from "next/router";
 import AdminLayout from "../layout";
 import { useAuth } from "../../../lib/auth";
 import { supabase } from "../../../lib/supabase";
-import ModernSlideCreator from "../../../components/ModernSlideCreator";
+import { ModernSlideCreator } from "../../../components/editor";
 import { ArrowLeft } from "lucide-react";
-import ProtectedRoute from "../../../components/ProtectedRoute";
+import { ProtectedRoute } from "../../../components/auth";
 
 export default function CreateSlide() {
   const router = useRouter();

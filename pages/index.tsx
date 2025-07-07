@@ -21,6 +21,7 @@ import {
   Quote,
   Menu,
   X,
+  Sparkles,
 } from "lucide-react";
 
 export default function Home() {
@@ -665,13 +666,28 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
             viewport={{ once: true }}
           >
-            <Link
-              href="/auth/signup"
-              className="bg-white text-afghan-green px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 inline-flex items-center shadow-lg"
-            >
-              Start Your Free Trial
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link
+                href="/client"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
+              >
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+              <Link
+                href="/fact-generator-demo"
+                className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
+              >
+                <Sparkles className="mr-2 h-5 w-5" />
+                Try Fact Generator
+              </Link>
+              <Link
+                href="/test-facts"
+                className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
+              >
+                Test API Key
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>

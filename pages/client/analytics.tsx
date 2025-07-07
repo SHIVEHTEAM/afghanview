@@ -15,7 +15,7 @@ import {
   Target,
   Award,
 } from "lucide-react";
-import ProtectedRoute from "../../components/ProtectedRoute";
+import { ProtectedRoute } from "../../components/auth";
 import ClientLayout from "./layout";
 
 interface SlideImage {
@@ -23,6 +23,7 @@ interface SlideImage {
   file: File;
   url: string;
   name: string;
+  mediaType?: "image" | "video";
 }
 
 interface SlideshowSettings {
@@ -46,6 +47,7 @@ interface SavedSlideshow {
   lastPlayed?: Date;
   isFavorite?: boolean;
   tags?: string[];
+  mediaType?: "image" | "video";
 }
 
 export default function AnalyticsPage() {
@@ -319,8 +321,11 @@ export default function AnalyticsPage() {
                             {slideshow.name}
                           </h4>
                           <p className="text-sm text-gray-500">
-                            {slideshow.images.length} images •{" "}
-                            {slideshow.settings.duration / 1000}s duration
+                            {slideshow.images.length}{" "}
+                            {slideshow.mediaType === "video"
+                              ? "videos"
+                              : "images"}{" "}
+                            • {slideshow.settings.duration / 1000}s duration
                           </p>
                         </div>
                         <div className="flex items-center space-x-4">

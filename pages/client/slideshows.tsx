@@ -22,14 +22,20 @@ import {
   Share,
   Copy,
   Star,
+  X,
+  RefreshCw,
 } from "lucide-react";
-import ProtectedRoute from "../../components/ProtectedRoute";
-import ImageSlideshowEditor from "../../components/ImageSlideshowEditor";
-import SimpleImageViewer from "../../components/slideshow/SimpleImageViewer";
-import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
+import { ProtectedRoute } from "../../components/auth";
+import SlideshowCreator from "../../components/slideshow-creator/SlideshowCreator";
+import SlideshowWizard from "../../components/slideshow-creator/SlideshowWizard";
+import ImageSlideshowWizard from "../../components/slideshow-creator/image/ImageSlideshowWizard";
+import VideoSlideshowWizard from "../../components/slideshow-creator/video/VideoSlideshowWizard";
+import { SimpleImageViewer } from "../../components/slideshow";
+import { DeleteConfirmationModal } from "../../components/common";
+import { ImageSlideshowEditor } from "../../components/editor";
 import ClientLayout from "./layout";
 import { useAuth } from "../../lib/auth";
-import { SlideshowSettings } from "../../components/slideshow/types";
+import { SlideshowSettings } from "../../components/slideshow";
 
 interface SlideImage {
   id: string;
@@ -43,24 +49,32 @@ interface SlideImage {
 
 interface SavedSlideshow {
   id: string;
-  images: SlideImage[];
-  settings: SlideshowSettings;
-  createdAt: Date;
   name: string;
-  isActive: boolean;
-  playCount: number;
+  restaurant_id: string;
+  is_template: boolean;
+  created_at: string;
+  updated_at: string;
+  // Additional fields for compatibility
+  images?: SlideImage[];
+  settings?: SlideshowSettings;
+  isActive?: boolean;
+  playCount?: number;
   lastPlayed?: Date;
   isFavorite?: boolean;
   tags?: string[];
+  mediaType?: "image" | "video";
 }
 
 export default function SlideshowsPage() {
   const { user } = useAuth();
   const [savedSlideshows, setSavedSlideshows] = useState<SavedSlideshow[]>([]);
-  const [showEditor, setShowEditor] = useState(false);
+  const [showCreator, setShowCreator] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardType, setWizardType] = useState<string>("");
   const [showViewer, setShowViewer] = useState(false);
   const [currentSlideshow, setCurrentSlideshow] =
     useState<SavedSlideshow | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<
     "all" | "active" | "inactive"
@@ -75,61 +89,153 @@ export default function SlideshowsPage() {
   const [selectedSlideshowId, setSelectedSlideshowId] = useState<string | null>(
     null
   );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load saved slideshows from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("client-slideshows");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSavedSlideshows(
-          parsed.map((item: any) => ({
-            ...item,
-            createdAt: new Date(item.createdAt),
-            lastPlayed: item.lastPlayed ? new Date(item.lastPlayed) : undefined,
-            isFavorite: item.isFavorite || false,
-            tags: item.tags || [],
-          }))
-        );
-      } catch (error) {
-        console.error("Error loading saved slideshows:", error);
+  // Fetch slideshows from API
+  const fetchSlideshows = async () => {
+    if (!user?.restaurant?.id) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `/api/slideshows?restaurantId=${user.restaurant?.id}&userId=${user.id}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch slideshows");
       }
-    }
-  }, []);
 
-  // Save slideshows to localStorage
-  const saveSlideshows = (slideshows: SavedSlideshow[]) => {
-    localStorage.setItem("client-slideshows", JSON.stringify(slideshows));
+      const data = await response.json();
+      console.log("Fetched slideshows:", data);
+
+      // Transform API data to match our interface
+      const transformedSlideshows = data.map((slideshow: any) => ({
+        ...slideshow,
+        isActive: true, // Default to active
+        playCount: 0, // Default play count
+        isFavorite: false, // Default favorite status
+        tags: [], // Default empty tags
+        mediaType: "image", // Default media type
+      }));
+
+      setSavedSlideshows(transformedSlideshows);
+    } catch (err) {
+      console.error("Error fetching slideshows:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch slideshows"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSaveSlideshow = (
-    images: SlideImage[],
-    settings: SlideshowSettings
-  ) => {
-    const viewerSettings = {
-      ...settings,
-      backgroundMusic:
-        settings.backgroundMusic instanceof File
-          ? URL.createObjectURL(settings.backgroundMusic)
-          : settings.backgroundMusic,
-    };
+  // Load slideshows on component mount and when user changes
+  useEffect(() => {
+    fetchSlideshows();
+  }, [user?.restaurant?.id, user?.id]);
 
-    const newSlideshow: SavedSlideshow = {
-      id: Math.random().toString(36).substr(2, 9),
-      images,
-      settings: viewerSettings,
-      createdAt: new Date(),
-      name: `Slideshow ${savedSlideshows.length + 1}`,
-      isActive: true,
-      playCount: 0,
-      isFavorite: false,
-      tags: [],
-    };
+  const handleStartCreation = (type: string) => {
+    setWizardType(type);
+    setShowCreator(false);
+    setShowWizard(true);
+  };
 
-    const updatedSlideshows = [...savedSlideshows, newSlideshow];
-    setSavedSlideshows(updatedSlideshows);
-    saveSlideshows(updatedSlideshows);
-    setShowEditor(false);
+  const handleSaveSlideshow = async (slideshowData: any) => {
+    try {
+      if (showEditor && currentSlideshow) {
+        // Update existing slideshow
+        const { media, settings } = slideshowData;
+
+        const response = await fetch(`/api/slideshows/${currentSlideshow.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: currentSlideshow.name,
+            images: media,
+            settings: settings,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update slideshow");
+        }
+
+        const updatedSlideshow = await response.json();
+        console.log("Updated slideshow:", updatedSlideshow);
+
+        // Refresh the slideshows list
+        await fetchSlideshows();
+        setShowEditor(false);
+        setCurrentSlideshow(null);
+        return;
+      }
+
+      // Create new slideshow
+      const { slides, settings, name, type } = slideshowData;
+
+      // Ensure slides is always an array
+      const slidesArray = Array.isArray(slides) ? slides : [];
+
+      // Extract images from slides for API compatibility
+      const images = slidesArray.flatMap((slide: any) => {
+        if (slide.content?.images) {
+          return slide.content.images;
+        }
+        if (slide.images) {
+          return slide.images;
+        }
+        if (slide.file || slide.url) {
+          return [slide];
+        }
+        return [];
+      });
+
+      // Create slideshow via API
+      const response = await fetch("/api/slideshows", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name:
+            name ||
+            `My ${type.charAt(0).toUpperCase() + type.slice(1)} Slideshow`,
+          images: images,
+          settings: {
+            duration: settings.duration || 6000,
+            transition: settings.transition || "fade",
+            autoPlay: settings.autoPlay !== false,
+            showControls: settings.showControls !== false,
+            backgroundMusic: settings.backgroundMusic,
+          },
+          restaurantId: user?.restaurant?.id,
+          userId: user?.id || "default-user",
+          type: type || "image",
+          slug: `${type}-${Date.now()}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create slideshow");
+      }
+
+      const newSlideshow = await response.json();
+      console.log("Created slideshow:", newSlideshow);
+
+      // Refresh the slideshows list
+      await fetchSlideshows();
+      setShowWizard(false);
+    } catch (err) {
+      console.error("Error creating slideshow:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to create slideshow"
+      );
+    }
   };
 
   const handleDeleteSlideshow = (id: string) => {
@@ -137,44 +243,46 @@ export default function SlideshowsPage() {
     setShowDeleteConfirmation(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedSlideshowId) {
-      const updatedSlideshows = savedSlideshows.filter(
-        (s) => s.id !== selectedSlideshowId
-      );
-      setSavedSlideshows(updatedSlideshows);
-      saveSlideshows(updatedSlideshows);
+  const handleConfirmDelete = async () => {
+    if (!selectedSlideshowId) return;
+
+    try {
+      const response = await fetch(`/api/slideshows/${selectedSlideshowId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete slideshow");
+      }
+
+      // Refresh the slideshows list
+      await fetchSlideshows();
       setSelectedSlideshows(
         selectedSlideshows.filter((s) => s !== selectedSlideshowId)
       );
       setShowDeleteConfirmation(false);
       setSelectedSlideshowId(null);
+    } catch (err) {
+      console.error("Error deleting slideshow:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to delete slideshow"
+      );
     }
   };
 
   const handlePlaySlideshow = (slideshow: SavedSlideshow) => {
-    const updatedSlideshows = savedSlideshows.map((s) =>
-      s.id === slideshow.id
-        ? {
-            ...s,
-            playCount: s.playCount + 1,
-            lastPlayed: new Date(),
-          }
-        : s
-    );
-    setSavedSlideshows(updatedSlideshows);
-    saveSlideshows(updatedSlideshows);
-
+    // For now, just open the viewer
+    // TODO: Implement play tracking
     setCurrentSlideshow(slideshow);
     setShowViewer(true);
   };
 
-  const handleToggleActive = (slideshow: SavedSlideshow) => {
+  const handleToggleActive = async (slideshow: SavedSlideshow) => {
+    // TODO: Implement API call to toggle active status
     const updatedSlideshows = savedSlideshows.map((s) =>
       s.id === slideshow.id ? { ...s, isActive: !s.isActive } : s
     );
     setSavedSlideshows(updatedSlideshows);
-    saveSlideshows(updatedSlideshows);
   };
 
   const handleToggleFavorite = (slideshow: SavedSlideshow) => {
@@ -182,56 +290,81 @@ export default function SlideshowsPage() {
       s.id === slideshow.id ? { ...s, isFavorite: !s.isFavorite } : s
     );
     setSavedSlideshows(updatedSlideshows);
-    saveSlideshows(updatedSlideshows);
   };
 
-  const handleDuplicateSlideshow = (slideshow: SavedSlideshow) => {
-    const duplicatedSlideshow: SavedSlideshow = {
-      ...slideshow,
-      id: Math.random().toString(36).substr(2, 9),
-      name: `${slideshow.name} (Copy)`,
-      createdAt: new Date(),
-      playCount: 0,
-      lastPlayed: undefined,
-      isFavorite: false,
-    };
+  const handleDuplicateSlideshow = async (slideshow: SavedSlideshow) => {
+    try {
+      // Create a copy via API
+      const response = await fetch("/api/slideshows", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: `${slideshow.name} (Copy)`,
+          restaurant_id: user?.restaurant?.id,
+          // TODO: Copy slides and settings from original
+        }),
+      });
 
-    const updatedSlideshows = [...savedSlideshows, duplicatedSlideshow];
-    setSavedSlideshows(updatedSlideshows);
-    saveSlideshows(updatedSlideshows);
-  };
+      if (!response.ok) {
+        throw new Error("Failed to duplicate slideshow");
+      }
 
-  const handleBulkAction = (action: "activate" | "deactivate" | "delete") => {
-    if (selectedSlideshows.length === 0) return;
-
-    if (
-      action === "delete" &&
-      !confirm(
-        `Are you sure you want to delete ${selectedSlideshows.length} slideshow(s)?`
-      )
-    ) {
-      return;
+      await fetchSlideshows();
+    } catch (err) {
+      console.error("Error duplicating slideshow:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to duplicate slideshow"
+      );
     }
+  };
 
-    const updatedSlideshows = savedSlideshows
-      .map((s) => {
-        if (selectedSlideshows.includes(s.id)) {
-          switch (action) {
-            case "activate":
-              return { ...s, isActive: true };
-            case "deactivate":
-              return { ...s, isActive: false };
-            case "delete":
-              return null;
+  const handleEditSlideshow = (slideshow: SavedSlideshow) => {
+    setCurrentSlideshow(slideshow);
+    setShowEditor(true);
+  };
+
+  const handleBulkAction = async (action: string) => {
+    if (!selectedSlideshows.length) return;
+
+    try {
+      switch (action) {
+        case "activate":
+          // Update local state for now - TODO: Implement API call
+          const activatedSlideshows = savedSlideshows.map((s) =>
+            selectedSlideshows.includes(s.id) ? { ...s, isActive: true } : s
+          );
+          setSavedSlideshows(activatedSlideshows);
+          break;
+        case "deactivate":
+          // Update local state for now - TODO: Implement API call
+          const deactivatedSlideshows = savedSlideshows.map((s) =>
+            selectedSlideshows.includes(s.id) ? { ...s, isActive: false } : s
+          );
+          setSavedSlideshows(deactivatedSlideshows);
+          break;
+        case "delete":
+          // Delete selected slideshows
+          for (const id of selectedSlideshows) {
+            const response = await fetch(`/api/slideshows/${id}`, {
+              method: "DELETE",
+            });
+            if (!response.ok) {
+              throw new Error(`Failed to delete slideshow ${id}`);
+            }
           }
-        }
-        return s;
-      })
-      .filter(Boolean) as SavedSlideshow[];
+          await fetchSlideshows();
+          break;
+      }
 
-    setSavedSlideshows(updatedSlideshows);
-    saveSlideshows(updatedSlideshows);
-    setSelectedSlideshows([]);
+      setSelectedSlideshows([]);
+    } catch (err) {
+      console.error("Error performing bulk action:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to perform bulk action"
+      );
+    }
   };
 
   const formatDate = (date: Date | undefined | null) => {
@@ -265,10 +398,11 @@ export default function SlideshowsPage() {
           comparison = a.name.localeCompare(b.name);
           break;
         case "created":
-          comparison = a.createdAt.getTime() - b.createdAt.getTime();
+          comparison =
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           break;
         case "plays":
-          comparison = a.playCount - b.playCount;
+          comparison = (a.playCount ?? 0) - (b.playCount ?? 0);
           break;
         case "lastPlayed":
           comparison =
@@ -283,7 +417,7 @@ export default function SlideshowsPage() {
     active: savedSlideshows.filter((s) => s.isActive).length,
     inactive: savedSlideshows.filter((s) => !s.isActive).length,
     favorites: savedSlideshows.filter((s) => s.isFavorite).length,
-    totalPlays: savedSlideshows.reduce((acc, s) => acc + s.playCount, 0),
+    totalPlays: savedSlideshows.reduce((acc, s) => acc + (s.playCount ?? 0), 0),
   };
 
   return (
@@ -308,7 +442,7 @@ export default function SlideshowsPage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowEditor(true)}
+              onClick={() => setShowCreator(true)}
               className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium flex items-center gap-2 shadow-lg hover:shadow-xl"
             >
               <Plus className="w-5 h-5" />
@@ -524,7 +658,7 @@ export default function SlideshowsPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowEditor(true)}
+                onClick={() => setShowCreator(true)}
                 className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
               >
                 Create Slideshow
@@ -549,10 +683,10 @@ export default function SlideshowsPage() {
               >
                 {/* Preview Image */}
                 <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
-                  {slideshow.images.length > 0 ? (
+                  {(slideshow.images?.length ?? 0) > 0 ? (
                     <img
-                      src={slideshow.images[0].url}
-                      alt={slideshow.images[0].name}
+                      src={slideshow.images?.[0]?.url}
+                      alt={slideshow.images?.[0]?.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
@@ -583,10 +717,10 @@ export default function SlideshowsPage() {
                     </div>
                   )}
 
-                  {/* Image Count Badge */}
-                  {slideshow.images.length > 1 && (
+                  {/* Media Count Badge */}
+                  {(slideshow.images?.length ?? 0) > 1 && (
                     <div className="absolute bottom-3 right-3 bg-black bg-opacity-75 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
-                      {slideshow.images.length} images
+                      {slideshow.images?.length ?? 0} images
                     </div>
                   )}
 
@@ -640,12 +774,24 @@ export default function SlideshowsPage() {
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
                     <span className="flex items-center gap-1">
                       <Eye className="w-4 h-4" />
-                      {slideshow.images.length} image
-                      {slideshow.images.length !== 1 ? "s" : ""}
+                      {(slideshow.images ?? []).map((img, idx) => (
+                        <span
+                          key={`${img.id}-${idx}`}
+                          className="flex items-center gap-1"
+                        >
+                          {img.name}
+                          {idx < (slideshow.images?.length ?? 0) - 1 && (
+                            <span>, </span>
+                          )}
+                        </span>
+                      ))}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      {slideshow.settings.duration / 1000}s
+                      {slideshow.settings?.duration
+                        ? slideshow.settings.duration / 1000
+                        : "N/A"}
+                      s
                     </span>
                   </div>
 
@@ -653,9 +799,9 @@ export default function SlideshowsPage() {
                   <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
                     <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
                       <Palette className="w-3 h-3" />
-                      {slideshow.settings.transition}
+                      {slideshow.settings?.transition || "N/A"}
                     </span>
-                    {slideshow.settings.backgroundMusic && (
+                    {slideshow.settings?.backgroundMusic && (
                       <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
                         <Music className="w-3 h-3" />
                         Music
@@ -677,10 +823,7 @@ export default function SlideshowsPage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        setCurrentSlideshow(slideshow);
-                        setShowEditor(true);
-                      }}
+                      onClick={() => handleEditSlideshow(slideshow)}
                       className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
                       title="Edit"
                     >
@@ -726,12 +869,14 @@ export default function SlideshowsPage() {
                   {/* Play Stats */}
                   <div className="text-xs text-gray-400">
                     <div className="flex justify-between">
-                      <span>Played {slideshow.playCount} times</span>
+                      <span>Played {slideshow.playCount ?? 0} times</span>
                       {slideshow.lastPlayed && (
                         <span>Last: {formatDate(slideshow.lastPlayed)}</span>
                       )}
                     </div>
-                    <div>Created {formatDate(slideshow.createdAt)}</div>
+                    <div>
+                      Created {formatDate(new Date(slideshow.created_at))}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -739,27 +884,93 @@ export default function SlideshowsPage() {
           </div>
         )}
 
-        {/* Editor Modal */}
-        {showEditor && (
-          <ImageSlideshowEditor
-            restaurantId={"mock-restaurant-id"}
-            userId={user?.id || "mock-user-id"}
-            onSave={handleSaveSlideshow}
-            onCancel={() => setShowEditor(false)}
+        {/* Creator Modal */}
+        {showCreator && (
+          <SlideshowCreator
+            onClose={() => setShowCreator(false)}
+            onStartCreation={handleStartCreation}
           />
+        )}
+
+        {/* Wizard Modal */}
+        {showWizard && wizardType === "image" && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+              <div className="flex justify-end p-4">
+                <button
+                  onClick={() => setShowWizard(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+                <ImageSlideshowWizard
+                  step={0}
+                  formData={{}}
+                  updateFormData={() => {}}
+                  onComplete={(data) => {
+                    handleSaveSlideshow(data);
+                    setShowWizard(false);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showWizard && wizardType === "video" && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+              <div className="flex justify-end p-4">
+                <button
+                  onClick={() => setShowWizard(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+                <VideoSlideshowWizard
+                  step={0}
+                  formData={{}}
+                  updateFormData={() => {}}
+                  onComplete={(data) => {
+                    handleSaveSlideshow(data);
+                    setShowWizard(false);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Viewer Modal */}
         {showViewer && currentSlideshow && (
           <SimpleImageViewer
-            images={currentSlideshow.images}
+            images={(currentSlideshow.images || []) as any}
             settings={{
-              duration: currentSlideshow.settings.defaultDuration || 5000,
-              transition: currentSlideshow.settings.transition as any,
-              autoPlay: currentSlideshow.settings.autoPlay || true,
-              showControls: currentSlideshow.settings.showControls || true,
+              duration: currentSlideshow.settings?.duration || 5000,
+              transition: currentSlideshow.settings?.transition as any,
+              autoPlay: currentSlideshow.settings?.autoPlay || true,
+              showControls: currentSlideshow.settings?.showControls || true,
             }}
             onClose={() => setShowViewer(false)}
+          />
+        )}
+
+        {/* Editor Modal */}
+        {showEditor && currentSlideshow && (
+          <ImageSlideshowEditor
+            onSave={handleSaveSlideshow}
+            onCancel={() => {
+              setShowEditor(false);
+              setCurrentSlideshow(null);
+            }}
+            restaurantId={currentSlideshow.restaurant_id}
+            userId={user?.id || "default-user"}
+            initialMedia={(currentSlideshow.images || []) as any}
+            initialSettings={currentSlideshow.settings}
           />
         )}
 

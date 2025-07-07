@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Slide } from "../lib/supabase";
+import { Slide } from "../../lib/supabase";
 
 interface SlideshowProps {
   slides: Slide[];

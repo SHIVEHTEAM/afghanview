@@ -22,11 +22,13 @@ import {
   Trash2,
   ExternalLink,
   RefreshCw,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import AdminLayout from "./layout";
 import { db, Restaurant, Slide } from "@/lib/supabase";
 import { useAuth } from "../../lib/auth";
-import ProtectedRoute from "../../components/ProtectedRoute";
+import { ProtectedRoute } from "../../components/auth";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -41,6 +43,8 @@ export default function AdminDashboard() {
     activeSlides: 0,
     lockedSlides: 0,
   });
+  const [totalSlides, setTotalSlides] = useState(0);
+  const [recentSlides, setRecentSlides] = useState<Slide[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -188,6 +192,10 @@ export default function AdminDashboard() {
     },
   ];
 
+  const handleViewAnalytics = () => {
+    window.open("/admin/analytics", "_blank");
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -228,6 +236,7 @@ export default function AdminDashboard() {
                 />
                 {refreshing ? "Refreshing..." : "Refresh"}
               </button>
+
               <Link
                 href="/admin/restaurants/new"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark"
@@ -279,7 +288,9 @@ export default function AdminDashboard() {
           <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">Restaurants</h2>
+                <h2 className="text-lg font-medium text-gray-900">
+                  Restaurants
+                </h2>
                 <Link
                   href="/admin/restaurants"
                   className="text-afghan-green hover:text-afghan-green-dark text-sm font-medium"
@@ -347,7 +358,10 @@ export default function AdminDashboard() {
                                   : "bg-green-500"
                               }`}
                               style={{
-                                width: `${Math.min(slideUsage.percentage, 100)}%`,
+                                width: `${Math.min(
+                                  slideUsage.percentage,
+                                  100
+                                )}%`,
                               }}
                             />
                           </div>

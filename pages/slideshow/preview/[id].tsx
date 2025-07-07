@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import SimpleImageViewer from "../../../components/slideshow/SimpleImageViewer";
+import { SimpleImageViewer } from "../../../components/slideshow";
 
 interface Slide {
   id: string;

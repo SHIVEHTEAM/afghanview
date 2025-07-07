@@ -5,7 +5,7 @@ import Link from "next/link";
 import AdminLayout from "../layout";
 import { useAuth } from "../../../lib/auth";
 import { supabase } from "../../../lib/supabase";
-import ProtectedRoute from "../../../components/ProtectedRoute";
+import { ProtectedRoute } from "../../../components/auth";
 import {
   Plus,
   Search,
@@ -32,7 +32,16 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  X,
 } from "lucide-react";
+import SlideshowCreator from "../../../components/slideshow-creator/SlideshowCreator";
+import SlideshowWizard from "../../../components/slideshow-creator/SlideshowWizard";
+import ImageSlideshowWizard from "../../../components/slideshow-creator/image/ImageSlideshowWizard";
+import VideoSlideshowWizard from "../../../components/slideshow-creator/video/VideoSlideshowWizard";
+import AiFactsSlideshowWizard from "../../../components/slideshow-creator/ai-facts/AiFactsSlideshowWizard";
+import MenuSlideshowWizard from "../../../components/slideshow-creator/menu/MenuSlideshowWizard";
+import DealsSlideshowWizard from "../../../components/slideshow-creator/deals/DealsSlideshowWizard";
+import TextSlideshowWizard from "../../../components/slideshow-creator/text/TextSlideshowWizard";
 
 interface Slide {
   id: string;
@@ -72,6 +81,11 @@ export default function AdminSlides() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedSlides, setSelectedSlides] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState("");
+  const [showSlideshowCreator, setShowSlideshowCreator] = useState(false);
+  const [wizardType, setWizardType] = useState<string | null>(null);
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardFormData, setWizardFormData] = useState<any>({});
+  const [isAdmin, setIsAdmin] = useState(true);
 
   useEffect(() => {
     fetchSlides();
@@ -199,6 +213,261 @@ export default function AdminSlides() {
     }
   };
 
+  // Handler for starting the wizard
+  const handleStartCreation = (type: string) => {
+    setWizardType(type);
+    setShowSlideshowCreator(false);
+    setShowWizard(true);
+    setWizardFormData({});
+  };
+
+  // Update form data handler
+  const handleUpdateFormData = (data: any) => {
+    setWizardFormData({ ...wizardFormData, ...data });
+  };
+
+  // Handler for wizard completion
+  const handleWizardComplete = async (data: any) => {
+    try {
+      console.log("Admin creating slideshow with data:", data);
+
+      // Extract admin settings
+      const adminSettings = data.adminSettings || {};
+
+      // Prepare the slideshow data with admin settings
+      const slideshowData = {
+        ...data,
+        // Admin-specific fields
+        is_locked: adminSettings.isLocked || false,
+        is_template: adminSettings.isTemplate || false,
+        assign_to_all: adminSettings.assignToAll || false,
+        selected_restaurants: adminSettings.selectedRestaurants || [],
+        allow_client_edit: adminSettings.allowClientEdit !== false, // Default to true
+        require_approval: adminSettings.requireApproval || false,
+        created_by: user?.id,
+        created_at: new Date().toISOString(),
+      };
+
+      // Call the slideshow creation API
+      const response = await fetch("/api/slideshows", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(slideshowData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(
+          `Failed to create slideshow: ${response.status} ${response.statusText} - ${errorData}`
+        );
+      }
+
+      const result = await response.json();
+      console.log("Slideshow created successfully:", result);
+
+      // Show success message
+      alert("Slideshow created successfully!");
+
+      setShowWizard(false);
+      // Refresh slides list
+      fetchSlides();
+    } catch (error) {
+      console.error("Error creating slideshow:", error);
+      alert(
+        `Error creating slideshow: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  };
+
+  // Get the appropriate wizard component based on type
+  const getWizardComponent = (type: string) => {
+    switch (type) {
+      case "image":
+        return (
+          <ImageSlideshowWizard
+            formData={wizardFormData}
+            updateFormData={handleUpdateFormData}
+            onComplete={handleWizardComplete}
+          />
+        );
+      case "video":
+        return (
+          <VideoSlideshowWizard
+            formData={wizardFormData}
+            updateFormData={handleUpdateFormData}
+            onComplete={handleWizardComplete}
+          />
+        );
+      case "ai-facts":
+        return (
+          <AiFactsSlideshowWizard
+            formData={wizardFormData}
+            updateFormData={handleUpdateFormData}
+            onComplete={handleWizardComplete}
+          />
+        );
+      case "menu":
+        return (
+          <MenuSlideshowWizard
+            formData={wizardFormData}
+            updateFormData={handleUpdateFormData}
+            onComplete={handleWizardComplete}
+          />
+        );
+      case "deals":
+        return (
+          <DealsSlideshowWizard
+            formData={wizardFormData}
+            updateFormData={handleUpdateFormData}
+            onComplete={handleWizardComplete}
+          />
+        );
+      case "text":
+        return (
+          <TextSlideshowWizard
+            formData={wizardFormData}
+            updateFormData={handleUpdateFormData}
+            onComplete={handleWizardComplete}
+          />
+        );
+      default:
+        return (
+          <ImageSlideshowWizard
+            formData={wizardFormData}
+            updateFormData={handleUpdateFormData}
+            onComplete={handleWizardComplete}
+          />
+        );
+    }
+  };
+
+  // Get steps for the wizard
+  const getWizardSteps = (type: string) => {
+    switch (type) {
+      case "image":
+        return [
+          {
+            id: "upload",
+            title: "Upload Images",
+            description: "Select and upload your images",
+          },
+          {
+            id: "arrange",
+            title: "Arrange Images",
+            description: "Organize your slides",
+          },
+          {
+            id: "settings",
+            title: "Settings",
+            description: "Configure slideshow settings",
+          },
+        ];
+      case "video":
+        return [
+          {
+            id: "upload",
+            title: "Upload Videos",
+            description: "Select and upload your videos",
+          },
+          {
+            id: "customize",
+            title: "Customize",
+            description: "Adjust video settings",
+          },
+          {
+            id: "preview",
+            title: "Preview",
+            description: "Preview your slideshow",
+          },
+        ];
+      case "ai-facts":
+        return [
+          {
+            id: "prompt",
+            title: "AI Prompt",
+            description: "Configure AI generation settings",
+          },
+          {
+            id: "generate",
+            title: "Generate Facts",
+            description: "Generate Afghan cultural facts",
+          },
+          {
+            id: "settings",
+            title: "Settings",
+            description: "Configure slideshow settings",
+          },
+        ];
+      case "menu":
+        return [
+          {
+            id: "items",
+            title: "Menu Items",
+            description: "Add your menu items",
+          },
+          {
+            id: "layout",
+            title: "Layout",
+            description: "Choose layout and styling",
+          },
+          {
+            id: "preview",
+            title: "Preview",
+            description: "Preview your menu slideshow",
+          },
+        ];
+      case "deals":
+        return [
+          {
+            id: "deals",
+            title: "Special Deals",
+            description: "Add your deals and offers",
+          },
+          {
+            id: "styling",
+            title: "Styling",
+            description: "Customize appearance",
+          },
+          {
+            id: "preview",
+            title: "Preview",
+            description: "Preview your deals slideshow",
+          },
+        ];
+      case "text":
+        return [
+          {
+            id: "content",
+            title: "Text Content",
+            description: "Add your text content",
+          },
+          {
+            id: "styling",
+            title: "Styling",
+            description: "Customize text appearance",
+          },
+          {
+            id: "preview",
+            title: "Preview",
+            description: "Preview your text slideshow",
+          },
+        ];
+      default:
+        return [
+          { id: "upload", title: "Upload", description: "Upload your media" },
+          {
+            id: "settings",
+            title: "Settings",
+            description: "Configure settings",
+          },
+        ];
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -249,13 +518,13 @@ export default function AdminSlides() {
               >
                 Test Slides
               </button>
-              <Link
-                href="/admin/slides/create"
+              <button
+                onClick={() => setShowSlideshowCreator(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Slide
-              </Link>
+                Create Slideshow
+              </button>
               <Link
                 href="/admin/slides/templates"
                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
@@ -631,19 +900,98 @@ export default function AdminSlides() {
                   selectedType === "all" &&
                   selectedStatus === "all" && (
                     <div className="mt-6">
-                      <Link
-                        href="/admin/slides/create"
+                      <button
+                        onClick={() => setShowSlideshowCreator(true)}
                         className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
                       >
                         <Plus className="h-4 w-4 mr-2" />
-                        Create Slide
-                      </Link>
+                        Create Slideshow
+                      </button>
                     </div>
                   )}
               </div>
             )}
           </div>
         </div>
+        {showSlideshowCreator && (
+          <SlideshowCreator
+            onClose={() => setShowSlideshowCreator(false)}
+            onStartCreation={handleStartCreation}
+          />
+        )}
+        {showWizard && wizardType && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+              <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold capitalize">
+                      {wizardType.replace("-", " ")} Slideshow
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowWizard(false)}
+                    className="text-white/80 hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col">
+                {wizardType === "image" && (
+                  <ImageSlideshowWizard
+                    step={0}
+                    formData={wizardFormData}
+                    updateFormData={handleUpdateFormData}
+                    onComplete={handleWizardComplete}
+                  />
+                )}
+                {wizardType === "video" && (
+                  <VideoSlideshowWizard
+                    step={0}
+                    formData={wizardFormData}
+                    updateFormData={handleUpdateFormData}
+                    onComplete={handleWizardComplete}
+                  />
+                )}
+                {wizardType === "ai-facts" && (
+                  <AiFactsSlideshowWizard
+                    step={0}
+                    formData={wizardFormData}
+                    updateFormData={handleUpdateFormData}
+                    onComplete={handleWizardComplete}
+                    onBack={() => setShowWizard(false)}
+                  />
+                )}
+                {wizardType === "menu" && (
+                  <MenuSlideshowWizard
+                    step={0}
+                    formData={wizardFormData}
+                    updateFormData={handleUpdateFormData}
+                    onComplete={handleWizardComplete}
+                  />
+                )}
+                {wizardType === "deals" && (
+                  <DealsSlideshowWizard
+                    step={0}
+                    formData={wizardFormData}
+                    updateFormData={handleUpdateFormData}
+                    onComplete={handleWizardComplete}
+                  />
+                )}
+                {wizardType === "text" && (
+                  <TextSlideshowWizard
+                    step={0}
+                    formData={wizardFormData}
+                    updateFormData={handleUpdateFormData}
+                    onComplete={handleWizardComplete}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </AdminLayout>
     </ProtectedRoute>
   );

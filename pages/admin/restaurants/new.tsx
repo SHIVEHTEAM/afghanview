@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import AdminLayout from "../layout";
 import { useAuth } from "../../../lib/auth";
 import { supabase } from "../../../lib/supabase";
-import ProtectedRoute from "../../../components/ProtectedRoute";
+import ProtectedRoute from "../../../components/auth/ProtectedRoute";
 import {
   ArrowLeft,
   Save,

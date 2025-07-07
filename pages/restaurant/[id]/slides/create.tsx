@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useAuth } from "../../../../lib/auth";
 import { supabase } from "../../../../lib/supabase";
-import ModernSlideCreator from "../../../../components/ModernSlideCreator";
+import { ModernSlideCreator } from "../../../../components/editor";
 import { ArrowLeft } from "lucide-react";
 
 interface Restaurant {
@@ -144,7 +144,6 @@ export default function RestaurantCreateSlide() {
       </Head>
 
       <ModernSlideCreator
-        restaurantId={restaurant.id}
         onSave={handleSave}
         onCancel={handleCancel}
         isAdmin={false}

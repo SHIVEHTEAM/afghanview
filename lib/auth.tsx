@@ -18,6 +18,7 @@ interface User {
   roles: string[];
   phone?: string;
   created_at: string;
+  email_verified?: boolean;
   restaurant?: {
     id: string;
     name: string;
@@ -35,9 +36,16 @@ interface AuthContextType {
     email: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
-  signUp: (userData: any) => Promise<{ success: boolean; error?: string }>;
+  signUp: (
+    userData: any
+  ) => Promise<{
+    success: boolean;
+    error?: string;
+    requiresEmailVerification?: boolean;
+  }>;
   signOut: () => void;
   checkAuth: () => Promise<void>;
+  resendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -130,16 +138,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      // Check for session cookie
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-      } else {
+      if (error || !session?.user) {
         setUser(null);
+        return;
+      }
+
+      // Fetch profile data
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          first_name: "",
+          last_name: "",
+          roles: [],
+          phone: "",
+          created_at: session.user.created_at,
+          email_verified: session.user.email_confirmed_at ? true : false,
+          restaurant: null,
+        });
+      } else {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          roles: profile.roles || [],
+          phone: profile.phone || "",
+          created_at: session.user.created_at,
+          email_verified: session.user.email_confirmed_at ? true : false,
+          restaurant: profile.restaurant || null,
+        });
       }
     } catch (error) {
       console.error("Auth check error:", error);
@@ -151,69 +190,143 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUser(data.user);
-
-        // Redirect based on user roles
-        setTimeout(() => {
-          if (data.user?.roles?.includes("admin")) {
-            router.push("/admin");
-          } else if (data.user?.roles?.includes("restaurant_owner")) {
-            router.push("/client");
-          } else {
-            router.push("/");
-          }
-        }, 1000);
-
-        return { success: true };
-      } else {
-        return { success: false, error: data.error };
+      if (error || !data.user) {
+        return {
+          success: false,
+          error: error?.message || "Invalid credentials",
+        };
       }
+      // Fetch profile data
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+      if (profileError || !profile) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email!,
+          first_name: "",
+          last_name: "",
+          roles: [],
+          phone: "",
+          created_at: data.user.created_at,
+          restaurant: null,
+        });
+      } else {
+        setUser({
+          id: data.user.id,
+          email: data.user.email!,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          roles: profile.roles || [],
+          phone: profile.phone || "",
+          created_at: data.user.created_at,
+          restaurant: profile.restaurant || null,
+        });
+      }
+      return { success: true };
     } catch (error) {
       console.error("Sign in error:", error);
-      return { success: false, error: "Something went wrong" };
+      return {
+        success: false,
+        error: (error as any).message || "Something went wrong",
+      };
     }
   };
 
   const signUp = async (userData: any) => {
     try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const {
+        email,
+        password,
+        firstName,
+        lastName,
+        phone,
+        restaurantName,
+        restaurantAddress,
+      } = userData;
+
+      // Check if email confirmation is required
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            phone,
+            restaurant_name: restaurantName,
+            restaurant_address: restaurantAddress,
+          },
         },
-        credentials: "include",
-        body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setUser(data.user);
-
-        // Redirect to client dashboard (restaurant owners only)
-        setTimeout(() => {
-          router.push("/client");
-        }, 2000);
-
-        return { success: true };
-      } else {
-        return { success: false, error: data.error };
+      if (error) {
+        return { success: false, error: error.message };
       }
+
+      if (data.user && !data.user.email_confirmed_at) {
+        // Email verification required
+        return {
+          success: true,
+          requiresEmailVerification: true,
+          error:
+            "Please check your email to verify your account before signing in.",
+        };
+      }
+
+      // Email already confirmed (or confirmation not required)
+      if (data.user) {
+        // Insert profile data
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: data.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+          roles: ["restaurant_owner"],
+          restaurant: {
+            id: "", // fallback id for linter
+            name: restaurantName,
+            address: restaurantAddress,
+            contact_info: { phone, email },
+          },
+        });
+
+        if (profileError) {
+          return { success: false, error: profileError.message };
+        }
+
+        // Set user state
+        setUser({
+          id: data.user.id,
+          email: data.user.email!,
+          first_name: firstName,
+          last_name: lastName,
+          roles: ["restaurant_owner"],
+          phone: phone || "",
+          created_at: data.user.created_at,
+          email_verified: data.user.email_confirmed_at ? true : false,
+          restaurant: {
+            id: "", // fallback id for linter
+            name: restaurantName,
+            address: restaurantAddress,
+            contact_info: { phone, email },
+          },
+        });
+      }
+
+      return { success: true };
     } catch (error) {
       console.error("Sign up error:", error);
-      return { success: false, error: "Something went wrong" };
+      return {
+        success: false,
+        error: (error as any).message || "Something went wrong",
+      };
     }
   };
 
@@ -231,6 +344,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resendVerificationEmail = async () => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: user?.email || "",
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Resend verification error:", error);
+      return {
+        success: false,
+        error: (error as any).message || "Something went wrong",
+      };
+    }
+  };
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -242,6 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp,
     signOut,
     checkAuth,
+    resendVerificationEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

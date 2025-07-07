@@ -4,7 +4,7 @@ import Head from "next/head";
 import AdminLayout from "../layout";
 import { useAuth } from "../../../lib/auth";
 import { supabase } from "../../../lib/supabase";
-import ProtectedRoute from "../../../components/ProtectedRoute";
+import ProtectedRoute from "../../../components/auth/ProtectedRoute";
 import {
   TrendingUp,
   TrendingDown,
@@ -118,7 +118,7 @@ export default function AdminAnalytics() {
           .reduce((sum, item) => sum + item.amount, 0) || 0;
 
       // Get top restaurants
-      const restaurantViews = {};
+      const restaurantViews: { [key: string]: number } = {};
       viewsResult.data?.forEach((view) => {
         if (restaurantViews[view.session_id]) {
           restaurantViews[view.session_id]++;

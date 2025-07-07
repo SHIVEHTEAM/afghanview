@@ -32,7 +32,7 @@ import {
   Plus,
   ExternalLink,
 } from "lucide-react";
-import ProtectedRoute from "../../../components/ProtectedRoute";
+import { ProtectedRoute } from "../../../components/auth";
 
 interface Slide {
   id: string;

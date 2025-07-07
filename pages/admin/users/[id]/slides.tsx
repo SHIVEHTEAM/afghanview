@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -29,7 +30,7 @@ import {
   FileText,
   User,
 } from "lucide-react";
-import ProtectedRoute from "../../../../components/ProtectedRoute";
+import { ProtectedRoute } from "../../../../components/auth";
 import AdminLayout from "../../layout";
 import { useAuth } from "../../../../lib/auth";
 import SimpleImageViewer from "../../../../components/slideshow/SimpleImageViewer";

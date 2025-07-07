@@ -30,8 +30,7 @@ import {
   Zap,
   Sparkles,
 } from "lucide-react";
-import { SlideMedia, SlideshowSettings } from "./slideshow/types";
-import SimpleImageViewer from "./slideshow/SimpleImageViewer";
+import { SlideMedia, SlideshowSettings, SimpleImageViewer } from "../slideshow";
 
 interface ImageSlideshowEditorProps {
   onSave: (media: SlideMedia[], settings: SlideshowSettings) => void;
@@ -50,6 +49,13 @@ export default function ImageSlideshowEditor({
   initialMedia = [],
   initialSettings,
 }: ImageSlideshowEditorProps) {
+  console.log("ImageSlideshowEditor received:", {
+    initialMedia,
+    initialSettings,
+    restaurantId,
+    userId,
+  });
+
   const [media, setMedia] = useState<SlideMedia[]>(initialMedia);
   const [settings, setSettings] = useState<SlideshowSettings>(
     initialSettings || {
@@ -68,6 +74,24 @@ export default function ImageSlideshowEditor({
       quality: "high",
     }
   );
+
+  // Update media and settings when initialMedia/initialSettings change
+  useEffect(() => {
+    console.log(
+      "🔄 ImageSlideshowEditor: Updating media and settings from props"
+    );
+    console.log("🔄 New initialMedia:", initialMedia);
+    console.log("🔄 New initialSettings:", initialSettings);
+
+    if (initialMedia && initialMedia.length > 0) {
+      setMedia(initialMedia);
+      setSelectedMedia(initialMedia[0]);
+    }
+
+    if (initialSettings) {
+      setSettings(initialSettings);
+    }
+  }, [initialMedia, initialSettings]);
   const [selectedMedia, setSelectedMedia] = useState<SlideMedia | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);

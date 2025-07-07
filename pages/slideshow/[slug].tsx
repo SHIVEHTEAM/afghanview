@@ -12,7 +12,7 @@ import {
   ArrowLeft,
   Home,
 } from "lucide-react";
-import SimpleImageViewer from "../../components/slideshow/SimpleImageViewer";
+import { SimpleImageViewer } from "../../components/slideshow";
 
 interface SlideImage {
   id: string;

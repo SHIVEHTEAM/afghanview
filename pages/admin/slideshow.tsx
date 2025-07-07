@@ -31,12 +31,12 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import ProtectedRoute from "../../components/ProtectedRoute";
-import ImageSlideshowEditor from "../../components/ImageSlideshowEditor";
-import SimpleImageViewer from "../../components/slideshow/SimpleImageViewer";
-import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
+import { ProtectedRoute } from "../../components/auth";
+import { ImageSlideshowEditor } from "../../components/editor";
+import { SimpleImageViewer } from "../../components/slideshow";
+import { DeleteConfirmationModal } from "../../components/common";
 import { useAuth } from "../../lib/auth";
-import { SlideshowSettings } from "../../components/slideshow/types";
+import { SlideshowSettings } from "../../components/slideshow";
 import AdminLayout from "./layout";
 
 interface SlideImage {
@@ -55,6 +55,7 @@ interface SavedSlideshow {
   isActive: boolean;
   playCount: number;
   lastPlayed?: Date;
+  mediaType?: "image" | "video";
 }
 
 export default function AdminSlideshow() {
@@ -309,10 +310,13 @@ export default function AdminSlideshow() {
                           </div>
                         </div>
 
-                        {/* Image Count Badge */}
+                        {/* Media Count Badge */}
                         {slideshow.images.length > 1 && (
                           <div className="absolute top-3 right-3 bg-black bg-opacity-75 text-white px-2 py-1 rounded-full text-xs">
-                            {slideshow.images.length} images
+                            {slideshow.images.length}{" "}
+                            {slideshow.mediaType === "video"
+                              ? "videos"
+                              : "images"}
                           </div>
                         )}
                       </div>
@@ -324,7 +328,10 @@ export default function AdminSlideshow() {
                         </h3>
                         <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
                           <span>
-                            {slideshow.images.length} image
+                            {slideshow.images.length}{" "}
+                            {slideshow.mediaType === "video"
+                              ? "video"
+                              : "image"}
                             {slideshow.images.length !== 1 ? "s" : ""}
                           </span>
                           <span>

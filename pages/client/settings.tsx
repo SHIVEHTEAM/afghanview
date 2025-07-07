@@ -19,7 +19,7 @@ import {
   MapPin,
   Building,
 } from "lucide-react";
-import ProtectedRoute from "../../components/ProtectedRoute";
+import { ProtectedRoute } from "../../components/auth";
 import ClientLayout from "./layout";
 
 export default function SettingsPage() {

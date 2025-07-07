@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -18,7 +18,7 @@ import {
 
 export default function SignIn() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -51,6 +51,17 @@ export default function SignIn() {
       [e.target.name]: e.target.value,
     });
   };
+
+  // Redirect when user is authenticated
+  useEffect(() => {
+    if (user) {
+      if (user.roles?.includes("admin")) {
+        router.push("/admin");
+      } else {
+        router.push("/client");
+      }
+    }
+  }, [user, router]);
 
   return (
     <>

@@ -3,8 +3,8 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Fullscreen, Minimize2 } from "lucide-react";
-import Slideshow from "@/components/Slideshow";
-import RestaurantInfo from "@/components/RestaurantInfo";
+import { Slideshow } from "@/components/slideshow";
+import { RestaurantInfo } from "@/components/restaurant";
 import { Slide } from "../../lib/supabase";
 
 interface Restaurant {

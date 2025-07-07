@@ -5,7 +5,7 @@ import Link from "next/link";
 import AdminLayout from "../layout";
 import { useAuth } from "../../../lib/auth";
 import { supabase } from "../../../lib/supabase";
-import ProtectedRoute from "../../../components/ProtectedRoute";
+import { ProtectedRoute } from "../../../components/auth";
 import {
   Plus,
   Search,

@@ -20,7 +20,7 @@ import {
 
 export default function SignUp() {
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, resendVerificationEmail } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -36,6 +36,9 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [requiresEmailVerification, setRequiresEmailVerification] =
+    useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,9 +68,36 @@ export default function SignUp() {
     const result = await signUp(signUpData);
 
     if (result.success) {
-      setSuccess("Account created successfully! Redirecting...");
+      if (result.requiresEmailVerification) {
+        setRequiresEmailVerification(true);
+        setVerificationEmail(formData.email);
+        setSuccess(
+          "Account created successfully! Please check your email to verify your account."
+        );
+      } else {
+        setSuccess("Account created successfully! Redirecting...");
+        // Redirect to client dashboard (restaurant owners only)
+        setTimeout(() => {
+          router.push("/client");
+        }, 2000);
+      }
     } else {
       setError(result.error || "Failed to create account");
+    }
+
+    setLoading(false);
+  };
+
+  const handleResendVerification = async () => {
+    setLoading(true);
+    setError("");
+
+    const result = await resendVerificationEmail();
+
+    if (result.success) {
+      setSuccess("Verification email sent! Please check your inbox.");
+    } else {
+      setError(result.error || "Failed to send verification email");
     }
 
     setLoading(false);
@@ -81,6 +111,120 @@ export default function SignUp() {
       [e.target.name]: e.target.value,
     });
   };
+
+  // If email verification is required, show verification message
+  if (requiresEmailVerification) {
+    return (
+      <>
+        <Head>
+          <title>Verify Email - ShivehView</title>
+          <meta
+            name="description"
+            content="Verify your email address to complete registration"
+          />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
+
+        <div className="min-h-screen bg-gradient-to-br from-afghan-green via-afghan-red to-afghan-gold flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md w-full space-y-8">
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center"
+            >
+              <Link href="/" className="inline-block">
+                <h1 className="text-4xl font-bold text-white mb-2">
+                  ShivehView
+                </h1>
+              </Link>
+              <h2 className="text-2xl font-semibold text-white mb-2">
+                Verify Your Email
+              </h2>
+              <p className="text-white/80">
+                We've sent a verification link to your email
+              </p>
+            </motion.div>
+
+            {/* Verification Message */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-white rounded-2xl shadow-xl p-8"
+            >
+              <div className="text-center space-y-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <Mail className="w-8 h-8 text-green-600" />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Check Your Email
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    We've sent a verification link to:
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 bg-gray-50 p-3 rounded-lg">
+                    {verificationEmail}
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Click the link in your email to verify your account and
+                    start using ShivehView.
+                  </p>
+
+                  <div className="flex flex-col space-y-3">
+                    <button
+                      onClick={handleResendVerification}
+                      disabled={loading}
+                      className="w-full bg-afghan-green text-white py-3 px-4 rounded-lg hover:bg-afghan-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? "Sending..." : "Resend Verification Email"}
+                    </button>
+
+                    <Link
+                      href="/auth/signin"
+                      className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors text-center"
+                    >
+                      Back to Sign In
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Error/Success Messages */}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center p-4 bg-red-50 border border-red-200 rounded-lg"
+                  >
+                    <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
+                    <span className="text-red-700 text-sm">{error}</span>
+                  </motion.div>
+                )}
+
+                {success && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg"
+                  >
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span className="text-green-700 text-sm">{success}</span>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

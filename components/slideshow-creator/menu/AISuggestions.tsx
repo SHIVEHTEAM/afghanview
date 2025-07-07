@@ -225,7 +225,7 @@ export default function AISuggestions({
                         <span className="text-sm text-gray-500">
                           {item.category}
                         </span>
-                        <span className="font-bold text-green-600">
+                        <span className="font-bold text-purple-600">
                           ${item.price}
                         </span>
                         {item.isPopular && (

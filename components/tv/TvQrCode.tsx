@@ -94,7 +94,7 @@ export default function TvQrCode({
             title="Copy URL"
           >
             {copied ? (
-              <span className="text-green-600 text-sm font-medium">
+              <span className="text-purple-600 text-sm font-medium">
                 Copied!
               </span>
             ) : (

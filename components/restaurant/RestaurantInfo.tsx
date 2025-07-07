@@ -30,7 +30,7 @@ const RestaurantInfo: React.FC = () => {
             Authentic Afghan Cuisine
           </motion.p>
           <motion.div
-            className="w-16 h-1 bg-gradient-to-r from-afghan-green to-afghan-red mx-auto mt-3 rounded-full"
+            className="w-16 h-1 bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mt-3 rounded-full"
             initial={{ width: 0 }}
             animate={{ width: "4rem" }}
             transition={{ delay: 1.4, duration: 0.5 }}
@@ -69,7 +69,7 @@ const RestaurantInfo: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 2.0 }}
           >
-            <div className="w-8 h-8 bg-afghan-gold rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
               <Globe className="w-4 h-4 text-white" />
             </div>
             <span className="text-sm">www.afghanpalace.com</span>

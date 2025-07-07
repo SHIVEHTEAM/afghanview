@@ -55,7 +55,7 @@ export default function DeleteConfirmationModal({
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
                   <span className="text-xl">{getIcon()}</span>
                 </div>
                 <div>
@@ -76,7 +76,7 @@ export default function DeleteConfirmationModal({
             {/* Content */}
             <div className="p-6">
               <div className="flex items-start gap-3 mb-6">
-                <AlertTriangle className="w-6 h-6 text-red-500 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-6 h-6 text-pink-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-gray-700 mb-2">{message}</p>
                   {itemName && (
@@ -99,7 +99,7 @@ export default function DeleteConfirmationModal({
                 </button>
                 <button
                   onClick={handleConfirm}
-                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-pink-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete

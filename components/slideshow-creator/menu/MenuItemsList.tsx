@@ -48,7 +48,7 @@ export default function MenuItemsList({
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 font-medium flex items-center gap-2"
+            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-emerald-500 text-white rounded-lg hover:from-purple-600 hover:to-emerald-600 font-medium flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Add Item
@@ -120,12 +120,12 @@ export default function MenuItemsList({
                     </span>
                   )}
                   {/* {item.spicy && (
-                    <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">
+                    <span className="px-2 py-1 bg-pink-100 text-red-800 text-xs rounded-full font-medium">
                       🌶️ Spicy
                     </span>
                   )}
                   {item.vegetarian && (
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                    <span className="px-2 py-1 bg-purple-100 text-green-800 text-xs rounded-full font-medium">
                       🥬 Vegetarian
                     </span>
                   )} */}
@@ -152,7 +152,7 @@ export default function MenuItemsList({
                 </button>
                 <button
                   onClick={() => onRemoveItem(item.id)}
-                  className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-pink-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                   title="Remove item"
                 >
                   <Trash2 className="w-4 h-4" />

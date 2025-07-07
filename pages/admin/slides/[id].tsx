@@ -282,7 +282,7 @@ export default function SlideDetail() {
       case "custom":
         return "bg-purple-100 text-purple-800";
       case "menu":
-        return "bg-green-100 text-green-800";
+        return "bg-purple-100 text-green-800";
       case "promo":
         return "bg-yellow-100 text-yellow-800";
       case "quote":
@@ -296,7 +296,7 @@ export default function SlideDetail() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-afghan-green"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
       </AdminLayout>
     );
@@ -307,7 +307,7 @@ export default function SlideDetail() {
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <AlertTriangle className="h-12 w-12 text-pink-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Slide Not Found
             </h2>
@@ -361,7 +361,7 @@ export default function SlideDetail() {
                 onClick={handleToggleLock}
                 className={`inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   slide.is_locked
-                    ? "bg-red-100 text-red-800 hover:bg-red-200"
+                    ? "bg-pink-100 text-red-800 hover:bg-red-200"
                     : "bg-green-100 text-green-800 hover:bg-green-200"
                 }`}
               >

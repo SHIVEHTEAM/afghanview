@@ -103,7 +103,7 @@ export default function PreviewPanel({
           <button
             onClick={onStartPreview}
             disabled={media.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
           >
             <Play className="w-4 h-4" />
             Start Preview
@@ -197,7 +197,7 @@ export default function PreviewPanel({
             {isPlaying && (
               <div className="mt-4 bg-gray-800 rounded-full h-2">
                 <div
-                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                  className="bg-purple-500 h-2 rounded-full transition-all duration-300"
                   style={{
                     width: `${((currentSlide + 1) / media.length) * 100}%`,
                   }}

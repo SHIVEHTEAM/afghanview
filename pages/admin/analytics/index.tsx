@@ -212,7 +212,7 @@ export default function AdminAnalytics() {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "restaurant_added":
-        return <Building className="h-4 w-4 text-green-500" />;
+        return <Building className="h-4 w-4 text-purple-500" />;
       case "slide_created":
         return <ImageIcon className="h-4 w-4 text-blue-500" />;
       case "subscription_upgraded":
@@ -226,7 +226,7 @@ export default function AdminAnalytics() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-afghan-green"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
       </AdminLayout>
     );
@@ -290,7 +290,7 @@ export default function AdminAnalytics() {
                   <p className="text-2xl font-bold text-gray-900">
                     {analytics.totalRestaurants}
                   </p>
-                  <p className="text-sm text-green-600 flex items-center">
+                  <p className="text-sm text-purple-600 flex items-center">
                     <TrendingUp className="h-4 w-4 mr-1" />
                     {analytics.activeRestaurants} active
                   </p>
@@ -305,7 +305,7 @@ export default function AdminAnalytics() {
               className="bg-white p-6 rounded-lg shadow"
             >
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 bg-purple-100 rounded-lg">
                   <ImageIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="ml-4">
@@ -369,7 +369,7 @@ export default function AdminAnalytics() {
                     className={`text-sm flex items-center ${
                       analytics.revenueGrowth >= 0
                         ? "text-green-600"
-                        : "text-red-600"
+                        : "text-pink-600"
                     }`}
                   >
                     {analytics.revenueGrowth >= 0 ? (

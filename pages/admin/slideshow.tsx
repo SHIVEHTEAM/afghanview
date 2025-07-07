@@ -228,7 +228,7 @@ export default function AdminSlideshow() {
                     </p>
                   </div>
                   <div className="bg-white p-6 rounded-xl shadow-sm border text-center">
-                    <Music className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                    <Music className="w-12 h-12 text-purple-600 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Add Music</h3>
                     <p className="text-gray-600">
                       Upload background music to enhance your presentation
@@ -303,7 +303,7 @@ export default function AdminSlideshow() {
                                 setCurrentSlideshow(slideshow);
                                 setShowDeleteConfirmation(true);
                               }}
-                              className="p-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                              className="p-3 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors"
                             >
                               <Trash2 className="w-5 h-5" />
                             </button>

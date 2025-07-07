@@ -104,9 +104,9 @@ export default function MenuItemForm({
   };
 
   const dietaryOptions = [
-    { key: "Vegetarian", label: "🥬 Vegetarian", color: "text-green-500" },
-    { key: "Vegan", label: "🌱 Vegan", color: "text-green-600" },
-    { key: "Spicy", label: "🌶️ Spicy", color: "text-red-500" },
+    { key: "Vegetarian", label: "🥬 Vegetarian", color: "text-purple-500" },
+    { key: "Vegan", label: "🌱 Vegan", color: "text-purple-600" },
+    { key: "Spicy", label: "🌶️ Spicy", color: "text-pink-500" },
     { key: "Gluten-Free", label: "🌾 Gluten-Free", color: "text-yellow-600" },
     { key: "Halal", label: "☪️ Halal", color: "text-blue-500" },
     { key: "Kosher", label: "✡️ Kosher", color: "text-purple-500" },
@@ -256,7 +256,7 @@ export default function MenuItemForm({
                 <button
                   type="button"
                   onClick={removeImage}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-pink-600"
                 >
                   ×
                 </button>

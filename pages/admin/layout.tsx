@@ -210,7 +210,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         href={child.href}
                         className={`block px-2 py-1 text-sm rounded-md ${
                           router.pathname === child.href
-                            ? "text-afghan-green font-medium"
+                            ? "text-purple-600 font-medium"
                             : "text-gray-500 hover:text-gray-700"
                         }`}
                       >
@@ -339,7 +339,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <button className="relative p-2 text-gray-400 hover:text-gray-500">
               <Bell className="h-6 w-6" />
               {notifications.filter((n) => !n.read).length > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-pink-500 text-xs text-white flex items-center justify-center">
                   {notifications.filter((n) => !n.read).length}
                 </span>
               )}

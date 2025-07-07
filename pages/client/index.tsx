@@ -1446,9 +1446,9 @@ export default function ClientDashboard() {
   const getTvStatusColor = (status: string) => {
     switch (status) {
       case "online":
-        return "text-green-600 bg-green-100";
+        return "text-purple-600 bg-purple-100";
       case "offline":
-        return "text-red-600 bg-red-100";
+        return "text-pink-600 bg-pink-100";
       case "connecting":
         return "text-yellow-600 bg-yellow-100";
       default:
@@ -1598,7 +1598,7 @@ export default function ClientDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl lg:rounded-2xl p-4 lg:p-6 text-white"
+              className="bg-gradient-to-r from-purple-500 to-emerald-600 rounded-xl lg:rounded-2xl p-4 lg:p-6 text-white"
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
@@ -1858,7 +1858,7 @@ export default function ClientDashboard() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => handlePlaySlideshow(slideshow)}
-                            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-2 lg:px-4 py-2 lg:py-2.5 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium flex items-center justify-center gap-1 lg:gap-2 shadow-sm hover:shadow-md text-xs lg:text-sm"
+                            className="flex-1 bg-gradient-to-r from-purple-600 to-emerald-600 text-white px-2 lg:px-4 py-2 lg:py-2.5 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium flex items-center justify-center gap-1 lg:gap-2 shadow-sm hover:shadow-md text-xs lg:text-sm"
                           >
                             <Play className="w-3 h-3 lg:w-4 lg:h-4" />
                             <span className="hidden sm:inline">Play</span>
@@ -1869,8 +1869,8 @@ export default function ClientDashboard() {
                             onClick={() => handleToggleActive(slideshow)}
                             className={`px-2 lg:px-4 py-2 lg:py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
                               slideshow.isActive
-                                ? "bg-red-500 text-white hover:bg-red-600"
-                                : "bg-green-500 text-white hover:bg-green-600"
+                                ? "bg-pink-500 text-white hover:bg-pink-700"
+                                : "bg-green-500 text-white hover:bg-purple-700"
                             }`}
                             title={
                               slideshow.isActive ? "Deactivate" : "Activate"
@@ -1997,7 +1997,7 @@ export default function ClientDashboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.2 }}
-                    className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl lg:rounded-2xl p-4 lg:p-6 text-white"
+                    className="bg-gradient-to-r from-green-500 to-pink-600 rounded-xl lg:rounded-2xl p-4 lg:p-6 text-white"
                   >
                     <div className="flex items-center justify-between">
                       <div>

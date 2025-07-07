@@ -151,7 +151,7 @@ export default function PromptSelector({
           placeholder="Write your own prompt..."
         />
         <button
-          className="bg-green-600 text-white px-4 py-2 rounded"
+          className="bg-purple-600 text-white px-4 py-2 rounded"
           onClick={handleCustomPrompt}
           disabled={!customPrompt.trim()}
         >

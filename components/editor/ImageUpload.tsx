@@ -192,7 +192,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               ? "border-blue-300 bg-blue-50"
               : previewUrl
               ? "border-green-300 bg-green-50"
-              : "border-gray-300 hover:border-afghan-green hover:bg-gray-50"
+              : "border-gray-300 hover:border-purple-600 hover:bg-gray-50"
           }
         `}
       >
@@ -227,12 +227,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   e.stopPropagation();
                   handleRemoveImage();
                 }}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                className="absolute -top-2 -right-2 bg-pink-500 text-white rounded-full p-1 hover:bg-pink-600"
               >
                 <X className="w-3 h-3" />
               </button>
             </div>
-            <p className="text-sm text-green-600">
+            <p className="text-sm text-purple-600">
               Image uploaded successfully
             </p>
           </div>
@@ -260,7 +260,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               {error.includes("Storage bucket") && (
                 <div className="mt-2 text-xs text-red-600">
                   <p>To fix this, run:</p>
-                  <code className="bg-red-100 px-2 py-1 rounded">
+                  <code className="bg-pink-100 px-2 py-1 rounded">
                     node scripts/setup-storage.js
                   </code>
                 </div>

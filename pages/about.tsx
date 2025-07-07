@@ -46,7 +46,7 @@ export default function About() {
       title: "Cultural Preservation",
       description:
         "We believe in preserving and celebrating Afghanistan's rich cultural heritage through modern technology.",
-      color: "from-red-500 to-red-600",
+      color: "from-pink-500 to-pink-600",
     },
     {
       icon: <Globe className="w-8 h-8" />,
@@ -60,7 +60,7 @@ export default function About() {
       title: "Community First",
       description:
         "Supporting Afghan restaurant owners and helping them succeed in the competitive food industry.",
-      color: "from-green-500 to-green-600",
+      color: "from-purple-500 to-purple-600",
     },
     {
       icon: <Sparkles className="w-8 h-8" />,
@@ -125,7 +125,7 @@ export default function About() {
               <div className="flex items-center space-x-4">
                 <Link
                   href="/"
-                  className="text-gray-700 hover:text-afghan-green px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Home
                 </Link>
@@ -153,7 +153,7 @@ export default function About() {
         </nav>
 
         {/* Hero Section */}
-        <section className="pt-20 pb-16 bg-gradient-to-br from-afghan-green via-afghan-red to-afghan-gold relative overflow-hidden">
+        <section className="pt-20 pb-16 bg-gradient-to-br from-afghan-green via-pink-600 to-yellow-400 relative overflow-hidden">
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
@@ -242,7 +242,7 @@ export default function About() {
                 viewport={{ once: true }}
                 className="relative"
               >
-                <div className="bg-gradient-to-br from-afghan-green to-green-600 rounded-2xl p-8 text-white">
+                <div className="bg-gradient-to-br from-afghan-green to-pink-600 rounded-2xl p-8 text-white">
                   <div className="text-center">
                     <Brain className="w-16 h-16 mx-auto mb-6 text-white" />
                     <h3 className="text-2xl font-bold mb-4">

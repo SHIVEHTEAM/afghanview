@@ -42,13 +42,13 @@ function ToastItem({ toast, onRemove }: ToastProps) {
   const getIcon = () => {
     switch (toast.type) {
       case "success":
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-purple-500" />;
       case "warning":
         return <AlertCircle className="w-5 h-5 text-amber-500" />;
       case "info":
         return <Info className="w-5 h-5 text-blue-500" />;
       default:
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="w-5 h-5 text-pink-500" />;
     }
   };
 

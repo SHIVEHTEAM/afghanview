@@ -396,7 +396,7 @@ export default function ModernSlideCreator({
         className="bg-white rounded-xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-afghan-green to-afghan-green-dark text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-afghan-green-dark text-white">
           <div className="flex items-center space-x-4">
             <button
               onClick={onCancel}
@@ -613,7 +613,7 @@ export default function ModernSlideCreator({
               {uploadError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center">
-                    <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                    <AlertCircle className="h-4 w-4 text-pink-500 mr-2" />
                     <span className="text-sm text-red-700">{uploadError}</span>
                   </div>
                 </div>

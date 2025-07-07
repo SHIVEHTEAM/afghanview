@@ -273,7 +273,7 @@ export default function DealsSlideshowWizard({
                 </div>
                 <button
                   onClick={addDeal}
-                  className="mt-3 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  className="mt-3 px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600"
                 >
                   <Plus className="w-4 h-4 inline mr-2" />
                   Add Deal
@@ -298,7 +298,7 @@ export default function DealsSlideshowWizard({
                         <span className="line-through text-gray-400">
                           ${deal.originalPrice}
                         </span>
-                        <span className="text-green-600 font-medium ml-2">
+                        <span className="text-purple-600 font-medium ml-2">
                           ${deal.dealPrice}
                         </span>
                       </div>

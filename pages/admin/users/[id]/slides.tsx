@@ -257,7 +257,7 @@ export default function AdminUserSlides() {
       case "video":
         return "bg-purple-100 text-purple-800";
       case "menu":
-        return "bg-green-100 text-green-800";
+        return "bg-purple-100 text-green-800";
       case "promo":
         return "bg-yellow-100 text-yellow-800";
       default:
@@ -270,7 +270,7 @@ export default function AdminUserSlides() {
       <ProtectedRoute requiredRole="admin">
         <AdminLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-afghan-green"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
           </div>
         </AdminLayout>
       </ProtectedRoute>

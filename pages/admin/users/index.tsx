@@ -194,7 +194,7 @@ export default function AdminUsers() {
 
   const getUserRoleIcon = (roles: any[]) => {
     if (roles.some((role) => role.name === "admin"))
-      return <Shield className="h-4 w-4 text-red-500" />;
+      return <Shield className="h-4 w-4 text-pink-500" />;
     if (roles.some((role) => role.name === "owner"))
       return <Crown className="h-4 w-4 text-yellow-500" />;
     if (roles.some((role) => role.name === "manager"))
@@ -204,7 +204,7 @@ export default function AdminUsers() {
 
   const getUserRoleColor = (roles: any[]) => {
     if (roles.some((role) => role.name === "admin"))
-      return "bg-red-100 text-red-800";
+      return "bg-pink-100 text-red-800";
     if (roles.some((role) => role.name === "owner"))
       return "bg-yellow-100 text-yellow-800";
     if (roles.some((role) => role.name === "manager"))
@@ -223,7 +223,7 @@ export default function AdminUsers() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-afghan-green"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
       </AdminLayout>
     );
@@ -295,8 +295,8 @@ export default function AdminUsers() {
               className="bg-white p-6 rounded-lg shadow"
             >
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <UserCheck className="h-6 w-6 text-green-600" />
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <UserCheck className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">
@@ -619,7 +619,7 @@ export default function AdminUsers() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         {userData.is_active ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-purple-500" />
                         ) : (
                           <XCircle className="h-4 w-4 text-red-500" />
                         )}

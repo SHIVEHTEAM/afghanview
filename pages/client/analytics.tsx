@@ -138,7 +138,7 @@ export default function AnalyticsPage() {
       change: "+1",
       changeType: "positive",
       icon: Activity,
-      color: "text-green-600",
+      color: "text-purple-600",
     },
     {
       name: "Total Images",
@@ -217,15 +217,15 @@ export default function AnalyticsPage() {
                   </p>
                   <div className="flex items-center mt-2">
                     {item.changeType === "positive" ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                      <TrendingUp className="w-4 h-4 text-purple-500 mr-1" />
                     ) : (
-                      <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                      <TrendingDown className="w-4 h-4 text-pink-500 mr-1" />
                     )}
                     <span
                       className={`text-sm font-medium ${
                         item.changeType === "positive"
                           ? "text-green-600"
-                          : "text-red-600"
+                          : "text-pink-600"
                       }`}
                     >
                       {item.change}
@@ -378,7 +378,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-6">
+          <div className="bg-gradient-to-r from-green-500 to-pink-600 text-white rounded-lg p-6">
             <div className="flex items-center">
               <Users className="h-8 w-8" />
               <div className="ml-4">

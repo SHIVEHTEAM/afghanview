@@ -13,7 +13,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ slides, currentSlide }) => {
 
   if (!slide) {
     return (
-      <div className="w-full h-screen bg-gradient-to-br from-afghan-green to-afghan-red flex items-center justify-center">
+      <div className="w-full h-screen bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
         <div className="text-center text-white">
           <h1 className="text-4xl font-bold mb-4">No Slides Available</h1>
           <p className="text-xl">Please add some slides to your slideshow</p>

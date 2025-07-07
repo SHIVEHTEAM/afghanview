@@ -205,7 +205,7 @@ export default function AdminSlides() {
       case "video":
         return "bg-purple-100 text-purple-800";
       case "menu":
-        return "bg-green-100 text-green-800";
+        return "bg-purple-100 text-green-800";
       case "promo":
         return "bg-yellow-100 text-yellow-800";
       default:
@@ -472,7 +472,7 @@ export default function AdminSlides() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-afghan-green"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
       </AdminLayout>
     );
@@ -565,7 +565,7 @@ export default function AdminSlides() {
             >
               <div className="flex items-center">
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  <CheckCircle className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Published</p>
@@ -827,7 +827,7 @@ export default function AdminSlides() {
                               Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-red-800">
                               <Lock className="h-3 w-3 mr-1" />
                               Inactive
                             </span>

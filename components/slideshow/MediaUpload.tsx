@@ -33,7 +33,7 @@ export default function MediaUpload({
           uploading
             ? "border-gray-300 bg-gray-50 cursor-not-allowed"
             : isDragActive
-            ? "border-green-500 bg-green-50 scale-105"
+            ? "border-purple-500 bg-green-50 scale-105"
             : "border-gray-300 hover:border-green-400 hover:bg-gray-50"
         }`}
       >

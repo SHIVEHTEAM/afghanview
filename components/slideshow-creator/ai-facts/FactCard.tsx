@@ -96,7 +96,7 @@ export default function FactCard({
             style={{ color: contrastColor }}
           >
             {isCopied ? (
-              <span className="text-green-600 flex items-center gap-1">
+              <span className="text-purple-600 flex items-center gap-1">
                 <Check className="w-4 h-4" />
                 Copied!
               </span>

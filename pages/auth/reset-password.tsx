@@ -81,7 +81,7 @@ export default function ResetPassword() {
 
   if (!isValidSession && !error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-afghan-green via-afghan-red to-afghan-gold flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-600 to-yellow-400 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     );
@@ -129,7 +129,7 @@ export default function ResetPassword() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex items-center p-4 bg-red-50 border border-red-200 rounded-lg"
                 >
-                  <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
+                  <AlertCircle className="w-5 h-5 text-pink-500 mr-3" />
                   <span className="text-red-700 text-sm">{error}</span>
                 </motion.div>
               )}
@@ -140,7 +140,7 @@ export default function ResetPassword() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg"
                 >
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-purple-500 mr-3" />
                   <span className="text-green-700 text-sm">{success}</span>
                 </motion.div>
               )}

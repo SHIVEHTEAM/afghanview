@@ -147,9 +147,9 @@ export default function TvManager({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "online":
-        return "text-green-500";
+        return "text-purple-500";
       case "offline":
-        return "text-red-500";
+        return "text-pink-500";
       case "playing":
         return "text-blue-500";
       case "paused":
@@ -243,7 +243,7 @@ export default function TvManager({
               </button>
               <button
                 onClick={() => deleteTv(tv.id)}
-                className="px-3 py-2 bg-red-100 text-red-700 text-sm rounded-lg hover:bg-red-200 transition-colors"
+                className="px-3 py-2 bg-pink-100 text-red-700 text-sm rounded-lg hover:bg-red-200 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

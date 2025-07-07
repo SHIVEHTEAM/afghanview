@@ -165,7 +165,7 @@ export default function SlideTemplates() {
       case "video":
         return "bg-purple-100 text-purple-800";
       case "menu":
-        return "bg-green-100 text-green-800";
+        return "bg-purple-100 text-green-800";
       case "promo":
         return "bg-yellow-100 text-yellow-800";
       case "quote":
@@ -181,7 +181,7 @@ export default function SlideTemplates() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-afghan-green"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
       </AdminLayout>
     );
@@ -254,7 +254,7 @@ export default function SlideTemplates() {
             >
               <div className="flex items-center">
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  <CheckCircle className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Active</p>
@@ -539,9 +539,9 @@ export default function SlideTemplates() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         {template.is_active ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-purple-500" />
                         ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
+                          <XCircle className="h-4 w-4 text-pink-500" />
                         )}
                         <span className="text-sm text-gray-500">
                           {template.is_active ? "Active" : "Inactive"}
@@ -702,7 +702,7 @@ export default function SlideTemplates() {
                                 Active
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-red-800">
                                 <XCircle className="h-3 w-3 mr-1" />
                                 Inactive
                               </span>

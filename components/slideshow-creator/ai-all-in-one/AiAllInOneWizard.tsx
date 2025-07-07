@@ -475,7 +475,7 @@ export default function AiAllInOneWizard({
             />
           )}
           {saveSuccess && (
-            <div className="text-green-600 text-center font-semibold mt-4">
+            <div className="text-purple-600 text-center font-semibold mt-4">
               Slideshow created successfully!
             </div>
           )}

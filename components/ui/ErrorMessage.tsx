@@ -32,7 +32,7 @@ export default function ErrorMessage({
       case "info":
         return "text-blue-500";
       default:
-        return "text-red-500";
+        return "text-pink-500";
     }
   };
 

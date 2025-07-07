@@ -79,7 +79,7 @@ export default function VideoUploadStep({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <h4 className="font-medium">Uploaded Videos ({videos.length})</h4>
-              <div className="flex items-center text-green-600 text-sm">
+              <div className="flex items-center text-purple-600 text-sm">
                 <svg
                   className="w-4 h-4 mr-1"
                   fill="currentColor"
@@ -119,7 +119,7 @@ export default function VideoUploadStep({
                 </div>
                 <button
                   onClick={() => onRemoveVideo(video.id)}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-pink-500 hover:text-red-700"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

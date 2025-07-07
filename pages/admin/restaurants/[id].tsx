@@ -145,7 +145,7 @@ export default function RestaurantManagement() {
       case "starter":
         return "bg-blue-100 text-blue-800";
       case "professional":
-        return "bg-green-100 text-green-800";
+        return "bg-purple-100 text-green-800";
       case "unlimited":
         return "bg-purple-100 text-purple-800";
       default:
@@ -265,7 +265,7 @@ export default function RestaurantManagement() {
                   <Link
                     href={`/restaurant/${restaurant.id}`}
                     target="_blank"
-                    className="bg-afghan-green text-white px-4 py-2 rounded-lg hover:bg-afghan-green/90 transition-colors flex items-center"
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-afghan-green/90 transition-colors flex items-center"
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     View Display
@@ -348,7 +348,7 @@ export default function RestaurantManagement() {
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             restaurant.is_active
                               ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                              : "bg-pink-100 text-red-800"
                           }`}
                         >
                           {restaurant.is_active ? (
@@ -393,10 +393,10 @@ export default function RestaurantManagement() {
                         <span
                           className={`text-sm font-medium ${
                             usage.usage > 100
-                              ? "text-red-600"
+                              ? "text-pink-600"
                               : usage.usage > 80
                               ? "text-yellow-600"
-                              : "text-green-600"
+                              : "text-purple-600"
                           }`}
                         >
                           {usage.usage}%
@@ -406,10 +406,10 @@ export default function RestaurantManagement() {
                         <div
                           className={`h-2 rounded-full ${
                             usage.usage > 100
-                              ? "bg-red-500"
+                              ? "bg-pink-500"
                               : usage.usage > 80
                               ? "bg-yellow-500"
-                              : "bg-green-500"
+                              : "bg-purple-500"
                           }`}
                           style={{ width: `${Math.min(usage.usage, 100)}%` }}
                         ></div>

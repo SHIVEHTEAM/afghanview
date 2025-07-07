@@ -26,7 +26,7 @@ const features = [
     title: "Mobile Management",
     description:
       "Create and manage your slideshows from anywhere using your smartphone or tablet.",
-    color: "from-green-500 to-teal-600",
+    color: "from-purple-500 to-teal-600",
   },
   {
     icon: Palette,
@@ -40,7 +40,7 @@ const features = [
     title: "Analytics & Insights",
     description:
       "Track engagement, view counts, and understand what content performs best.",
-    color: "from-orange-500 to-red-600",
+    color: "from-orange-500 to-pink-600",
   },
   {
     icon: Zap,
@@ -61,7 +61,7 @@ const features = [
     title: "Background Music",
     description:
       "Add ambient music to create the perfect atmosphere for your restaurant.",
-    color: "from-emerald-500 to-green-600",
+    color: "from-emerald-500 to-purple-600",
   },
   {
     icon: Clock,

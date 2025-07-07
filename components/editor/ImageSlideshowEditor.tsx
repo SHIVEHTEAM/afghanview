@@ -209,7 +209,7 @@ export default function ImageSlideshowEditor({
           <button
             onClick={handleSave}
             disabled={isSaving || media.length === 0}
-            className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? (
               <>
@@ -332,7 +332,7 @@ export default function ImageSlideshowEditor({
                           e.stopPropagation();
                           handleMediaDelete(item.id);
                         }}
-                        className="p-1 text-red-500 hover:text-red-700"
+                        className="p-1 text-pink-500 hover:text-red-700"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

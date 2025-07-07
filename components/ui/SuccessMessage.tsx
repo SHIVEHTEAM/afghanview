@@ -46,7 +46,7 @@ export default function SuccessMessage({
           <div className="bg-white border border-green-200 rounded-lg shadow-lg p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <CheckCircle className="h-6 w-6 text-green-500" />
+                <CheckCircle className="h-6 w-6 text-purple-500" />
               </div>
               <div className="ml-3 flex-1">
                 <p className="text-sm font-medium text-gray-900">{message}</p>

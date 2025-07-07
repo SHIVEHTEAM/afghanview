@@ -76,7 +76,7 @@ function SortableMediaItem({
       style={style}
       className={`flex items-center gap-4 p-4 bg-white rounded-lg border-2 transition-all cursor-pointer ${
         isDragging
-          ? "border-green-500 shadow-lg scale-105 opacity-75"
+          ? "border-purple-500 shadow-lg scale-105 opacity-75"
           : selectedMedia === item.id
           ? "border-green-400 bg-green-50"
           : "border-gray-200 hover:border-gray-300"
@@ -158,7 +158,7 @@ function SortableMediaItem({
             e.stopPropagation();
             onRemoveMedia(item.id);
           }}
-          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+          className="p-2 text-pink-500 hover:bg-red-50 rounded-lg transition-colors"
           title="Remove"
         >
           <Trash2 className="w-4 h-4" />

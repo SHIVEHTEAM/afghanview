@@ -138,7 +138,7 @@ export default function AdminDashboard() {
       case "starter":
         return "bg-blue-100 text-blue-800";
       case "professional":
-        return "bg-green-100 text-green-800";
+        return "bg-purple-100 text-green-800";
       case "unlimited":
         return "bg-purple-100 text-purple-800";
       default:
@@ -200,7 +200,7 @@ export default function AdminDashboard() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-afghan-green"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
       </AdminLayout>
     );
@@ -273,8 +273,8 @@ export default function AdminDashboard() {
                   <span
                     className={`text-sm font-medium ${
                       stat.changeType === "positive"
-                        ? "text-green-600"
-                        : "text-red-600"
+                        ? "text-purple-600"
+                        : "text-pink-600"
                     }`}
                   >
                     {stat.change}
@@ -352,10 +352,10 @@ export default function AdminDashboard() {
                             <div
                               className={`h-2 rounded-full ${
                                 slideUsage.percentage > 80
-                                  ? "bg-red-500"
+                                  ? "bg-pink-500"
                                   : slideUsage.percentage > 60
                                   ? "bg-yellow-500"
-                                  : "bg-green-500"
+                                  : "bg-purple-500"
                               }`}
                               style={{
                                 width: `${Math.min(
@@ -373,7 +373,7 @@ export default function AdminDashboard() {
                               Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-red-800">
                               <XCircle className="h-3 w-3 mr-1" />
                               Inactive
                             </span>

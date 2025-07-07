@@ -325,7 +325,7 @@ export default function CreateRestaurant() {
               className="bg-white shadow rounded-lg p-6"
             >
               <div className="flex items-center mb-6">
-                <Building className="h-6 w-6 text-afghan-green mr-3" />
+                <Building className="h-6 w-6 text-purple-600 mr-3" />
                 <h2 className="text-xl font-semibold text-gray-900">
                   Basic Information
                 </h2>
@@ -341,12 +341,12 @@ export default function CreateRestaurant() {
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     className={`w-full border rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green ${
-                      errors.name ? "border-red-500" : "border-gray-300"
+                      errors.name ? "border-pink-500" : "border-gray-300"
                     }`}
                     placeholder="Enter restaurant name"
                   />
                   {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                    <p className="mt-1 text-sm text-pink-600">{errors.name}</p>
                   )}
                 </div>
 

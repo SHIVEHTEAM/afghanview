@@ -32,7 +32,7 @@ export default function SettingsPanel({
               onChange={(e) =>
                 onUpdateSettings({ defaultDuration: Number(e.target.value) })
               }
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               {durationOptions.map(
                 (option: { value: number; label: string }) => (
@@ -113,7 +113,7 @@ export default function SettingsPanel({
                 onChange={(e) =>
                   onUpdateSettings({ autoPlay: e.target.checked })
                 }
-                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                className="rounded border-gray-300 text-purple-600 focus:ring-green-500"
               />
               <span className="ml-2 text-sm text-gray-700">
                 Auto-play slideshow
@@ -239,7 +239,7 @@ export default function SettingsPanel({
                 </p>
                 <button
                   onClick={onRemoveMusic}
-                  className="text-xs text-red-600 hover:text-red-800"
+                  className="text-xs text-pink-600 hover:text-red-800"
                 >
                   Remove
                 </button>

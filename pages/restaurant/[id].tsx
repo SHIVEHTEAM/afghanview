@@ -293,7 +293,7 @@ export default function RestaurantDisplay() {
               <p className="text-lg opacity-90 font-medium">
                 {restaurant.description}
               </p>
-              <div className="w-16 h-1 bg-gradient-to-r from-afghan-green to-afghan-red mx-auto mt-3 rounded-full"></div>
+              <div className="w-16 h-1 bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mt-3 rounded-full"></div>
             </div>
 
             <div className="space-y-4 mb-6">
@@ -342,7 +342,7 @@ export default function RestaurantDisplay() {
               </div>
 
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-afghan-gold rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
                   <svg
                     className="w-4 h-4 text-white"
                     fill="none"

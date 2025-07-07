@@ -341,7 +341,7 @@ export default function SlideshowWizard({
             ) : (
               <button
                 onClick={handleComplete}
-                className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-purple-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
               >
                 <Check className="w-5 h-5" />
                 Create Slideshow

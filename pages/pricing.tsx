@@ -240,7 +240,7 @@ export default function Pricing() {
         </nav>
 
         {/* Hero Section */}
-        <section className="pt-20 pb-16 bg-gradient-to-br from-afghan-green via-afghan-red to-afghan-gold relative overflow-hidden">
+        <section className="pt-20 pb-16 bg-gradient-to-br from-purple-600 via-pink-600 to-yellow-400 relative overflow-hidden">
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
@@ -389,7 +389,7 @@ export default function Pricing() {
                   )}
 
                   <div className="text-center mb-8">
-                    <div className="inline-flex p-3 rounded-xl bg-gradient-to-r from-afghan-green to-green-600 text-white mb-4">
+                    <div className="inline-flex p-3 rounded-xl bg-gradient-to-r from-afghan-green to-purple-600 text-white mb-4">
                       {plan.icon}
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">

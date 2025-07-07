@@ -138,7 +138,7 @@ export default function SettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                       activeTab === tab.id
-                        ? "bg-green-600 text-white shadow-md"
+                        ? "bg-purple-600 text-white shadow-md"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                   >
@@ -181,7 +181,7 @@ export default function SettingsPage() {
                             },
                           })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-600 focus:border-transparent text-gray-900 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
                       />
                     </div>
                     <div>
@@ -490,7 +490,7 @@ export default function SettingsPage() {
                               Restore slideshows from backup file
                             </p>
                           </div>
-                          <label className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors flex items-center gap-2 cursor-pointer">
+                          <label className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2 cursor-pointer">
                             <Upload className="w-4 h-4" />
                             Import
                             <input
@@ -512,7 +512,7 @@ export default function SettingsPage() {
                           </div>
                           <button
                             onClick={handleClearData}
-                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors flex items-center gap-2"
+                            className="bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600 transition-colors flex items-center gap-2"
                           >
                             <Trash2 className="w-4 h-4" />
                             Clear

@@ -213,9 +213,9 @@ export default function AdminRestaurants() {
   };
 
   const getStatusColor = (restaurant: Restaurant) => {
-    if (!restaurant.is_active) return "bg-red-100 text-red-800";
+    if (!restaurant.is_active) return "bg-pink-100 text-red-800";
     if (!restaurant.is_verified) return "bg-yellow-100 text-yellow-800";
-    return "bg-green-100 text-green-800";
+    return "bg-purple-100 text-green-800";
   };
 
   const getStatusIcon = (restaurant: Restaurant) => {
@@ -234,7 +234,7 @@ export default function AdminRestaurants() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-afghan-green"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
       </AdminLayout>
     );
@@ -310,7 +310,7 @@ export default function AdminRestaurants() {
             >
               <div className="flex items-center">
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  <CheckCircle className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Active</p>

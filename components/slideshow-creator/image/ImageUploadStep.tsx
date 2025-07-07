@@ -116,7 +116,7 @@ export default function ImageUploadStep({
                 </div>
                 <button
                   onClick={() => removeImage(image.id)}
-                  className="absolute top-1 right-1 p-1 text-red-500 hover:text-red-700 bg-white rounded-full shadow"
+                  className="absolute top-1 right-1 p-1 text-pink-500 hover:text-red-700 bg-white rounded-full shadow"
                   title="Remove"
                 >
                   <Trash2 className="w-4 h-4" />

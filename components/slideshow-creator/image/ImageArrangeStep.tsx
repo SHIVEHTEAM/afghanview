@@ -70,7 +70,7 @@ export default function ImageArrangeStep({
                 </button>
                 <button
                   onClick={() => removeImage(image.id)}
-                  className="p-1 text-red-500 hover:text-red-700"
+                  className="p-1 text-pink-500 hover:text-red-700"
                   title="Remove"
                 >
                   <Trash2 className="w-4 h-4" />

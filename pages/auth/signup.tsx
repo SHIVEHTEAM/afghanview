@@ -126,7 +126,7 @@ export default function SignUp() {
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
-        <div className="min-h-screen bg-gradient-to-br from-afghan-green via-afghan-red to-afghan-gold flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-600 to-yellow-400 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             {/* Header */}
             <motion.div
@@ -156,8 +156,8 @@ export default function SignUp() {
               className="bg-white rounded-2xl shadow-xl p-8"
             >
               <div className="text-center space-y-6">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <Mail className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
+                  <Mail className="w-8 h-8 text-purple-600" />
                 </div>
 
                 <div>
@@ -203,7 +203,7 @@ export default function SignUp() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex items-center p-4 bg-red-50 border border-red-200 rounded-lg"
                   >
-                    <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
+                    <AlertCircle className="w-5 h-5 text-pink-500 mr-3" />
                     <span className="text-red-700 text-sm">{error}</span>
                   </motion.div>
                 )}
@@ -214,7 +214,7 @@ export default function SignUp() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg"
                   >
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <CheckCircle className="w-5 h-5 text-purple-500 mr-3" />
                     <span className="text-green-700 text-sm">{success}</span>
                   </motion.div>
                 )}

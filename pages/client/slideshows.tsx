@@ -342,7 +342,7 @@ export default function SlideshowsPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowCreator(true)}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium flex items-center gap-2 shadow-lg hover:shadow-xl"
+              className="bg-gradient-to-r from-purple-600 to-emerald-600 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium flex items-center gap-2 shadow-lg hover:shadow-xl"
             >
               <Plus className="w-5 h-5" />
               Create New
@@ -424,7 +424,7 @@ export default function SlideshowsPage() {
                     placeholder="Search slideshows..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-600 focus:border-transparent text-gray-900 bg-white"
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
                   />
                 </div>
               </div>
@@ -511,7 +511,7 @@ export default function SlideshowsPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleBulkAction("activate")}
-                    className="px-4 py-2 bg-green-500 text-white text-sm rounded-xl hover:bg-green-600 transition-all duration-200 font-medium"
+                    className="px-4 py-2 bg-purple-500 text-white text-sm rounded-xl hover:bg-purple-700 transition-all duration-200 font-medium"
                   >
                     Activate
                   </motion.button>
@@ -527,7 +527,7 @@ export default function SlideshowsPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleBulkAction("delete")}
-                    className="px-4 py-2 bg-red-500 text-white text-sm rounded-xl hover:bg-red-600 transition-all duration-200 font-medium"
+                    className="px-4 py-2 bg-pink-500 text-white text-sm rounded-xl hover:bg-pink-600 transition-all duration-200 font-medium"
                   >
                     Delete
                   </motion.button>
@@ -558,7 +558,7 @@ export default function SlideshowsPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowCreator(true)}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                className="bg-gradient-to-r from-purple-600 to-emerald-600 text-white px-8 py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
               >
                 Create Slideshow
               </motion.button>
@@ -743,7 +743,7 @@ export default function SlideshowsPage() {
                       onClick={() => handleToggleActive(slideshow)}
                       className={`px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
                         slideshow.isActive
-                          ? "bg-red-500 text-white hover:bg-red-600"
+                          ? "bg-red-500 text-white hover:bg-pink-700"
                           : "bg-green-500 text-white hover:bg-green-600"
                       }`}
                       title={slideshow.isActive ? "Deactivate" : "Activate"}

@@ -289,7 +289,7 @@ export default function TextSlideshowWizard({
                     </div>
                     <button
                       onClick={() => removeTextSlide(slide.id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-pink-500 hover:text-red-700"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

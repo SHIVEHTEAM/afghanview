@@ -77,34 +77,54 @@ export default async function handler(
           .json({ error: "Access denied to this business" });
       }
 
-      const { data: staff, error } = await supabase
+      // First get all staff members
+      const { data: staffMembers, error: staffError } = await supabase
         .from("business_staff")
-        .select(
-          `
-          *,
-          user:profiles!user_id(
-            id,
-            first_name,
-            last_name,
-            email
-          ),
-          invited_by:profiles!invited_by(
-            first_name,
-            last_name,
-            email
-          )
-        `
-        )
+        .select("*")
         .eq("business_id", business_id)
         .eq("is_active", true)
         .order("joined_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching staff:", error);
+      if (staffError) {
+        console.error("Error fetching staff:", staffError);
         return res.status(500).json({ error: "Failed to fetch staff" });
       }
 
-      return res.status(200).json(staff);
+      // Then get user profiles for each staff member
+      const staffWithProfiles = await Promise.all(
+        (staffMembers || []).map(async (staffMember) => {
+          // Get user profile
+          const { data: userProfile } = await supabase
+            .from("profiles")
+            .select("id, first_name, last_name, email")
+            .eq("id", staffMember.user_id)
+            .single();
+
+          // Get invited by profile
+          let invitedByProfile = null;
+          if (staffMember.invited_by) {
+            const { data: inviterProfile } = await supabase
+              .from("profiles")
+              .select("first_name, last_name, email")
+              .eq("id", staffMember.invited_by)
+              .single();
+            invitedByProfile = inviterProfile;
+          }
+
+          return {
+            ...staffMember,
+            user: userProfile || {
+              id: staffMember.user_id,
+              first_name: "Unknown",
+              last_name: "User",
+              email: "unknown@example.com",
+            },
+            invited_by: invitedByProfile,
+          };
+        })
+      );
+
+      return res.status(200).json(staffWithProfiles);
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({ error: "Internal server error" });
@@ -172,17 +192,7 @@ export default async function handler(
           invited_by: user.id,
           is_active: true,
         })
-        .select(
-          `
-          *,
-          user:profiles!user_id(
-            id,
-            first_name,
-            last_name,
-            email
-          )
-        `
-        )
+        .select("*")
         .single();
 
       if (error) {
@@ -190,7 +200,24 @@ export default async function handler(
         return res.status(500).json({ error: "Failed to create staff record" });
       }
 
-      return res.status(201).json(staff);
+      // Get user profile for the created staff member
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email")
+        .eq("id", staff.user_id)
+        .single();
+
+      const staffWithProfile = {
+        ...staff,
+        user: userProfile || {
+          id: staff.user_id,
+          first_name: "Unknown",
+          last_name: "User",
+          email: "unknown@example.com",
+        },
+      };
+
+      return res.status(201).json(staffWithProfile);
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({ error: "Internal server error" });
@@ -230,17 +257,7 @@ export default async function handler(
         })
         .eq("id", staff_id)
         .eq("business_id", business_id)
-        .select(
-          `
-          *,
-          user:profiles!user_id(
-            id,
-            first_name,
-            last_name,
-            email
-          )
-        `
-        )
+        .select("*")
         .single();
 
       if (error) {
@@ -248,7 +265,24 @@ export default async function handler(
         return res.status(500).json({ error: "Failed to update staff" });
       }
 
-      return res.status(200).json(staff);
+      // Get user profile for the updated staff member
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email")
+        .eq("id", staff.user_id)
+        .single();
+
+      const staffWithProfile = {
+        ...staff,
+        user: userProfile || {
+          id: staff.user_id,
+          first_name: "Unknown",
+          last_name: "User",
+          email: "unknown@example.com",
+        },
+      };
+
+      return res.status(200).json(staffWithProfile);
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({ error: "Internal server error" });

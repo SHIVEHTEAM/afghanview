@@ -17,238 +17,230 @@ export default async function handler(
 
   if (req.method === "GET") {
     try {
-      // Fetch slideshow data from database
-      const { data: slideshow, error } = await supabase
-        .from("slides")
+      const { id } = req.query;
+      if (!id || typeof id !== "string") {
+        return res.status(400).json({ error: "Invalid slideshow ID" });
+      }
+
+      // First try to get from slideshows table
+      let { data: slideshow, error: slideshowError } = await supabase
+        .from("slideshows")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error || !slideshow) {
+      // If not found in slideshows, try slides table and convert
+      if (slideshowError && slideshowError.code === "PGRST116") {
+        const { data: slide, error: slideError } = await supabase
+          .from("slides")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (slideError) {
+          return res.status(404).json({ error: "Slideshow not found" });
+        }
+
+        // Convert slide to slideshow format
+        slideshow = {
+          id: slide.id,
+          title: slide.name || slide.title,
+          description: slide.subtitle,
+          business_id: slide.business_id,
+          business_type: slide.business_type || "restaurant",
+          is_active: slide.is_active,
+          settings: slide.styling || {},
+          content: slide.content || {},
+          created_at: slide.created_at,
+          updated_at: slide.updated_at,
+          created_by: slide.created_by,
+          updated_by: slide.updated_by,
+        };
+      } else if (slideshowError) {
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (!slideshow) {
         return res.status(404).json({ error: "Slideshow not found" });
       }
 
-      console.log("Raw slideshow data:", slideshow); // Debug log
-
-      // Check if slideshow is active
-      if (!slideshow.is_active) {
-        return res.status(403).json({
-          error: "Slideshow is not active",
-          isActive: false,
-        });
-      }
-
-      // Extract images from multiple possible locations with better debugging
-      let images = [];
-      console.log("Slideshow content:", slideshow.content);
-      console.log("Slideshow mediaType:", slideshow.content?.mediaType);
-      console.log("Slideshow original_data:", slideshow.original_data);
-
-      // Try multiple sources for images
+      // Extract images from slideshow content
+      let images: any[] = [];
       if (
+        slideshow.content?.slides &&
+        Array.isArray(slideshow.content.slides)
+      ) {
+        images = slideshow.content.slides;
+      } else if (
         slideshow.content?.images &&
         Array.isArray(slideshow.content.images)
       ) {
-        console.log(
-          "Found images in content.images:",
-          slideshow.content.images.length
-        );
         images = slideshow.content.images;
       } else if (slideshow.images && Array.isArray(slideshow.images)) {
-        console.log(
-          "Found images in slideshow.images:",
-          slideshow.images.length
-        );
         images = slideshow.images;
-      } else if (slideshow.media && Array.isArray(slideshow.media)) {
-        console.log("Found images in slideshow.media:", slideshow.media.length);
-        images = slideshow.media;
-      } else if (
-        slideshow.original_data?.images &&
-        Array.isArray(slideshow.original_data.images)
-      ) {
-        console.log(
-          "Found images in original_data.images:",
-          slideshow.original_data.images.length
-        );
-        images = slideshow.original_data.images;
-      } else if (
-        slideshow.original_data?.slides &&
-        Array.isArray(slideshow.original_data.slides)
-      ) {
-        console.log(
-          "Found images in original_data.slides:",
-          slideshow.original_data.slides.length
-        );
-        images = slideshow.original_data.slides;
-      } else if (
-        slideshow.original_data?.facts &&
-        Array.isArray(slideshow.original_data.facts)
-      ) {
-        console.log(
-          "Found facts in original_data.facts:",
-          slideshow.original_data.facts.length
-        );
-        images = slideshow.original_data.facts;
-      } else if (
-        slideshow.original_data?.menuItems &&
-        Array.isArray(slideshow.original_data.menuItems)
-      ) {
-        console.log(
-          "Found menuItems in original_data.menuItems:",
-          slideshow.original_data.menuItems.length
-        );
-        images = slideshow.original_data.menuItems;
       }
 
-      console.log("Final extracted images count:", images.length);
-
-      // Process images to ensure they have the correct type field
-      const processedImages = images.map((image: any, index: number) => {
-        console.log(`Processing image ${index}:`, image);
-
+      // Process images to ensure they have proper URLs
+      const processedImages = images.map((image, index) => {
         let processedImage = { ...image };
 
-        // If this is a video slideshow, ensure all images have type: "video"
-        if (slideshow.content?.mediaType === "video") {
-          processedImage.type = "video";
-          console.log(`Image ${index} marked as video`);
+        // Handle different image formats
+        if (image.base64) {
+          processedImage.url = image.base64;
+        } else if (image.url) {
+          processedImage.url = image.url;
+        } else if (image.file_path) {
+          // Check if it's already a full URL
+          if (image.file_path.startsWith("http")) {
+            processedImage.url = image.file_path;
+          } else if (image.file_path.startsWith("data:")) {
+            processedImage.url = image.file_path;
+          } else {
+            // Construct full URL
+            processedImage.url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/slideshow-media/${image.file_path}`;
+          }
+        } else if (image.image_url) {
+          processedImage.url = image.image_url;
         }
 
-        // For AI facts slideshows, ensure proper structure
-        if (
-          slideshow.content?.mediaType === "ai-facts" ||
-          slideshow.original_data?.type === "ai-facts"
-        ) {
-          // AI facts might be stored differently, ensure they have the right structure
-          if (image.text && !image.name) {
-            processedImage.name = `AI Fact ${index + 1}`;
-          }
-
-          // Convert AI fact text to SVG image if no file_path exists
-          if (image.text && !image.file_path && !image.url && !image.base64) {
-            const backgroundColor = image.backgroundColor || "#1f2937";
-            const fontColor = image.fontColor || "#ffffff";
-            const fontSize = image.fontSize || 48;
-
-            // Create SVG for the fact
-            const svgContent = `
-              <svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
-                <rect width="100%" height="100%" fill="${backgroundColor}"/>
-                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" 
-                      font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" 
-                      fill="${fontColor}" text-align="center">
-                  ${image.text
-                    .replace(/"/g, "&quot;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")}
-                </text>
-              </svg>
-            `;
-
-            processedImage.base64 = `data:image/svg+xml;base64,${Buffer.from(
-              svgContent
-            ).toString("base64")}`;
-            console.log(`Image ${index} converted to SVG for AI fact`);
-          }
-
-          if (image.image_url && !image.file_path && !image.url) {
-            processedImage.file_path = image.image_url;
-          }
-        }
-
-        // For menu slideshows, ensure proper structure
-        if (
-          slideshow.content?.mediaType === "menu" ||
-          slideshow.original_data?.type === "menu"
-        ) {
-          if (image.name && !processedImage.name) {
-            processedImage.name = image.name;
-          }
-          if (image.image_url && !image.file_path && !image.url) {
-            processedImage.file_path = image.image_url;
-          }
-        }
-
-        console.log(`Processed image ${index}:`, processedImage);
         return processedImage;
       });
 
-      console.log("Processed images:", processedImages);
-
-      // Parse the slideshow data in the same format as main slideshows API
-      const slideshowData = {
-        id: slideshow.id,
-        name: slideshow.name,
+      // Return slideshow with processed images
+      const responseSlideshow = {
+        ...slideshow,
         images: processedImages,
-        settings: {
-          defaultDuration: slideshow.duration || 5000,
-          duration: slideshow.duration || 5000,
-          transition: slideshow.styling?.transition || "fade",
-          backgroundMusic: slideshow.styling?.backgroundMusic,
-          musicVolume: slideshow.styling?.musicVolume || 50,
-          musicLoop: slideshow.styling?.musicLoop || true,
-          autoPlay: slideshow.styling?.autoPlay || true,
-          showControls: slideshow.styling?.showControls || true,
+        content: {
+          ...slideshow.content,
+          slides: processedImages,
+          images: processedImages,
         },
-        isActive: slideshow.is_active || false,
-        createdAt: slideshow.created_at,
-        updatedAt: slideshow.updated_at,
-        playCount: slideshow.content?.playCount || 0,
-        lastPlayed: slideshow.content?.lastPlayed,
-        publicLink: slideshow.content?.publicLink,
-        slug: slideshow.content?.slug,
-        mediaType:
-          slideshow.content?.mediaType ||
-          slideshow.original_data?.type ||
-          "image",
-        slideshowType:
-          slideshow.content?.mediaType ||
-          slideshow.original_data?.type ||
-          "image",
-        originalData: slideshow.original_data,
       };
 
-      console.log("Final processed slideshow data:", slideshowData);
-
-      res.status(200).json(slideshowData);
+      return res.status(200).json(responseSlideshow);
     } catch (error) {
       console.error("Error fetching slideshow:", error);
-      res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({ error: "Internal server error" });
     }
   } else if (req.method === "PATCH") {
     try {
-      const { isActive } = req.body;
+      const { isActive, is_active } = req.body;
 
-      if (typeof isActive !== "boolean") {
-        return res.status(400).json({ error: "isActive must be a boolean" });
+      // Handle both field names for compatibility
+      const shouldActivate = isActive !== undefined ? isActive : is_active;
+
+      if (typeof shouldActivate !== "boolean") {
+        return res
+          .status(400)
+          .json({ error: "isActive/is_active must be a boolean" });
       }
 
-      // Update the slideshow in the database
-      const { data: updatedSlideshow, error } = await supabase
-        .from("slides")
-        .update({ is_active: isActive })
+      // First try to update in slideshows table
+      let { data: updatedSlideshow, error } = await supabase
+        .from("slideshows")
+        .update({ is_active: shouldActivate })
         .eq("id", id)
         .select()
         .single();
 
-      if (error) {
-        console.error("Database error:", error);
-        return res.status(500).json({ error: "Failed to update slideshow" });
+      // If not found in slideshows table, try slides table
+      if (error || !updatedSlideshow) {
+        const { data: updatedSlide, error: slideError } = await supabase
+          .from("slides")
+          .update({ is_active: shouldActivate })
+          .eq("id", id)
+          .select()
+          .single();
+
+        if (slideError || !updatedSlide) {
+          return res.status(404).json({ error: "Slideshow not found" });
+        }
+
+        updatedSlideshow = updatedSlide;
       }
 
       res.status(200).json({
         success: true,
         isActive: updatedSlideshow.is_active,
         message: `Slideshow ${
-          isActive ? "activated" : "deactivated"
+          shouldActivate ? "activated" : "deactivated"
         } successfully`,
       });
     } catch (error) {
       console.error("Error updating slideshow:", error);
       res.status(500).json({ error: "Internal server error" });
     }
+  } else if (req.method === "HEAD") {
+    // Quick status check for polling
+    try {
+      // First try to find in slideshows table
+      let { data: slideshow, error } = await supabase
+        .from("slideshows")
+        .select("is_active")
+        .eq("id", id)
+        .single();
+
+      // If not found in slideshows table, try slides table
+      if (error || !slideshow) {
+        const { data: slide, error: slideError } = await supabase
+          .from("slides")
+          .select("is_active")
+          .eq("id", id)
+          .single();
+
+        if (slideError || !slide) {
+          return res.status(404).json({ error: "Slideshow not found" });
+        }
+
+        slideshow = slide;
+      }
+
+      // Return 403 if slideshow is not active, 200 if active
+      if (!slideshow.is_active) {
+        return res.status(403).json({ error: "Slideshow is not active" });
+      }
+
+      return res.status(200).json({ status: "active" });
+    } catch (error) {
+      console.error("Error checking slideshow status:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
   } else if (req.method === "DELETE") {
+    // --- Role check start ---
+    // Get user from headers/session (example: from a custom header or cookie)
+    // You should replace this with your actual auth/session logic
+    const userId = req.headers["x-user-id"] || req.cookies["user_id"];
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    // Find the slideshow to get business_id
+    const { data: slideshow, error: fetchError } = await supabase
+      .from("slideshows")
+      .select("business_id")
+      .eq("id", id)
+      .single();
+    if (fetchError || !slideshow) {
+      return res.status(404).json({ error: "Slideshow not found" });
+    }
+    // Find the user's role for this business
+    const { data: staff, error: staffError } = await supabase
+      .from("business_staff")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("business_id", slideshow.business_id)
+      .eq("is_active", true)
+      .single();
+    if (staffError || !staff) {
+      return res
+        .status(403)
+        .json({ error: "No permission to delete slideshow" });
+    }
+    if (staff.role !== "owner" && staff.role !== "manager") {
+      return res
+        .status(403)
+        .json({ error: "Only owner or manager can delete slideshow" });
+    }
+    // --- Role check end ---
     return await deleteSlideshow(id, res);
   } else {
     return res.status(405).json({ error: "Method not allowed" });
@@ -415,16 +407,27 @@ async function updateSlideshow(
 
 async function deleteSlideshow(id: string, res: NextApiResponse) {
   try {
-    const { data: deletedSlide, error } = await supabase
-      .from("slides")
+    // First try to delete from slideshows table
+    let { data: deletedSlideshow, error } = await supabase
+      .from("slideshows")
       .delete()
       .eq("id", id)
       .select()
       .single();
 
-    if (error) {
-      console.error("Database error:", error);
-      return res.status(500).json({ error: "Failed to delete slideshow" });
+    // If not found in slideshows table, try slides table
+    if (error || !deletedSlideshow) {
+      const { data: deletedSlide, error: slideError } = await supabase
+        .from("slides")
+        .delete()
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (slideError || !deletedSlide) {
+        console.error("Database error:", slideError);
+        return res.status(500).json({ error: "Failed to delete slideshow" });
+      }
     }
 
     return res.status(200).json({ message: "Slideshow deleted successfully" });

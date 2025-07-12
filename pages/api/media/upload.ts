@@ -25,128 +25,58 @@ export default async function handler(
   }
 
   try {
-    console.log("Upload request received:", {
-      hasFile: !!req.body.file,
-      hasType: !!req.body.type,
-      hasUserId: !!req.body.userId,
-      bodyKeys: Object.keys(req.body),
-    });
-
-    const { file, type, restaurantId, userId } = req.body;
+    const { file, fileName, contentType, businessId } = req.body;
 
     // Validate required fields
-    if (!file || !type || !userId) {
-      console.log("Missing fields:", {
-        file: !!file,
-        type: !!type,
-        userId: !!userId,
-      });
+    if (!file || !fileName || !contentType || !businessId) {
       return res.status(400).json({
-        error: "Missing required fields: file, type, userId",
+        error: "Missing required fields",
       });
     }
 
-    // Validate file type
-    const allowedImageTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
-    const allowedVideoTypes = [
-      "video/mp4",
-      "video/webm",
-      "video/mov",
-      "video/avi",
-      "video/quicktime",
-    ];
+    // Convert base64 to buffer
+    const base64Data = file.replace(/^data:[^;]+;base64,/, "");
+    const buffer = Buffer.from(base64Data, "base64");
 
-    if (type === "image" && !allowedImageTypes.includes(file.type)) {
-      return res.status(400).json({
-        error: "Invalid image file type. Allowed: JPEG, PNG, GIF, WebP",
-      });
-    }
-
-    if (type === "video" && !allowedVideoTypes.includes(file.type)) {
-      return res.status(400).json({
-        error:
-          "Invalid video file type. Allowed: MP4, WebM, MOV, AVI, QuickTime",
-      });
-    }
-
-    // Decode base64 file
-    console.log("Processing file:", {
-      fileName: file.name,
-      fileType: file.type,
-      dataLength: file.data?.length || 0,
-    });
-
-    const buffer = Buffer.from(file.data.split(",")[1], "base64");
-    console.log("Buffer created, size:", buffer.length);
-
-    // Validate file size (50MB limit)
-    if (buffer.length > 50 * 1024 * 1024) {
-      return res.status(400).json({
-        error: "File too large. Maximum size is 50MB",
-      });
-    }
-
-    // Generate unique filename
-    const fileExt = file.name.split(".").pop() || "bin";
-    const fileName = `${Date.now()}-${Math.random()
+    // Generate unique file path
+    const timestamp = Date.now();
+    const fileExtension = fileName.split(".").pop();
+    const uniqueFileName = `${timestamp}-${Math.random()
       .toString(36)
-      .substring(2)}.${fileExt}`;
+      .substring(2)}.${fileExtension}`;
+    const filePath = `${businessId}/${uniqueFileName}`;
 
-    // Create file path based on context
-    const filePath = restaurantId
-      ? `restaurants/${restaurantId}/media/${fileName}`
-      : `templates/media/${fileName}`;
-
-    // Upload to Supabase storage using service role (bypasses RLS)
-    console.log("Uploading to Supabase:", { filePath, contentType: file.type });
-
+    // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("slideshow-media")
       .upload(filePath, buffer, {
-        contentType: file.type,
-        cacheControl: "3600",
+        contentType: contentType,
         upsert: false,
       });
 
     if (uploadError) {
-      console.error("Storage upload error:", uploadError);
+      console.error("Supabase upload error:", uploadError);
       return res.status(500).json({
-        error: `Upload failed: ${uploadError.message}`,
+        error: "Failed to upload file",
+        details: uploadError.message,
       });
     }
 
-    console.log("Upload successful:", uploadData);
-
     // Get public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("slideshow-media").getPublicUrl(filePath);
+    const { data: urlData } = supabase.storage
+      .from("slideshow-media")
+      .getPublicUrl(filePath);
 
-    // For now, skip database record creation to avoid foreign key issues
-    // The file is uploaded to storage and we have the public URL
-    console.log("Upload successful, skipping database record for now");
-
-    // Return success response
     return res.status(200).json({
-      id: `temp-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-      url: publicUrl,
-      filename: fileName,
-      originalFilename: file.name,
-      fileSize: buffer.length,
-      mimeType: file.type,
-      mediaType: type,
-      duration: null, // Could be extracted for videos if needed
+      success: true,
+      filePath: filePath,
+      publicUrl: urlData.publicUrl,
+      fileName: fileName,
     });
   } catch (error) {
-    console.error("Upload handler error:", error);
+    console.error("Upload error:", error);
     return res.status(500).json({
-      error: "Internal server error during upload",
+      error: "Internal server error",
     });
   }
 }

@@ -2,408 +2,751 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { motion } from "framer-motion";
 import {
+  BarChart3,
   TrendingUp,
-  TrendingDown,
   Eye,
   Play,
-  Clock,
   Users,
   Calendar,
-  BarChart3,
-  PieChart,
-  Activity,
-  Target,
-  Award,
+  Download,
+  RefreshCw,
+  Filter,
+  Calendar as CalendarIcon,
 } from "lucide-react";
-import { ProtectedRoute } from "../../components/auth";
-import ClientLayout from "./layout";
 
-interface SlideImage {
-  id: string;
-  file: File;
-  url: string;
-  name: string;
-  mediaType?: "image" | "video";
-}
+import ClientLayout from "../../components/client/ClientLayout";
+import { useAuth } from "../../lib/auth";
+import { supabase } from "../../lib/supabase";
 
-interface SlideshowSettings {
-  duration: number;
-  transition: "fade" | "slide" | "zoom" | "flip" | "bounce";
-  backgroundMusic?: File | string;
-  musicVolume: number;
-  musicLoop: boolean;
-  autoPlay: boolean;
-  showControls: boolean;
-}
-
-interface SavedSlideshow {
-  id: string;
-  images: SlideImage[];
-  settings: SlideshowSettings;
-  createdAt: Date;
-  name: string;
-  isActive: boolean;
-  playCount: number;
-  lastPlayed?: Date;
-  isFavorite?: boolean;
-  tags?: string[];
-  mediaType?: "image" | "video";
+interface AnalyticsData {
+  totalSlideshows: number;
+  totalPlays: number;
+  totalViews: number;
+  activeSlideshows: number;
+  monthlyActivity: {
+    month: string;
+    plays: number;
+    views: number;
+  }[];
+  topSlideshows: {
+    id: string;
+    name: string;
+    plays: number;
+    views: number;
+  }[];
+  recentActivity: {
+    id: string;
+    type: string;
+    description: string;
+    timestamp: string;
+  }[];
 }
 
 export default function AnalyticsPage() {
-  const [savedSlideshows, setSavedSlideshows] = useState<SavedSlideshow[]>([]);
+  const { user } = useAuth();
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState("30d");
+  const [businessId, setBusinessId] = useState<string | null>(null);
 
-  // Load saved slideshows from localStorage
+  // Fetch user's business
   useEffect(() => {
-    const saved = localStorage.getItem("client-slideshows");
-    if (saved) {
+    const fetchBusiness = async () => {
+      if (!user?.id) return;
+
       try {
-        const parsed = JSON.parse(saved);
-        setSavedSlideshows(
-          parsed.map((item: any) => ({
-            ...item,
-            createdAt: new Date(item.createdAt),
-            lastPlayed: item.lastPlayed ? new Date(item.lastPlayed) : undefined,
-            isFavorite: item.isFavorite || false,
-            tags: item.tags || [],
-          }))
-        );
+        const { data: staffMember } = await supabase
+          .from("business_staff")
+          .select(
+            `
+            business:businesses!inner(
+              id,
+              name,
+              slug
+            )
+          `
+          )
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .single();
+
+        let businessId: string | null = null;
+
+        if (
+          staffMember?.business &&
+          Array.isArray(staffMember.business) &&
+          staffMember.business.length > 0
+        ) {
+          businessId = staffMember.business[0].id;
+        } else {
+          const { data: userBusiness } = await supabase
+            .from("businesses")
+            .select("id, name, slug")
+            .eq("created_by", user.id)
+            .eq("is_active", true)
+            .single();
+
+          if (userBusiness) {
+            businessId = userBusiness.id;
+          }
+        }
+
+        setBusinessId(businessId);
       } catch (error) {
-        console.error("Error loading saved slideshows:", error);
+        console.error("Error fetching business:", error);
       }
+    };
+
+    fetchBusiness();
+  }, [user?.id]);
+
+  // Fetch analytics data
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!businessId) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch slideshows for this business
+        const { data: slideshows, error: slideshowsError } = await supabase
+          .from("slideshows")
+          .select("*")
+          .eq("business_id", businessId);
+
+        if (slideshowsError) {
+          throw new Error("Failed to fetch slideshows");
+        }
+
+        // Get real view data from slide_views table
+        const { data: slideViews, error: viewsError } = await supabase
+          .from("slide_views")
+          .select("*")
+          .in("slide_id", slideshows?.map((s) => s.id) || []);
+
+        // Get real play data from analytics_events table
+        const { data: playEvents, error: playError } = await supabase
+          .from("analytics_events")
+          .select("*")
+          .eq("business_id", businessId)
+          .eq("event_type", "slideshow_play");
+
+        // Calculate basic stats from real data
+        const totalSlideshows = slideshows?.length || 0;
+        const activeSlideshows =
+          slideshows?.filter((s) => s.is_active).length || 0;
+        const totalPlays = playEvents?.length || 0;
+        const totalViews = slideViews?.length || 0;
+
+        // Get real monthly activity from analytics_events table
+        const { data: analyticsEvents, error: analyticsError } = await supabase
+          .from("analytics_events")
+          .select("*")
+          .eq("business_id", businessId)
+          .gte(
+            "occurred_at",
+            new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString()
+          ); // Last 6 months
+
+        // Process monthly activity from real data
+        const monthlyActivity: {
+          month: string;
+          plays: number;
+          views: number;
+        }[] = [];
+        const monthlyData: { [key: string]: { plays: number; views: number } } =
+          {};
+
+        // Initialize last 6 months
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          const monthKey = date.toLocaleDateString("en-US", {
+            month: "short",
+            year: "numeric",
+          });
+          monthlyData[monthKey] = { plays: 0, views: 0 };
+        }
+
+        // Process real analytics events
+        if (analyticsEvents) {
+          analyticsEvents.forEach((event) => {
+            const eventDate = new Date(event.occurred_at);
+            const monthKey = eventDate.toLocaleDateString("en-US", {
+              month: "short",
+              year: "numeric",
+            });
+
+            if (monthlyData[monthKey]) {
+              if (event.event_type === "slideshow_play") {
+                monthlyData[monthKey].plays++;
+              } else if (event.event_type === "slide_view") {
+                monthlyData[monthKey].views++;
+              }
+            }
+          });
+        }
+
+        // Convert to array format
+        Object.entries(monthlyData).forEach(([month, data]) => {
+          monthlyActivity.push({
+            month,
+            plays: data.plays,
+            views: data.views,
+          });
+        });
+
+        // Get real slideshow performance data
+        const slideshowStats = await Promise.all(
+          (slideshows || []).map(async (slideshow) => {
+            // Get plays for this slideshow
+            const { data: slideshowPlays } = await supabase
+              .from("analytics_events")
+              .select("*")
+              .eq("business_id", businessId)
+              .eq("event_type", "slideshow_play")
+              .contains("event_data", { slideshow_id: slideshow.id });
+
+            // Get views for this slideshow's slides
+            const { data: slideshowViews } = await supabase
+              .from("slide_views")
+              .select("*")
+              .in(
+                "slide_id",
+                slideshow.slides?.map((slide: any) => slide.id) || []
+              );
+
+            return {
+              id: slideshow.id,
+              name: slideshow.name || slideshow.title,
+              plays: slideshowPlays?.length || 0,
+              views: slideshowViews?.length || 0,
+            };
+          })
+        );
+
+        // Top slideshows by plays
+        const topSlideshows = slideshowStats
+          .sort((a, b) => b.plays - a.plays)
+          .slice(0, 5);
+
+        // Get real recent activity from analytics_events table
+        const { data: recentEvents, error: eventsError } = await supabase
+          .from("analytics_events")
+          .select("*")
+          .eq("business_id", businessId)
+          .order("occurred_at", { ascending: false })
+          .limit(10);
+
+        // Process recent activity from real events
+        const recentActivity = (recentEvents || []).map((event) => {
+          let description = "";
+          let type = event.event_type;
+
+          switch (event.event_type) {
+            case "slideshow_play":
+              description = `Slideshow played`;
+              break;
+            case "slide_view":
+              description = `Slide viewed`;
+              break;
+            case "slideshow_created":
+              description = `New slideshow created`;
+              break;
+            case "slideshow_updated":
+              description = `Slideshow updated`;
+              break;
+            default:
+              description = `${event.event_type} event`;
+          }
+
+          return {
+            id: event.id,
+            type,
+            description,
+            timestamp: event.occurred_at,
+          };
+        });
+
+        setAnalytics({
+          totalSlideshows,
+          totalPlays,
+          totalViews,
+          activeSlideshows,
+          monthlyActivity,
+          topSlideshows,
+          recentActivity,
+        });
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch analytics"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [businessId, dateRange]);
+
+  const handleRefresh = () => {
+    if (businessId) {
+      setLoading(true);
+      // Re-fetch data by triggering the useEffect
+      const fetchAnalytics = async () => {
+        try {
+          setError(null);
+
+          // Fetch slideshows for this business
+          const { data: slideshows, error: slideshowsError } = await supabase
+            .from("slideshows")
+            .select("*")
+            .eq("business_id", businessId);
+
+          if (slideshowsError) {
+            throw new Error("Failed to fetch slideshows");
+          }
+
+          // Get real view data from slide_views table
+          const { data: slideViews, error: viewsError } = await supabase
+            .from("slide_views")
+            .select("*")
+            .in("slide_id", slideshows?.map((s) => s.id) || []);
+
+          // Get real play data from analytics_events table
+          const { data: playEvents, error: playError } = await supabase
+            .from("analytics_events")
+            .select("*")
+            .eq("business_id", businessId)
+            .eq("event_type", "slideshow_play");
+
+          // Calculate basic stats from real data
+          const totalSlideshows = slideshows?.length || 0;
+          const activeSlideshows =
+            slideshows?.filter((s) => s.is_active).length || 0;
+          const totalPlays = playEvents?.length || 0;
+          const totalViews = slideViews?.length || 0;
+
+          // Get real monthly activity from analytics_events table
+          const { data: analyticsEvents, error: analyticsError } =
+            await supabase
+              .from("analytics_events")
+              .select("*")
+              .eq("business_id", businessId)
+              .gte(
+                "occurred_at",
+                new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString()
+              ); // Last 6 months
+
+          // Process monthly activity from real data
+          const monthlyActivity: {
+            month: string;
+            plays: number;
+            views: number;
+          }[] = [];
+          const monthlyData: {
+            [key: string]: { plays: number; views: number };
+          } = {};
+
+          // Initialize last 6 months
+          for (let i = 5; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            const monthKey = date.toLocaleDateString("en-US", {
+              month: "short",
+              year: "numeric",
+            });
+            monthlyData[monthKey] = { plays: 0, views: 0 };
+          }
+
+          // Process real analytics events
+          if (analyticsEvents) {
+            analyticsEvents.forEach((event) => {
+              const eventDate = new Date(event.occurred_at);
+              const monthKey = eventDate.toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
+              });
+
+              if (monthlyData[monthKey]) {
+                if (event.event_type === "slideshow_play") {
+                  monthlyData[monthKey].plays++;
+                } else if (event.event_type === "slide_view") {
+                  monthlyData[monthKey].views++;
+                }
+              }
+            });
+          }
+
+          // Convert to array format
+          Object.entries(monthlyData).forEach(([month, data]) => {
+            monthlyActivity.push({
+              month,
+              plays: data.plays,
+              views: data.views,
+            });
+          });
+
+          // Get real slideshow performance data
+          const slideshowStats = await Promise.all(
+            (slideshows || []).map(async (slideshow) => {
+              // Get plays for this slideshow
+              const { data: slideshowPlays } = await supabase
+                .from("analytics_events")
+                .select("*")
+                .eq("business_id", businessId)
+                .eq("event_type", "slideshow_play")
+                .contains("event_data", { slideshow_id: slideshow.id });
+
+              // Get views for this slideshow's slides
+              const { data: slideshowViews } = await supabase
+                .from("slide_views")
+                .select("*")
+                .in(
+                  "slide_id",
+                  slideshow.slides?.map((slide: any) => slide.id) || []
+                );
+
+              return {
+                id: slideshow.id,
+                name: slideshow.name || slideshow.title,
+                plays: slideshowPlays?.length || 0,
+                views: slideshowViews?.length || 0,
+              };
+            })
+          );
+
+          // Top slideshows by plays
+          const topSlideshows = slideshowStats
+            .sort((a, b) => b.plays - a.plays)
+            .slice(0, 5);
+
+          // Get real recent activity from analytics_events table
+          const { data: recentEvents, error: eventsError } = await supabase
+            .from("analytics_events")
+            .select("*")
+            .eq("business_id", businessId)
+            .order("occurred_at", { ascending: false })
+            .limit(10);
+
+          // Process recent activity from real events
+          const recentActivity = (recentEvents || []).map((event) => {
+            let description = "";
+            let type = event.event_type;
+
+            switch (event.event_type) {
+              case "slideshow_play":
+                description = `Slideshow played`;
+                break;
+              case "slide_view":
+                description = `Slide viewed`;
+                break;
+              case "slideshow_created":
+                description = `New slideshow created`;
+                break;
+              case "slideshow_updated":
+                description = `Slideshow updated`;
+                break;
+              default:
+                description = `${event.event_type} event`;
+            }
+
+            return {
+              id: event.id,
+              type,
+              description,
+              timestamp: event.occurred_at,
+            };
+          });
+
+          setAnalytics({
+            totalSlideshows,
+            totalPlays,
+            totalViews,
+            activeSlideshows,
+            monthlyActivity,
+            topSlideshows,
+            recentActivity,
+          });
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "Failed to fetch analytics"
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchAnalytics();
     }
-  }, []);
+  };
 
-  // Calculate analytics
-  const totalSlideshows = savedSlideshows.length;
-  const activeSlideshows = savedSlideshows.filter((s) => s.isActive).length;
-  const totalImages = savedSlideshows.reduce(
-    (acc, s) => acc + s.images.length,
-    0
-  );
-  const totalPlays = savedSlideshows.reduce((acc, s) => acc + s.playCount, 0);
-  const totalDuration = savedSlideshows.reduce(
-    (acc, s) => acc + s.settings.duration,
-    0
-  );
-  const averagePlaysPerSlideshow =
-    totalSlideshows > 0 ? (totalPlays / totalSlideshows).toFixed(1) : "0";
+  if (loading) {
+    return (
+      <ClientLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading analytics...</p>
+          </div>
+        </div>
+      </ClientLayout>
+    );
+  }
 
-  // Most popular slideshow
-  const mostPopularSlideshow =
-    savedSlideshows.length > 0
-      ? savedSlideshows.reduce((prev, current) =>
-          prev.playCount > current.playCount ? prev : current
-        )
-      : null;
+  if (error) {
+    return (
+      <ClientLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BarChart3 className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Error loading analytics
+            </h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={handleRefresh}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </ClientLayout>
+    );
+  }
 
-  // Recent activity (last 7 days)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const recentActivity = savedSlideshows.filter(
-    (s) => s.lastPlayed && s.lastPlayed > sevenDaysAgo
-  ).length;
-
-  // Transition usage
-  const transitionStats =
-    savedSlideshows.length > 0
-      ? savedSlideshows.reduce((acc, s) => {
-          acc[s.settings.transition] = (acc[s.settings.transition] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      : {};
-
-  // Monthly activity (mock data for now)
-  const monthlyData = [
-    { month: "Jan", plays: 45, slideshows: 3 },
-    { month: "Feb", plays: 67, slideshows: 4 },
-    { month: "Mar", plays: 89, slideshows: 5 },
-    { month: "Apr", plays: 123, slideshows: 6 },
-    { month: "May", plays: 156, slideshows: 7 },
-    { month: "Jun", plays: 189, slideshows: 8 },
-  ];
-
-  const stats = [
-    {
-      name: "Total Slideshows",
-      value: totalSlideshows.toString(),
-      change: "+2",
-      changeType: "positive",
-      icon: BarChart3,
-      color: "text-blue-600",
-    },
-    {
-      name: "Active Slideshows",
-      value: activeSlideshows.toString(),
-      change: "+1",
-      changeType: "positive",
-      icon: Activity,
-      color: "text-purple-600",
-    },
-    {
-      name: "Total Images",
-      value: totalImages.toString(),
-      change: "+15",
-      changeType: "positive",
-      icon: Eye,
-      color: "text-purple-600",
-    },
-    {
-      name: "Total Plays",
-      value: totalPlays.toString(),
-      change: "+8",
-      changeType: "positive",
-      icon: Play,
-      color: "text-orange-600",
-    },
-    {
-      name: "Avg Plays/Slideshow",
-      value: averagePlaysPerSlideshow,
-      change: "+12%",
-      changeType: "positive",
-      icon: Target,
-      color: "text-indigo-600",
-    },
-    {
-      name: "Recent Activity",
-      value: recentActivity.toString(),
-      change: "+3",
-      changeType: "positive",
-      icon: Calendar,
-      color: "text-pink-600",
-    },
-  ];
-
-  const topSlideshows =
-    savedSlideshows.length > 0
-      ? savedSlideshows.sort((a, b) => b.playCount - a.playCount).slice(0, 5)
-      : [];
+  if (!analytics) {
+    return (
+      <ClientLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BarChart3 className="w-8 h-8 text-gray-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No analytics data
+            </h3>
+            <p className="text-gray-600">
+              Create some slideshows to see analytics
+            </p>
+          </div>
+        </div>
+      </ClientLayout>
+    );
+  }
 
   return (
-    <ProtectedRoute requiredRole="restaurant_owner">
+    <>
+      <Head>
+        <title>Analytics - AfghanView</title>
+        <meta
+          name="description"
+          content="View your slideshow analytics and performance"
+        />
+      </Head>
+
       <ClientLayout>
-        <Head>
-          <title>Analytics - ShivehView</title>
-          <meta name="description" content="View your slideshow analytics" />
-        </Head>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
+              <p className="text-gray-600 mt-2">
+                Track your slideshow performance and engagement
+              </p>
+            </div>
 
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Analytics Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Track your slideshow performance and engagement
-          </p>
-        </div>
+            <div className="flex items-center space-x-4">
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+                <option value="1y">Last year</option>
+              </select>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-          {stats.map((item) => (
-            <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 p-6"
-            >
+              <button
+                onClick={handleRefresh}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <RefreshCw className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {item.name}
+                    Total Slideshows
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">
-                    {item.value}
+                  <p className="text-3xl font-bold text-gray-900">
+                    {analytics.totalSlideshows}
                   </p>
-                  <div className="flex items-center mt-2">
-                    {item.changeType === "positive" ? (
-                      <TrendingUp className="w-4 h-4 text-purple-500 mr-1" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-pink-500 mr-1" />
-                    )}
-                    <span
-                      className={`text-sm font-medium ${
-                        item.changeType === "positive"
-                          ? "text-green-600"
-                          : "text-pink-600"
-                      }`}
-                    >
-                      {item.change}
-                    </span>
-                  </div>
                 </div>
-                <div className={`p-3 rounded-xl bg-gray-50 ${item.color}`}>
-                  <item.icon className="w-6 h-6" />
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <BarChart3 className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
+            </div>
 
-        {/* Charts and Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Monthly Activity Chart */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Monthly Activity
-            </h3>
-            <div className="space-y-4">
-              {monthlyData.map((data, index) => (
-                <div key={data.month} className="flex items-center">
-                  <div className="w-12 text-sm text-gray-500">{data.month}</div>
-                  <div className="flex-1 ml-4">
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span>Plays: {data.plays}</span>
-                      <span>Slideshows: {data.slideshows}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(data.plays / 200) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    Active Slideshows
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {analytics.activeSlideshows}
+                  </p>
                 </div>
-              ))}
+                <div className="p-3 bg-green-100 rounded-xl">
+                  <Play className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Plays
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {analytics.totalPlays}
+                  </p>
+                </div>
+                <div className="p-3 bg-purple-100 rounded-xl">
+                  <Eye className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Views
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {analytics.totalViews}
+                  </p>
+                </div>
+                <div className="p-3 bg-orange-100 rounded-xl">
+                  <TrendingUp className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Transition Usage */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Transition Usage
-            </h3>
-            <div className="space-y-3">
-              {Object.entries(transitionStats).map(([transition, count]) => (
-                <div
-                  key={transition}
-                  className="flex items-center justify-between"
-                >
-                  <span className="text-sm font-medium text-gray-700 capitalize">
-                    {transition}
-                  </span>
-                  <div className="flex items-center">
-                    <div className="w-20 bg-gray-200 rounded-full h-2 mr-3">
-                      <div
-                        className="bg-purple-500 h-2 rounded-full"
-                        style={{ width: `${(count / totalSlideshows) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm text-gray-500">{count}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Top Performing Slideshows */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">
-              Top Performing Slideshows
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-200">
-            {topSlideshows.length > 0 ? (
-              topSlideshows.map((slideshow, index) => (
-                <div key={slideshow.id} className="px-6 py-4">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                        {index + 1}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Monthly Activity Chart */}
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Monthly Activity
+              </h3>
+              <div className="space-y-4">
+                {analytics.monthlyActivity.map((month, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="text-sm text-gray-600">{month.month}</span>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm text-gray-600">
+                          {month.plays} plays
+                        </span>
                       </div>
-                    </div>
-                    <div className="ml-4 flex-1">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900">
-                            {slideshow.name}
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            {slideshow.images.length}{" "}
-                            {slideshow.mediaType === "video"
-                              ? "videos"
-                              : "images"}{" "}
-                            • {slideshow.settings.duration / 1000}s duration
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <p className="text-sm font-medium text-gray-900">
-                              {slideshow.playCount} plays
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {slideshow.lastPlayed
-                                ? new Date(
-                                    slideshow.lastPlayed
-                                  ).toLocaleDateString()
-                                : "Never played"}
-                            </p>
-                          </div>
-                          {index === 0 && (
-                            <Award className="h-5 w-5 text-yellow-400" />
-                          )}
-                        </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="text-sm text-gray-600">
+                          {month.views} views
+                        </span>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="px-6 py-8 text-center">
-                <BarChart3 className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  No data available
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Create some slideshows to see analytics here.
-                </p>
+                ))}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Quick Insights */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6">
-            <div className="flex items-center">
-              <Clock className="h-8 w-8" />
-              <div className="ml-4">
-                <p className="text-sm font-medium">Total Duration</p>
-                <p className="text-2xl font-bold">
-                  {(totalDuration / 1000 / 60).toFixed(1)} min
-                </p>
+            {/* Top Slideshows */}
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Top Performing Slideshows
+              </h3>
+              <div className="space-y-4">
+                {analytics.topSlideshows.map((slideshow, index) => (
+                  <div
+                    key={slideshow.id}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-blue-600">
+                          {index + 1}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {slideshow.name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {slideshow.plays} plays
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">
+                        {slideshow.views}
+                      </p>
+                      <p className="text-xs text-gray-600">views</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-500 to-pink-600 text-white rounded-lg p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8" />
-              <div className="ml-4">
-                <p className="text-sm font-medium">Engagement Rate</p>
-                <p className="text-2xl font-bold">
-                  {totalSlideshows > 0
-                    ? ((activeSlideshows / totalSlideshows) * 100).toFixed(0)
-                    : 0}
-                  %
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6">
-            <div className="flex items-center">
-              <Target className="h-8 w-8" />
-              <div className="ml-4">
-                <p className="text-sm font-medium">Avg. Performance</p>
-                <p className="text-2xl font-bold">{averagePlaysPerSlideshow}</p>
+          {/* Recent Activity */}
+          <div className="mt-8">
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Recent Activity
+              </h3>
+              <div className="space-y-4">
+                {analytics.recentActivity.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-center space-x-3"
+                  >
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">
+                        {activity.description}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {new Date(activity.timestamp).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </ClientLayout>
-    </ProtectedRoute>
+    </>
   );
 }

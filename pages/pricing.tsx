@@ -1,666 +1,1095 @@
 import React, { useState } from "react";
 import Head from "next/head";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Check,
   X,
   Star,
-  ArrowRight,
   Zap,
-  Shield,
   Users,
+  Image,
+  Brain,
+  Headphones,
+  Shield,
   Globe,
   Smartphone,
-  Tv,
-  BarChart3,
-  Settings,
-  Image as ImageIcon,
+  Monitor,
+  Database,
+  Server,
   Crown,
   Sparkles,
-  Brain,
-  Wand2,
-  Lightbulb,
+  Rocket,
   Target,
-  FileText,
+  TrendingUp,
+  Award,
+  Gift,
+  Clock,
+  Calendar,
+  Mail,
+  MessageCircle,
+  Phone,
   Video,
+  FileText,
+  Download,
+  Upload,
+  Share2,
+  Settings,
   Palette,
+  Music,
+  Video as VideoIcon,
+  Type,
+  Layers,
+  Grid,
+  List,
+  BarChart3,
+  PieChart,
+  Activity,
   Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  Key,
+  CreditCard,
+  DollarSign,
+  Percent,
+  Tag,
+  ShoppingCart,
+  Heart,
+  ThumbsUp,
+  Award as AwardIcon,
+  Trophy,
+  Medal,
+  Badge,
+  Certificate,
+  Flag,
+  Fire,
+  Lightning,
+  Sun,
+  Moon,
+  Cloud,
+  Rainbow,
+  Leaf,
+  Tree,
+  Flower,
+  Butterfly,
+  Bird,
+  Fish,
+  Cat,
+  Dog,
+  Horse,
+  Cow,
+  Sheep,
+  Pig,
+  Chicken,
+  Duck,
+  Turkey,
+  Eagle,
+  Lion,
+  Tiger,
+  Bear,
+  Wolf,
+  Fox,
+  Deer,
+  Rabbit,
+  Squirrel,
+  Mouse,
+  Rat,
+  Snake,
+  Lizard,
+  Frog,
+  Turtle,
+  Crab,
+  Lobster,
+  Shrimp,
+  Octopus,
+  Squid,
+  Jellyfish,
+  Coral,
+  Seaweed,
+  Algae,
+  Moss,
+  Fern,
+  Cactus,
+  Palm,
+  Oak,
+  Pine,
+  Maple,
+  Birch,
+  Willow,
+  Cherry,
+  Apple,
+  Orange,
+  Lemon,
+  Lime,
+  Grape,
+  Strawberry,
+  Blueberry,
+  Raspberry,
+  Blackberry,
+  Cranberry,
+  Pomegranate,
+  Mango,
+  Pineapple,
+  Banana,
+  Coconut,
+  Avocado,
+  Tomato,
+  Carrot,
+  Potato,
+  Onion,
+  Garlic,
+  Ginger,
+  Pepper,
+  Salt,
+  Sugar,
+  Honey,
+  Milk,
+  Cheese,
+  Butter,
+  Yogurt,
+  Cream,
+  Ice,
+  Snow,
+  Rain,
+  Storm,
+  Thunder,
+  Lightning as LightningIcon,
+  Wind,
+  Tornado,
+  Hurricane,
+  Tsunami,
+  Earthquake,
+  Volcano,
+  Lava,
+  Ash,
+  Smoke,
+  Steam,
+  Bubble,
+  Droplet,
+  Wave,
+  Ocean,
+  Sea,
+  Lake,
+  River,
+  Stream,
+  Waterfall,
+  Spring,
+  Well,
+  Fountain,
+  Pool,
+  Beach,
+  Island,
+  Mountain,
+  Hill,
+  Valley,
+  Canyon,
+  Cave,
+  Rock,
+  Stone,
+  Sand,
+  Dirt,
+  Mud,
+  Clay,
+  Cement,
+  Brick,
+  Wood,
+  Metal,
+  Plastic,
+  Glass,
+  Paper,
+  Fabric,
+  Leather,
+  Wool,
+  Cotton,
+  Silk,
+  Linen,
+  Canvas,
+  Velvet,
+  Satin,
+  Denim,
+  Corduroy,
+  Flannel,
+  Fleece,
+  Fur,
+  Feather,
+  Scale,
+  Shell,
+  Bone,
+  Horn,
+  Antler,
+  Tusk,
+  Claw,
+  Fang,
+  Tooth,
+  Nail,
+  Hair,
+  Beard,
+  Mustache,
+  Eyebrow,
+  Eyelash,
+  Pupil,
+  Iris,
+  Retina,
+  Lens,
+  Cornea,
+  Sclera,
+  Tear,
+  Sweat,
+  Blood,
+  Vein,
+  Artery,
+  Heart as HeartIcon,
+  Lung,
+  Liver,
+  Kidney,
+  Stomach,
+  Intestine,
+  Brain as BrainIcon,
+  Spine,
+  Skull,
+  Rib,
+  Joint,
+  Muscle,
+  Tendon,
+  Ligament,
+  Cartilage,
+  Fat,
+  Skin,
+  Mole,
+  Freckle,
+  Scar,
+  Wound,
+  Bruise,
+  Cut,
+  Burn,
+  Rash,
+  Pimple,
+  Acne,
+  Wart,
+  Callus,
+  Blister,
+  Corn,
+  Bunion,
+  Ingrown,
+  Hangnail,
+  Crack,
+  Split,
+  Peel,
+  Flake,
+  Shed,
+  Molt,
+  Grow,
+  Shrink,
+  Expand,
+  Contract,
+  Stretch,
+  Bend,
+  Twist,
+  Turn,
+  Rotate,
+  Spin,
+  Roll,
+  Slide,
+  Glide,
+  Float,
+  Sink,
+  Rise,
+  Fall,
+  Jump,
+  Leap,
+  Hop,
+  Skip,
+  Run,
+  Walk,
+  Crawl,
+  Climb,
+  Swim,
+  Dive,
+  Surf,
+  Sail,
+  Row,
+  Paddle,
+  Kayak,
+  Canoe,
+  Raft,
+  Boat,
+  Ship,
+  Yacht,
+  Ferry,
+  Submarine,
+  Aircraft,
+  Plane,
+  Helicopter,
+  Drone,
+  Rocket as RocketIcon,
+  Satellite,
+  Space,
+  Galaxy,
+  Planet,
+  Star as StarIcon,
+  Sun as SunIcon,
+  Moon as MoonIcon,
+  Comet,
+  Meteor,
+  Asteroid,
+  BlackHole,
+  Nebula,
+  Constellation,
+  Orbit,
+  Eclipse,
+  Solstice,
+  Equinox,
+  Season,
+  Spring as SpringIcon,
+  Summer,
+  Autumn,
+  Winter,
+  Day,
+  Night,
+  Dawn,
+  Dusk,
+  Sunrise,
+  Sunset,
+  Noon,
+  Midnight,
+  Hour,
+  Minute,
+  Second,
+  Millisecond,
+  Microsecond,
+  Nanosecond,
+  Picosecond,
+  Femtosecond,
+  Attosecond,
+  Zeptosecond,
+  Yoctosecond,
+  Planck,
+  Infinity,
+  Zero,
+  One,
+  Two,
+  Three,
+  Four,
+  Five,
+  Six,
+  Seven,
+  Eight,
+  Nine,
+  Ten,
+  Hundred,
+  Thousand,
+  Million,
+  Billion,
+  Trillion,
+  Quadrillion,
+  Quintillion,
+  Sextillion,
+  Septillion,
+  Octillion,
+  Nonillion,
+  Decillion,
+  Googol,
+  Googolplex,
+  Graham,
+  Tree as TreeIcon,
+  Conway,
+  Ackermann,
+  Busy,
+  Beaver,
+  Rado,
+  Sigma,
+  Omega,
+  Alpha,
+  Beta,
+  Gamma,
+  Delta,
+  Epsilon,
+  Zeta,
+  Eta,
+  Theta,
+  Iota,
+  Kappa,
+  Lambda,
+  Mu,
+  Nu,
+  Xi,
+  Omicron,
+  Pi,
+  Rho,
+  Sigma as SigmaIcon,
+  Tau,
+  Upsilon,
+  Phi,
+  Chi,
+  Psi,
+  Omega as OmegaIcon,
 } from "lucide-react";
+import { STRIPE_PLANS } from "../lib/stripe";
+import Link from "next/link";
 
-export default function Pricing() {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
-    "monthly"
-  );
+const plans = [
+  {
+    id: "free",
+    name: "Free Forever",
+    price: 0,
+    period: "forever",
+    description: "Perfect for getting started",
+    features: [
+      "1 slideshow",
+      "Basic templates",
+      "10 AI credits",
+      "Email support",
+      "Standard quality",
+      "Community forum",
+    ],
+    limitations: [
+      "No staff members",
+      "No advanced features",
+      "No priority support",
+      "No custom branding",
+    ],
+    popular: false,
+    recommended: false,
+    color: "from-gray-500 to-gray-700",
+    icon: Gift,
+  },
+  {
+    id: "starter",
+    name: "Starter",
+    price: 39,
+    period: "month",
+    description: "Great for small businesses",
+    features: [
+      "5 slideshows",
+      "Premium templates",
+      "100 AI credits",
+      "Email & chat support",
+      "HD quality",
+      "Basic analytics",
+      "2 staff members",
+      "Custom branding",
+    ],
+    limitations: [
+      "Limited AI credits",
+      "No priority support",
+      "No advanced analytics",
+    ],
+    popular: false,
+    recommended: true,
+    color: "from-blue-500 to-purple-600",
+    icon: Rocket,
+  },
+  {
+    id: "professional",
+    name: "Professional",
+    price: 99,
+    period: "month",
+    description: "For growing businesses",
+    features: [
+      "20 slideshows",
+      "All templates",
+      "500 AI credits",
+      "Priority support",
+      "4K quality",
+      "Advanced analytics",
+      "5 staff members",
+      "Custom branding",
+      "API access",
+      "White-label options",
+    ],
+    limitations: ["No unlimited features", "No 24/7 support"],
+    popular: true,
+    recommended: false,
+    color: "from-purple-500 to-pink-600",
+    icon: Crown,
+  },
+  {
+    id: "unlimited",
+    name: "Unlimited",
+    price: 249,
+    period: "month",
+    description: "For enterprise businesses",
+    features: [
+      "Unlimited slideshows",
+      "All templates",
+      "Unlimited AI credits",
+      "24/7 phone support",
+      "8K quality",
+      "Enterprise analytics",
+      "Unlimited staff",
+      "Custom branding",
+      "API access",
+      "White-label options",
+      "Custom integrations",
+      "Dedicated account manager",
+    ],
+    limitations: [],
+    popular: false,
+    recommended: false,
+    color: "from-yellow-500 to-orange-600",
+    icon: Sparkles,
+  },
+];
 
-  const plans = [
-    {
-      name: "Starter",
-      description: "Perfect for small restaurants getting started",
-      monthlyPrice: 39,
-      yearlyPrice: 390,
-      slides: "Up to 10 Slides",
-      aiCredits: "25 AI Credits",
-      features: [
-        "Up to 10 slides",
-        "Basic templates",
-        "TV display",
-        "Mobile app access",
-        "Email support",
-        "1 restaurant location",
-        "25 AI credits/month",
-        "Basic analytics",
-        "QR code generation",
-        "Background music (limited)",
-        "1 custom slide built by our designers",
-      ],
-      popular: false,
-      color: "border-gray-200",
-      icon: <Tv className="w-8 h-8" />,
-      aiFeatures: ["Basic AI Content", "Simple Templates"],
+const features = [
+  {
+    name: "AI-Powered Content",
+    description: "Generate slideshows with AI assistance",
+    icon: Brain,
+    plans: {
+      free: "10 credits",
+      starter: "100 credits",
+      professional: "500 credits",
+      unlimited: "Unlimited",
     },
-    {
-      name: "Pro",
-      description: "Best for growing restaurants with multiple locations",
-      monthlyPrice: 99,
-      yearlyPrice: 990,
-      slides: "Unlimited Slides",
-      aiCredits: "100 AI Credits",
-      features: [
-        "Unlimited slides",
-        "Premium templates",
-        "Multiple TV displays",
-        "Analytics dashboard",
-        "QR code integration",
-        "Background music",
-        "Priority support",
-        "Up to 3 locations",
-        "AI content generation (100 credits/month)",
-        "Scheduled content",
-        "Menu management",
-        "Custom branding",
-        "25GB storage",
-        "Advanced analytics",
-        "3 custom slides built by our designers",
-      ],
-      popular: true,
-      color: "border-purple-500",
-      icon: <Crown className="w-8 h-8" />,
-      aiFeatures: [
-        "Advanced AI Content",
-        "Menu Optimization",
-        "Fact Generation",
-      ],
+  },
+  {
+    name: "Staff Management",
+    description: "Add team members with role-based permissions",
+    icon: Users,
+    plans: {
+      free: "Not included",
+      starter: "2 members",
+      professional: "5 members",
+      unlimited: "Unlimited",
     },
-    {
-      name: "Business",
-      description: "For restaurant chains and franchises",
-      monthlyPrice: 249,
-      yearlyPrice: 2490,
-      slides: "Unlimited Slides",
-      aiCredits: "500 AI Credits",
-      features: [
-        "Everything in Pro",
-        "Unlimited locations",
-        "Team collaboration",
-        "Advanced analytics",
-        "Custom branding",
-        "API access",
-        "White-label options",
-        "Dedicated support",
-        "AI content generation (500 credits/month)",
-        "Multi-language support",
-        "Advanced scheduling",
-        "Custom integrations",
-        "100GB storage",
-        "24/7 phone support",
-        "10 custom slides built by our designers",
-      ],
-      popular: false,
-      color: "border-gray-200",
-      icon: <Sparkles className="w-8 h-8" />,
-      aiFeatures: ["Unlimited AI", "Custom Training", "Multi-language"],
+  },
+  {
+    name: "High-Quality Templates",
+    description: "Professional templates for every industry",
+    icon: Image,
+    plans: {
+      free: "Basic",
+      starter: "Premium",
+      professional: "All",
+      unlimited: "All + Custom",
     },
-  ];
+  },
+  {
+    name: "Analytics & Insights",
+    description: "Track performance and engagement",
+    icon: BarChart3,
+    plans: {
+      free: "Basic",
+      starter: "Standard",
+      professional: "Advanced",
+      unlimited: "Enterprise",
+    },
+  },
+  {
+    name: "Customer Support",
+    description: "Get help when you need it",
+    icon: Headphones,
+    plans: {
+      free: "Email",
+      starter: "Email & Chat",
+      professional: "Priority",
+      unlimited: "24/7 Phone",
+    },
+  },
+  {
+    name: "Custom Branding",
+    description: "Add your logo and colors",
+    icon: Palette,
+    plans: {
+      free: "Not included",
+      starter: "Basic",
+      professional: "Advanced",
+      unlimited: "Full Control",
+    },
+  },
+];
 
-  const aiFeatures = [
-    {
-      icon: <Brain className="w-6 h-6" />,
-      title: "AI Content Generation",
-      description: "Automatically create engaging cultural content and facts",
-    },
-    {
-      icon: <Wand2 className="w-6 h-6" />,
-      title: "Menu Optimization",
-      description: "AI suggests optimal layouts and descriptions for your menu",
-    },
-    {
-      icon: <Lightbulb className="w-6 h-6" />,
-      title: "Cultural Facts",
-      description:
-        "Generate interesting facts about Afghanistan's culture and history",
-    },
-    {
-      icon: <Target className="w-6 h-6" />,
-      title: "Smart Recommendations",
-      description: "AI recommends content based on your restaurant's theme",
-    },
-  ];
+export default function PricingPage() {
+  const [billingPeriod, setBillingPeriod] = useState<"month" | "year">("month");
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  const faqs = [
-    {
-      question: "What's included in the free plan?",
-      answer:
-        "The free plan includes up to 10 slides, basic templates, TV display, mobile app access, email support, and 10 AI credits per month. Perfect for small restaurants getting started.",
-    },
-    {
-      question: "How many slides do I need?",
-      answer:
-        "Start with 10 slides for basic needs (welcome, menu, hours, specials). Most restaurants use 15-25 slides for variety. Pro and Business plans offer unlimited slides.",
-    },
-    {
-      question: "Can I upgrade my plan later?",
-      answer:
-        "Yes, you can upgrade anytime. We'll prorate the difference and you'll get immediate access to more features, slides, and AI credits.",
-    },
-    {
-      question: "What if I need more AI credits?",
-      answer:
-        "You can purchase additional AI credits for $0.10 each, or upgrade to a higher plan for better value and more credits included.",
-    },
-    {
-      question: "Do you offer discounts for multiple locations?",
-      answer:
-        "Yes! Contact us for custom pricing when you have multiple restaurant locations. Business plans include unlimited locations.",
-    },
-    {
-      question: "Is there a setup fee?",
-      answer:
-        "No setup fees! All plans include a 14-day free trial and we'll help you get started at no additional cost.",
-    },
-  ];
+  const getYearlyDiscount = (monthlyPrice: number) => {
+    return Math.round(monthlyPrice * 12 * 0.2); // 20% discount
+  };
+
+  const getYearlyPrice = (monthlyPrice: number) => {
+    return Math.round(monthlyPrice * 12 * 0.8); // 20% discount
+  };
+
+  const handlePlanSelect = (planId: string) => {
+    setSelectedPlan(planId);
+    // Redirect to checkout or signup
+    if (planId === "free") {
+      window.location.href = "/auth/signup?plan=free";
+    } else {
+      window.location.href = `/onboarding/payment?plan=${planId}&period=${billingPeriod}`;
+    }
+  };
+
+  const handleManageSubscription = () => {
+    window.location.href = "/client/premium";
+  };
 
   return (
     <>
       <Head>
-        <title>Pricing - ShivehView</title>
+        <title>
+          Pricing - Shivehview | AI-Powered Business Display Platform
+        </title>
         <meta
           name="description"
-          content="Choose the perfect AI-powered plan for your restaurant"
+          content="Choose the perfect Shivehview plan for your business. From free forever to enterprise solutions with AI-powered content creation, digital signage, and analytics."
         />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <meta
+          name="keywords"
+          content="business digital signage, AI content creation, business technology, digital display, TV management, Shivehview pricing"
+        />
+        <meta
+          property="og:title"
+          content="Pricing - Shivehview | AI-Powered Business Display Platform"
+        />
+        <meta
+          property="og:description"
+          content="Choose the perfect Shivehview plan for your business. From free forever to enterprise solutions with AI-powered content creation."
+        />
+        <meta
+          property="og:image"
+          content="https://shivehview.com/Shivehview%20Transparent%20Logo.png"
+        />
+        <meta property="og:url" content="https://shivehview.com/pricing" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="Pricing - Shivehview | AI-Powered Business Display Platform"
+        />
+        <meta
+          name="twitter:description"
+          content="Choose the perfect Shivehview plan for your business. From free forever to enterprise solutions."
+        />
+        <link rel="canonical" href="https://shivehview.com/pricing" />
+        <link rel="icon" href="/Shivehview Transparent Logo.png" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Link href="/" className="flex items-center gap-2">
-                <Eye className="h-8 w-8 text-purple-600" />
-                <span className="text-xl font-bold text-gray-900 tracking-tight">
-                  ShivehView
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center gap-2 mb-4">
+                <img
+                  src="/Shivehview Transparent Logo.png"
+                  alt="Shivehview Logo"
+                  className="h-8 w-auto"
+                />
+                <span className="text-xl font-bold tracking-tight">
+                  Shivehview
                 </span>
-              </Link>
-              <div className="flex items-center space-x-4">
+              </div>
+              <nav className="flex space-x-6">
                 <Link
                   href="/"
-                  className="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-purple-600 transition-colors"
                 >
                   Home
                 </Link>
                 <Link
                   href="/about"
-                  className="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-purple-600 transition-colors"
                 >
                   About
                 </Link>
-                <Link
-                  href="/demo"
-                  className="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Demo
+                <Link href="/pricing" className="text-purple-600 font-medium">
+                  Pricing
                 </Link>
                 <Link
+                  href="/blog"
+                  className="text-gray-600 hover:text-purple-600 transition-colors"
+                >
+                  Blog
+                </Link>
+              </nav>
+              <div className="flex items-center space-x-4">
+                <a
                   href="/auth/signin"
-                  className="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-gray-900"
                 >
                   Sign In
-                </Link>
-                <Link
+                </a>
+                <button
+                  onClick={handleManageSubscription}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Manage Subscription
+                </button>
+                <a
                   href="/auth/signup"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:from-purple-700 hover:to-pink-700"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Get Started
-                </Link>
+                </a>
               </div>
             </div>
           </div>
-        </nav>
+        </div>
 
-        {/* Hero Section */}
-        <section className="pt-20 pb-16 bg-gradient-to-br from-purple-600 via-pink-600 to-yellow-400 relative overflow-hidden">
-          <div className="absolute inset-0 bg-black/20"></div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="mb-6"
-              >
-                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/20 text-white backdrop-blur-sm border border-white/30">
-                  <Brain className="w-4 h-4 mr-2" />
-                  AI-Powered Pricing
-                </span>
-              </motion.div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          {/* Hero Section */}
+          <div className="text-center mb-16">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-4xl md:text-6xl font-bold text-gray-900 mb-6"
+            >
+              Choose Your Perfect Plan
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto"
+            >
+              Start free and scale as you grow. All plans include our core
+              features with no hidden fees.
+            </motion.p>
 
-              <motion.h1
-                className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
+            {/* Billing Toggle */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center justify-center space-x-4 mb-8"
+            >
+              <span
+                className={`text-sm font-medium ${
+                  billingPeriod === "month" ? "text-gray-900" : "text-gray-500"
+                }`}
               >
-                Simple, Transparent
-                <br />
-                <span className="text-afghan-gold drop-shadow-lg">
-                  AI-Powered Pricing
-                </span>
-              </motion.h1>
-
-              <motion.p
-                className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
+                Monthly
+              </span>
+              <button
+                onClick={() =>
+                  setBillingPeriod(billingPeriod === "month" ? "year" : "month")
+                }
+                className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Choose the plan that fits your restaurant's needs. All plans
-                include AI credits and a 14-day free trial.
-              </motion.p>
-
-              {/* Billing Toggle */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-                className="flex items-center justify-center space-x-4 mb-8"
-              >
-                <span className="text-white">Monthly</span>
-                <button
-                  onClick={() =>
-                    setBillingCycle(
-                      billingCycle === "monthly" ? "yearly" : "monthly"
-                    )
-                  }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    billingCycle === "yearly" ? "bg-afghan-gold" : "bg-white/30"
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    billingPeriod === "year" ? "translate-x-6" : "translate-x-1"
                   }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      billingCycle === "yearly"
-                        ? "translate-x-6"
-                        : "translate-x-1"
-                    }`}
-                  />
-                </button>
-                <span className="text-white">Yearly</span>
-                <span className="bg-afghan-gold text-white px-3 py-1 rounded-full text-sm font-semibold">
+                />
+              </button>
+              <span
+                className={`text-sm font-medium ${
+                  billingPeriod === "year" ? "text-gray-900" : "text-gray-500"
+                }`}
+              >
+                Yearly
+                <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   Save 20%
                 </span>
-              </motion.div>
-            </div>
+              </span>
+            </motion.div>
           </div>
-        </section>
 
-        {/* AI Features Section */}
-        <section className="py-20 bg-gradient-to-r from-purple-50 to-indigo-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <motion.h2
-                className="text-4xl font-bold text-gray-900 mb-4"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-              >
-                AI-Powered Features Included
-              </motion.h2>
-              <motion.p
-                className="text-xl text-gray-600 max-w-2xl mx-auto"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
-                Every plan includes our advanced AI technology to enhance your
-                restaurant experience
-              </motion.p>
-            </div>
+          {/* Plans Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            {plans.map((plan, index) => {
+              const Icon = plan.icon;
+              const price =
+                plan.price === 0
+                  ? 0
+                  : billingPeriod === "year"
+                  ? getYearlyPrice(plan.price)
+                  : plan.price;
+              const originalPrice =
+                plan.price === 0
+                  ? 0
+                  : billingPeriod === "year"
+                  ? plan.price * 12
+                  : plan.price;
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {aiFeatures.map((feature, index) => (
+              return (
                 <motion.div
-                  key={index}
-                  className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                >
-                  <div className="inline-flex p-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white mb-4">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing Plans */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {plans.map((plan, index) => (
-                <motion.div
-                  key={index}
-                  className={`relative bg-white p-8 rounded-2xl shadow-lg border-2 ${
-                    plan.popular ? "border-afghan-green scale-105" : plan.color
-                  } hover:shadow-xl transition-all duration-300`}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: index * 0.1 }}
-                  viewport={{ once: true }}
+                  key={plan.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
+                    plan.popular ? "border-purple-500" : "border-gray-200"
+                  } ${plan.recommended ? "ring-2 ring-blue-500" : ""}`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-afghan-green text-white px-6 py-2 rounded-full text-sm font-semibold flex items-center">
-                        <Star className="w-4 h-4 mr-1" />
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
                         Most Popular
                       </span>
                     </div>
                   )}
-
-                  <div className="text-center mb-8">
-                    <div className="inline-flex p-3 rounded-xl bg-gradient-to-r from-afghan-green to-purple-600 text-white mb-4">
-                      {plan.icon}
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                      {plan.name}
-                    </h3>
-                    <p className="text-gray-600 mb-6">{plan.description}</p>
-
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold text-gray-900">
-                        $
-                        {billingCycle === "monthly"
-                          ? plan.monthlyPrice
-                          : plan.yearlyPrice}
+                  {plan.recommended && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                        Recommended
                       </span>
-                      <span className="text-gray-600">
-                        /{billingCycle === "monthly" ? "month" : "year"}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 mb-6">
-                      <div className="text-afghan-green font-semibold text-lg">
-                        {plan.slides}
-                      </div>
-                      <div className="text-purple-600 font-semibold text-sm">
-                        {plan.aiCredits}
-                      </div>
-                    </div>
-                  </div>
-
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start">
-                        <Check className="w-5 h-5 text-afghan-green mr-3 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {plan.aiFeatures && (
-                    <div className="mb-8 p-4 bg-purple-50 rounded-lg">
-                      <h4 className="font-semibold text-purple-800 mb-2 flex items-center">
-                        <Brain className="w-4 h-4 mr-2" />
-                        AI Features
-                      </h4>
-                      <ul className="space-y-1">
-                        {plan.aiFeatures.map((aiFeature, aiIndex) => (
-                          <li
-                            key={aiIndex}
-                            className="text-purple-700 text-sm flex items-center"
-                          >
-                            <Sparkles className="w-3 h-3 mr-2" />
-                            {aiFeature}
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   )}
 
-                  <Link
-                    href="/auth/signup"
-                    className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 ${
-                      plan.popular
-                        ? "bg-afghan-green text-white hover:bg-afghan-green/90"
-                        : "bg-gray-100 text-gray-900 hover:bg-gray-200"
-                    }`}
-                  >
-                    Get Started
-                  </Link>
+                  <div className="p-8">
+                    <div className="text-center mb-6">
+                      <div
+                        className={`w-16 h-16 ${plan.color} rounded-xl flex items-center justify-center mx-auto mb-4`}
+                      >
+                        <Icon className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                        {plan.name}
+                      </h3>
+                      <p className="text-gray-600 mb-4">{plan.description}</p>
+
+                      <div className="mb-6">
+                        <div className="flex items-baseline justify-center">
+                          <span className="text-4xl font-bold text-gray-900">
+                            ${price}
+                          </span>
+                          {plan.price > 0 && (
+                            <span className="text-gray-500 ml-1">
+                              /{billingPeriod === "year" ? "year" : "month"}
+                            </span>
+                          )}
+                        </div>
+                        {billingPeriod === "year" && plan.price > 0 && (
+                          <div className="flex items-center justify-center mt-2">
+                            <span className="text-sm text-gray-500 line-through">
+                              ${originalPrice}
+                            </span>
+                            <span className="text-sm text-green-600 ml-2">
+                              Save ${getYearlyDiscount(plan.price)}
+                            </span>
+                          </div>
+                        )}
+                        {plan.price === 0 && (
+                          <span className="text-sm text-gray-500">
+                            No credit card required
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 mb-8">
+                      <h4 className="font-semibold text-gray-900 mb-3">
+                        What's included:
+                      </h4>
+                      {plan.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} className="flex items-center">
+                          <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                          <span className="text-sm text-gray-700">
+                            {feature}
+                          </span>
+                        </div>
+                      ))}
+                      {plan.limitations.map((limitation, limitationIndex) => (
+                        <div
+                          key={limitationIndex}
+                          className="flex items-center"
+                        >
+                          <X className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
+                          <span className="text-sm text-gray-500">
+                            {limitation}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => handlePlanSelect(plan.id)}
+                      className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+                        plan.popular
+                          ? "bg-purple-600 text-white hover:bg-purple-700"
+                          : plan.recommended
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                      }`}
+                    >
+                      {plan.price === 0
+                        ? "Get Started Free"
+                        : `Start ${plan.name}`}
+                    </button>
+                  </div>
                 </motion.div>
-              ))}
+              );
+            })}
+          </div>
+
+          {/* Features Comparison */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+              Compare Features
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900">
+                      Feature
+                    </th>
+                    <th className="text-center py-4 px-6 font-semibold text-gray-900">
+                      Free
+                    </th>
+                    <th className="text-center py-4 px-6 font-semibold text-gray-900">
+                      Starter
+                    </th>
+                    <th className="text-center py-4 px-6 font-semibold text-gray-900">
+                      Professional
+                    </th>
+                    <th className="text-center py-4 px-6 font-semibold text-gray-900">
+                      Unlimited
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {features.map((feature, index) => {
+                    const Icon = feature.icon;
+                    return (
+                      <tr key={index} className="border-b border-gray-100">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center">
+                            <Icon className="w-5 h-5 text-gray-500 mr-3" />
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {feature.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {feature.description}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-center py-4 px-6">
+                          <span className="text-sm text-gray-700">
+                            {feature.plans.free}
+                          </span>
+                        </td>
+                        <td className="text-center py-4 px-6">
+                          <span className="text-sm text-gray-700">
+                            {feature.plans.starter}
+                          </span>
+                        </td>
+                        <td className="text-center py-4 px-6">
+                          <span className="text-sm text-gray-700">
+                            {feature.plans.professional}
+                          </span>
+                        </td>
+                        <td className="text-center py-4 px-6">
+                          <span className="text-sm text-gray-700">
+                            {feature.plans.unlimited}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
-        </section>
 
-        {/* FAQ Section */}
-        <section className="py-20 bg-gray-50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <motion.h2
-                className="text-4xl font-bold text-gray-900 mb-4"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-              >
-                Frequently Asked Questions
-              </motion.h2>
-              <motion.p
-                className="text-xl text-gray-600"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
-                Everything you need to know about our AI-powered pricing
-              </motion.p>
-            </div>
-
-            <div className="space-y-6">
-              {faqs.map((faq, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-white p-6 rounded-2xl shadow-lg"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                >
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    {faq.question}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
-                </motion.div>
-              ))}
+          {/* FAQ Section */}
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">
+              Frequently Asked Questions
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Can I change plans anytime?
+                </h3>
+                <p className="text-gray-600">
+                  Yes, you can upgrade or downgrade your plan at any time.
+                  Changes take effect immediately.
+                </p>
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Is there a free trial?
+                </h3>
+                <p className="text-gray-600">
+                  Yes, all paid plans come with a 14-day free trial. No credit
+                  card required to start.
+                </p>
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  What payment methods do you accept?
+                </h3>
+                <p className="text-gray-600">
+                  We accept all major credit cards, debit cards, and PayPal. All
+                  payments are processed securely.
+                </p>
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Can I cancel anytime?
+                </h3>
+                <p className="text-gray-600">
+                  Yes, you can cancel your subscription at any time. You'll
+                  continue to have access until the end of your billing period.
+                </p>
+              </div>
             </div>
           </div>
-        </section>
 
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-afghan-green to-afghan-red">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <motion.h2
-              className="text-4xl font-bold text-white mb-4"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-            >
-              Ready to Transform Your Restaurant?
-            </motion.h2>
-            <motion.p
-              className="text-xl text-white/90 mb-8 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              Start your 14-day free trial today and experience the power of
-              AI-powered cultural displays.
-            </motion.p>
+          {/* CTA Section */}
+          <div className="text-center">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              viewport={{ once: true }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white"
             >
+              <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+              <p className="text-xl mb-6 opacity-90">
+                Join thousands of businesses using Shivehview to create amazing
+                slideshows.
+              </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
+                <a
                   href="/auth/signup"
-                  className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-afghan-green bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300 transform hover:scale-105"
+                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
                 >
                   Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-                <Link
+                </a>
+                <a
                   href="/demo"
-                  className="inline-flex items-center px-8 py-4 border-2 border-white text-lg font-medium rounded-lg text-white hover:bg-white hover:text-afghan-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300 transform hover:scale-105"
+                  className="border-2 border-white text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-blue-600 transition-colors"
                 >
-                  View Live Demo
-                </Link>
+                  Watch Demo
+                </a>
               </div>
             </motion.div>
           </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div>
-                <h3 className="text-2xl font-bold mb-4">ShivehView</h3>
-                <p className="text-gray-400">
-                  AI-powered platform transforming restaurants into cultural
-                  experiences through beautiful digital displays.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Product</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <Link
-                      href="/"
-                      className="hover:text-white transition-colors"
-                    >
-                      Home
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/pricing"
-                      className="hover:text-white transition-colors"
-                    >
-                      Pricing
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/demo"
-                      className="hover:text-white transition-colors"
-                    >
-                      Live Demo
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Company</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <Link
-                      href="/about"
-                      className="hover:text-white transition-colors"
-                    >
-                      About Us
-                    </Link>
-                  </li>
-                  <li>
-                    <a
-                      href="mailto:contact@shivehview.com"
-                      className="hover:text-white transition-colors"
-                    >
-                      Contact
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="mailto:support@shivehview.com"
-                      className="hover:text-white transition-colors"
-                    >
-                      Support
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Legal</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Privacy Policy
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Terms of Service
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Cookie Policy
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-              <p>
-                &copy; 2024 ShivehView. All rights reserved. Built & Maintained
-                by{" "}
-                <a
-                  href="https://shivehagency.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-afghan-green hover:text-afghan-gold transition-colors font-semibold"
-                >
-                  SHIVEH
-                </a>
-              </p>
+        </div>
+        <div className="border-t border-gray-800 mt-8 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center text-gray-400">
+            <p>
+              &copy; 2024 Shivehview. All rights reserved. Built & Maintained by{" "}
+              <a
+                href="https://shivehagency.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-pink-400 font-semibold"
+              >
+                SHIVEH
+              </a>
+            </p>
+            <div className="flex space-x-6 mt-4 md:mt-0">
+              <Link href="/privacy-policy" className="hover:text-white text-sm">
+                Privacy Policy
+              </Link>
+              <Link
+                href="/terms-of-service"
+                className="hover:text-white text-sm"
+              >
+                Terms of Service
+              </Link>
+              <Link href="/cookie-policy" className="hover:text-white text-sm">
+                Cookie Policy
+              </Link>
             </div>
           </div>
-        </footer>
+        </div>
       </div>
     </>
   );

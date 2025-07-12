@@ -1,38 +1,134 @@
 import React, { useState, useEffect } from "react";
-import { Fact } from "./types";
-import { SlideshowSettings } from "../shared/types";
-import { DEFAULT_SETTINGS } from "../shared/constants";
-import SettingsPanel from "../shared/SettingsPanel";
-import WizardStepper from "../shared/WizardStepper";
+import { motion } from "framer-motion";
+import { CheckCircle, XCircle, Clock, Sparkles } from "lucide-react";
 import FactGenerationStep from "./FactGenerationStep";
+import SettingsStep from "./SettingsStep";
+import { Fact } from "./types";
+import { useToastNotifications } from "../../../lib/toast-utils";
 
 interface AiFactsSlideshowWizardProps {
   step?: number;
-  formData: any;
-  updateFormData: (data: any) => void;
-  onComplete: (data: any) => void;
+  formData?: any;
+  updateFormData?: (data: any) => void;
+  onComplete?: (data: any) => void;
   onBack?: () => void;
   isEditing?: boolean;
   initialData?: any;
 }
 
-const steps = [
-  {
-    id: "generate",
-    label: "Generate Facts",
-    description: "Create Afghan culture facts",
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    description: "Configure slideshow and music",
-  },
-  {
-    id: "preview",
-    label: "Preview & Create",
-    description: "Review and finish",
-  },
-];
+// Helper function to safely encode UTF-8 strings to base64
+function utf8ToBase64(str: string): string {
+  if (typeof window !== "undefined") {
+    // Browser environment
+    return btoa(unescape(encodeURIComponent(str)));
+  } else {
+    // Node.js environment
+    return Buffer.from(str, "utf8").toString("base64");
+  }
+}
+
+// Helper function to create SVG for AI facts
+function createFactSVG(fact: Fact): string {
+  // Clean the text to remove any problematic characters for SVG
+  const cleanText = fact.text
+    .replace(/[^\x00-\x7F]/g, (char) => {
+      // Replace non-ASCII characters with HTML entities or safe alternatives
+      const entityMap: { [key: string]: string } = {
+        "🎨": "🎨",
+        "🍽️": "🍽️",
+        "🏔️": "🏔️",
+        "🌹": "🌹",
+        "📖": "📖",
+        "🎵": "🎵",
+        "🏛️": "🏛️",
+        "🕌": "🕌",
+        "🌙": "🌙",
+        "☀️": "☀️",
+        "⭐": "⭐",
+        "💎": "💎",
+        "🌺": "🌺",
+        "🦅": "🦅",
+        "🐪": "🐪",
+        "🏺": "🏺",
+        "🪕": "🪕",
+        "🥻": "🥻",
+        "🧿": "🧿",
+        "🕯️": "🕯️",
+      };
+      return entityMap[char] || " ";
+    })
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  const svg = `
+    <svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${
+            fact.backgroundColor || "#1f2937"
+          };stop-opacity:1" />
+          <stop offset="100%" style="stop-color:${
+            fact.backgroundColor || "#1f2937"
+          };stop-opacity:0.8" />
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#bg)"/>
+      
+      <!-- Background pattern for visual interest -->
+      <defs>
+        <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+          <circle cx="20" cy="20" r="1" fill="${
+            fact.fontColor || "#ffffff"
+          }" opacity="0.1"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#dots)"/>
+      
+      <!-- Main text container -->
+      <foreignObject x="5%" y="10%" width="90%" height="80%">
+        <div xmlns="http://www.w3.org/1999/xhtml" 
+             style="
+               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+               font-size: ${fact.fontSize || 48}px; 
+               font-weight: 600;
+               color: ${fact.fontColor || "#ffffff"};
+               text-align: center;
+               line-height: 1.4;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+               height: 100%;
+               width: 100%;
+               padding: 40px;
+               text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+               word-wrap: break-word;
+               overflow-wrap: break-word;
+             ">
+          ${cleanText}
+        </div>
+      </foreignObject>
+      
+      <!-- Decorative elements -->
+      <circle cx="100" cy="100" r="3" fill="${
+        fact.fontColor || "#ffffff"
+      }" opacity="0.3"/>
+      <circle cx="1820" cy="980" r="3" fill="${
+        fact.fontColor || "#ffffff"
+      }" opacity="0.3"/>
+      <circle cx="100" cy="980" r="2" fill="${
+        fact.fontColor || "#ffffff"
+      }" opacity="0.2"/>
+      <circle cx="1820" cy="100" r="2" fill="${
+        fact.fontColor || "#ffffff"
+      }" opacity="0.2"/>
+    </svg>
+  `;
+
+  return svg;
+}
 
 export default function AiFactsSlideshowWizard({
   step,
@@ -43,66 +139,75 @@ export default function AiFactsSlideshowWizard({
   isEditing = false,
   initialData,
 }: AiFactsSlideshowWizardProps) {
-  const [currentStep, setCurrentStep] = useState(step ?? 0);
-  const [generatedFacts, setGeneratedFacts] = useState<Fact[]>(
-    Array.isArray(formData.facts)
-      ? formData.facts
-      : Array.isArray(initialData?.facts)
-      ? initialData.facts
-      : []
-  );
+  const [currentStep, setCurrentStep] = useState(step || 0);
+  const [generatedFacts, setGeneratedFacts] = useState<Fact[]>([]);
+  const [selectedFacts, setSelectedFacts] = useState<Set<string>>(new Set());
   const [slideshowName, setSlideshowName] = useState(
-    formData.name || initialData?.name || "AI Facts Slideshow"
+    initialData?.name || "AI Facts Slideshow"
   );
-  const [settings, setSettings] = useState<SlideshowSettings>(
-    formData.settings || initialData?.settings || DEFAULT_SETTINGS
-  );
+  const [settings, setSettings] = useState({
+    duration: 5000,
+    transition: "fade",
+    transitionDuration: 1000,
+    backgroundMusic: "",
+    musicVolume: 50,
+    musicLoop: true,
+    autoPlay: true,
+    showControls: true,
+    showProgress: true,
+    loopSlideshow: true,
+    shuffleSlides: false,
+    aspectRatio: "16:9",
+    quality: "high",
+    autoRandomFact: false,
+    randomFactInterval: 6,
+  });
   const [isCreating, setIsCreating] = useState(false);
+  const toast = useToastNotifications();
+
+  const steps = [
+    { name: "Generate Facts", description: "Create AI-generated facts" },
+    { name: "Settings", description: "Configure slideshow settings" },
+  ];
 
   useEffect(() => {
-    updateFormData({ facts: generatedFacts, name: slideshowName, settings });
-  }, [generatedFacts, slideshowName, settings, updateFormData]);
-
-  const handleFactGenerationComplete = (facts: Fact[]) => {
-    setGeneratedFacts(facts);
-    setCurrentStep(1);
-  };
+    if (initialData) {
+      setGeneratedFacts(initialData.facts || []);
+      setSelectedFacts(
+        new Set(initialData.facts?.map((f: Fact) => f.id) || [])
+      );
+      setSlideshowName(initialData.name || "AI Facts Slideshow");
+      setSettings(initialData.settings || settings);
+    }
+  }, [initialData]);
 
   const handleCreate = async () => {
     if (generatedFacts.length === 0) {
-      alert("Please generate some facts first");
+      toast.showWarning("Please generate some facts first");
       return;
     }
 
     setIsCreating(true);
 
     try {
-      // Convert facts to slides
-      const slides = generatedFacts.map((fact, index) => ({
-        id: `fact-${index}`,
-        file_path: `data:image/svg+xml;base64,${btoa(`
-          <svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
-            <rect width="100%" height="100%" fill="${
-              fact.backgroundColor || "#1f2937"
-            }"/>
-            <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" 
-                  font-family="Arial, sans-serif" font-size="48" font-weight="bold" 
-                  fill="${fact.fontColor || "#ffffff"}" text-align="center">
-              ${fact.text}
-            </text>
-          </svg>
-        `)}`,
-        name: `Fact ${index + 1}`,
-        type: "image",
-        order_index: index,
-        duration: settings.duration,
-        styling: {
-          backgroundColor: fact.backgroundColor || "#1f2937",
-          textColor: fact.fontColor || "#ffffff",
-          fontSize: fact.fontSize || 48,
-          animation: settings.transition,
-        },
-      }));
+      // Convert facts to slides using the safe SVG generation
+      const slides = generatedFacts.map((fact, index) => {
+        const svg = createFactSVG(fact);
+        return {
+          id: `fact-${index}`,
+          file_path: `data:image/svg+xml;base64,${utf8ToBase64(svg)}`,
+          name: `Fact ${index + 1}`,
+          type: "image",
+          order_index: index,
+          duration: settings.duration,
+          styling: {
+            backgroundColor: fact.backgroundColor || "#1f2937",
+            textColor: fact.fontColor || "#ffffff",
+            fontSize: fact.fontSize || 48,
+            animation: settings.transition,
+          },
+        };
+      });
 
       const slideshowData = {
         slides,
@@ -112,11 +217,13 @@ export default function AiFactsSlideshowWizard({
         facts: generatedFacts,
       };
 
-      updateFormData(slideshowData);
-      onComplete(slideshowData);
+      updateFormData?.(slideshowData);
+      onComplete?.(slideshowData);
     } catch (error) {
       console.error("Error creating AI facts slideshow:", error);
-      alert(`Error creating slideshow: ${(error as any).message || error}`);
+      toast.showError(
+        `Error creating slideshow: ${(error as any).message || error}`
+      );
     } finally {
       setIsCreating(false);
     }
@@ -153,104 +260,27 @@ export default function AiFactsSlideshowWizard({
     }
   };
 
-  // Render current step content
-  const renderStepContent = () => {
+  const renderStep = () => {
     switch (currentStep) {
       case 0:
         return (
           <FactGenerationStep
-            onComplete={handleFactGenerationComplete}
+            onComplete={(facts, settings) => {
+              setGeneratedFacts(facts);
+              setSelectedFacts(new Set(facts.map((f) => f.id)));
+              setSettings(settings);
+              handleNext();
+            }}
             onBack={onBack || (() => {})}
           />
         );
       case 1:
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SettingsPanel
-              settings={settings}
-              onSettingsChange={setSettings}
-              slideshowName={slideshowName}
-              onSlideshowNameChange={setSlideshowName}
-            />
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-800 mb-3">
-                Generated Facts Preview
-              </h4>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {generatedFacts.map((fact, index) => (
-                  <div key={index} className="bg-white p-3 rounded border">
-                    <div className="text-sm font-medium text-gray-800">
-                      {fact.text}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {fact.category}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-      case 2:
-        return (
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Preview</h3>
-            <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-4">
-              {generatedFacts.length > 0 ? (
-                <div
-                  className="w-full h-full flex items-center justify-center p-8"
-                  style={{
-                    backgroundColor:
-                      generatedFacts[0].backgroundColor || "#1f2937",
-                  }}
-                >
-                  <p
-                    className="text-center text-white text-2xl font-bold"
-                    style={{ color: generatedFacts[0].fontColor || "#ffffff" }}
-                  >
-                    {generatedFacts[0].text}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  No facts generated
-                </div>
-              )}
-            </div>
-            <div className="text-center mb-4">
-              <p className="text-sm text-gray-600">
-                {generatedFacts.length} fact
-                {generatedFacts.length !== 1 ? "s" : ""} •{" "}
-                {Math.round((generatedFacts.length * settings.duration) / 1000)}
-                s total
-              </p>
-            </div>
-            <div className="text-left text-gray-700 text-sm space-y-1">
-              <div>
-                <b>Name:</b> {slideshowName}
-              </div>
-              <div>
-                <b>Transition:</b> {settings.transition}
-              </div>
-              <div>
-                <b>Duration:</b> {settings.duration / 1000}s per slide
-              </div>
-              <div>
-                <b>Auto Play:</b> {settings.autoPlay ? "Yes" : "No"}
-              </div>
-              <div>
-                <b>Loop:</b> {settings.loopSlideshow ? "Yes" : "No"}
-              </div>
-              <div>
-                <b>Show Controls:</b> {settings.showControls ? "Yes" : "No"}
-              </div>
-              {settings.backgroundMusic && (
-                <div>
-                  <b>Background Music:</b> Yes
-                </div>
-              )}
-            </div>
-          </div>
+          <SettingsStep
+            facts={generatedFacts}
+            onComplete={handleCreate}
+            onBack={handleBack}
+          />
         );
       default:
         return null;
@@ -259,20 +289,110 @@ export default function AiFactsSlideshowWizard({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto p-6">{renderStepContent()}</div>
+      <div className="flex-1 overflow-y-auto p-6 pb-0">
+        <div className="max-w-4xl mx-auto">
+          {/* Progress Steps */}
+          <div className="mb-8">
+            <nav aria-label="Progress">
+              <ol className="flex items-center space-x-4">
+                {steps.map((step, index) => (
+                  <li key={step.name} className="flex items-center">
+                    <button
+                      onClick={() => handleStepClick(index)}
+                      className={`flex items-center space-x-2 ${
+                        index <= currentStep
+                          ? "text-blue-600 hover:text-blue-800"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          index < currentStep
+                            ? "bg-green-500 text-white"
+                            : index === currentStep
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 text-gray-600"
+                        }`}
+                      >
+                        {index < currentStep ? (
+                          <CheckCircle className="w-5 h-5" />
+                        ) : (
+                          <span className="text-sm font-medium">
+                            {index + 1}
+                          </span>
+                        )}
+                      </div>
+                      <div className="hidden sm:block">
+                        <p className="text-sm font-medium">{step.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {step.description}
+                        </p>
+                      </div>
+                    </button>
+                    {index < steps.length - 1 && (
+                      <div className="ml-4 h-0.5 w-8 bg-gray-200" />
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </div>
 
-      <WizardStepper
-        steps={steps}
-        currentStep={currentStep}
-        onStepClick={handleStepClick}
-        canGoNext={canGoNext()}
-        canGoBack={canGoBack}
-        onNext={handleNext}
-        onBack={handleBack}
-        onComplete={handleCreate}
-        isCreating={isCreating}
-        createButtonText={isEditing ? "Update Slideshow" : "Create Slideshow"}
-      />
+          {/* Step Content */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            {renderStep()}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer with navigation buttons */}
+      <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onBack}
+            className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+          >
+            Back
+          </button>
+
+          <div className="flex items-center gap-3">
+            {currentStep > 0 && (
+              <button
+                onClick={handleBack}
+                className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+              >
+                Previous
+              </button>
+            )}
+
+            {currentStep < steps.length - 1 ? (
+              <button
+                onClick={handleNext}
+                disabled={!canGoNext()}
+                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                  canGoNext()
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={handleCreate}
+                disabled={isCreating || !canGoNext()}
+                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                  isCreating || !canGoNext()
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-green-600 text-white hover:bg-green-700"
+                }`}
+              >
+                {isCreating ? "Creating..." : "Create Slideshow"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

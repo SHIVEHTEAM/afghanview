@@ -1,46 +1,36 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import Head from "next/head";
-import Link from "next/link";
-import AdminLayout from "../layout";
-import { useAuth } from "../../../lib/auth";
-import { supabase } from "../../../lib/supabase";
-import { ProtectedRoute } from "../../../components/auth";
+import { useRouter } from "next/router";
 import {
-  Plus,
+  Users,
   Search,
   Filter,
-  MoreVertical,
+  Plus,
   Edit,
   Trash2,
   Eye,
-  Copy,
-  Star,
-  Settings,
-  Users,
-  User,
-  Shield,
+  MoreHorizontal,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  RefreshCw,
   Building,
+  Calendar,
   Mail,
   Phone,
-  Calendar,
   CheckCircle,
   XCircle,
-  AlertTriangle,
-  Lock,
-  Unlock,
-  Send,
-  Download,
-  Upload,
-  Grid,
-  List,
-  Crown,
+  AlertCircle,
+  Shield,
   UserCheck,
   UserX,
-  Activity,
 } from "lucide-react";
 
-interface UserData {
+import { useAuth } from "../../../lib/auth";
+import { supabase } from "../../../lib/supabase";
+import AdminLayout from "../layout";
+
+interface User {
   id: string;
   email: string;
   first_name: string;
@@ -48,88 +38,80 @@ interface UserData {
   phone: string;
   avatar_url: string;
   email_verified: boolean;
-  email_verified_at: string;
-  last_login_at: string;
   is_active: boolean;
   created_at: string;
-  updated_at: string;
-  roles: Array<{
-    id: string;
-    name: string;
-    description: string;
-  }>;
-  restaurants: Array<{
-    id: string;
-    name: string;
-    role: string;
-  }>;
-  organization: {
-    id: string;
-    name: string;
-    role: string;
-  };
+  last_login_at: string;
+  business_count: number;
+  staff_roles: string[];
 }
 
 export default function AdminUsers() {
+  const router = useRouter();
   const { user } = useAuth();
-  const [users, setUsers] = useState<UserData[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [bulkAction, setBulkAction] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (user) {
+      fetchUsers();
+    }
+  }, [user, filter, sortBy, sortOrder]);
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+
+      let query = supabase
         .from("users")
-        .select(
-          `
-          *,
-          roles:user_roles(
-            role:roles(id, name, description)
-          ),
-          restaurants:restaurant_staff(
-            restaurant:restaurants(id, name),
-            role
-          ),
-          organization:organization_members(
-            organization:organizations(id, name),
-            role
-          )
-        `
-        )
-        .order("created_at", { ascending: false });
+        .select("*")
+        .order(sortBy, { ascending: sortOrder === "asc" });
+
+      // Apply filters
+      if (filter === "active") {
+        query = query.eq("is_active", true);
+      } else if (filter === "inactive") {
+        query = query.eq("is_active", false);
+      } else if (filter === "verified") {
+        query = query.eq("email_verified", true);
+      } else if (filter === "unverified") {
+        query = query.eq("email_verified", false);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      // Transform the data to flatten the structure
-      const transformedUsers = (data || []).map((user) => ({
-        ...user,
-        roles: user.roles?.map((r: any) => r.role) || [],
-        restaurants:
-          user.restaurants?.map((r: any) => ({
-            id: r.restaurant.id,
-            name: r.restaurant.name,
-            role: r.role,
-          })) || [],
-        organization: user.organization?.[0]
-          ? {
-              id: user.organization[0].organization.id,
-              name: user.organization[0].organization.name,
-              role: user.organization[0].role,
-            }
-          : null,
-      }));
+      // Get additional data for each user
+      const usersWithDetails = await Promise.all(
+        (data || []).map(async (user) => {
+          const [businessCount, staffRoles] = await Promise.all([
+            supabase
+              .from("business_staff")
+              .select("*", { count: "exact", head: true })
+              .eq("user_id", user.id),
+            supabase
+              .from("business_staff")
+              .select("role")
+              .eq("user_id", user.id),
+          ]);
 
-      setUsers(transformedUsers);
+          return {
+            ...user,
+            business_count: businessCount.count || 0,
+            staff_roles: [
+              ...new Set(staffRoles.data?.map((s) => s.role) || []),
+            ],
+          };
+        })
+      );
+
+      setUsers(usersWithDetails);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
@@ -137,741 +119,418 @@ export default function AdminUsers() {
     }
   };
 
-  const filteredUsers = users.filter((userData) => {
-    const matchesSearch =
-      userData.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      userData.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      userData.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole =
-      selectedRole === "all" ||
-      userData.roles.some((role) => role.name === selectedRole);
-    const matchesStatus =
-      selectedStatus === "all" ||
-      (selectedStatus === "active" && userData.is_active) ||
-      (selectedStatus === "verified" && userData.email_verified);
-
-    return matchesSearch && matchesRole && matchesStatus;
-  });
-
-  const handleBulkAction = async () => {
-    if (!selectedUsers.length || !bulkAction) return;
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
 
     try {
-      switch (bulkAction) {
-        case "activate":
-          await supabase
-            .from("users")
-            .update({ is_active: true })
-            .in("id", selectedUsers);
-          break;
-        case "deactivate":
-          await supabase
-            .from("users")
-            .update({ is_active: false })
-            .in("id", selectedUsers);
-          break;
-        case "verify":
-          await supabase
-            .from("users")
-            .update({
-              email_verified: true,
-              email_verified_at: new Date().toISOString(),
-            })
-            .in("id", selectedUsers);
-          break;
-        case "delete":
-          await supabase.from("users").delete().in("id", selectedUsers);
-          break;
-      }
+      // Delete related records first
+      await Promise.all([
+        supabase.from("business_staff").delete().eq("user_id", selectedUser.id),
+        supabase
+          .from("analytics_events")
+          .delete()
+          .eq("user_id", selectedUser.id),
+        supabase
+          .from("auto_generation_settings")
+          .delete()
+          .eq("user_id", selectedUser.id),
+      ]);
 
-      setSelectedUsers([]);
-      setBulkAction("");
+      // Delete the user
+      const { error } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", selectedUser.id);
+
+      if (error) throw error;
+
+      setShowDeleteModal(false);
+      setSelectedUser(null);
       fetchUsers();
     } catch (error) {
-      console.error("Error performing bulk action:", error);
+      console.error("Error deleting user:", error);
     }
   };
 
-  const getUserRoleIcon = (roles: any[]) => {
-    if (roles.some((role) => role.name === "admin"))
-      return <Shield className="h-4 w-4 text-pink-500" />;
-    if (roles.some((role) => role.name === "owner"))
-      return <Crown className="h-4 w-4 text-yellow-500" />;
-    if (roles.some((role) => role.name === "manager"))
-      return <UserCheck className="h-4 w-4 text-blue-500" />;
-    return <User className="h-4 w-4 text-gray-500" />;
+  const handleToggleStatus = async (userId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ is_active: !isActive })
+        .eq("id", userId);
+
+      if (error) throw error;
+      fetchUsers();
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
   };
 
-  const getUserRoleColor = (roles: any[]) => {
-    if (roles.some((role) => role.name === "admin"))
-      return "bg-pink-100 text-red-800";
-    if (roles.some((role) => role.name === "owner"))
-      return "bg-yellow-100 text-yellow-800";
-    if (roles.some((role) => role.name === "manager"))
-      return "bg-blue-100 text-blue-800";
-    return "bg-gray-100 text-gray-800";
+  const handleToggleVerification = async (
+    userId: string,
+    isVerified: boolean
+  ) => {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({
+          email_verified: !isVerified,
+          email_verified_at: !isVerified ? new Date().toISOString() : null,
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+      fetchUsers();
+    } catch (error) {
+      console.error("Error updating user verification:", error);
+    }
   };
 
-  const getUserRoleText = (roles: any[]) => {
-    if (roles.some((role) => role.name === "admin")) return "Admin";
-    if (roles.some((role) => role.name === "owner")) return "Owner";
-    if (roles.some((role) => role.name === "manager")) return "Manager";
-    return "User";
+  const filteredUsers = users.filter(
+    (user) =>
+      user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case "owner":
+        return "text-purple-600 bg-purple-100";
+      case "manager":
+        return "text-blue-600 bg-blue-100";
+      case "staff":
+        return "text-green-600 bg-green-100";
+      default:
+        return "text-gray-600 bg-gray-100";
+    }
+  };
 
   return (
-    <ProtectedRoute requiredRole="admin">
-      <AdminLayout>
-        <Head>
-          <title>Users Management - ShivehView Admin</title>
-          <meta name="description" content="Manage all users in the system" />
-        </Head>
+    <AdminLayout>
+      <Head>
+        <title>User Management - Admin Dashboard</title>
+        <meta name="description" content="Manage users in AfghanView" />
+      </Head>
 
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Users Management
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage all users, admins, and restaurant staff
-              </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              User Management
+            </h1>
+            <p className="text-gray-600 mt-2">Manage all users in the system</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={fetchUsers}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => router.push("/admin/users/new")}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add User</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
-            <div className="flex space-x-3">
-              <Link
-                href="/admin/users/add"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
+            <div className="flex items-center space-x-4">
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Add User
-              </Link>
-              <Link
-                href="/admin/users/roles"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
+                <option value="all">All Users</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="verified">Email Verified</option>
+                <option value="unverified">Email Unverified</option>
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <Shield className="h-4 w-4 mr-2" />
-                Roles
-              </Link>
+                <option value="created_at">Created Date</option>
+                <option value="first_name">First Name</option>
+                <option value="last_name">Last Name</option>
+                <option value="email">Email</option>
+                <option value="is_active">Status</option>
+              </select>
+              <button
+                onClick={() =>
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                {sortOrder === "asc" ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white p-6 rounded-lg shadow"
-            >
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">
-                    Total Users
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.length}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white p-6 rounded-lg shadow"
-            >
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <UserCheck className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">
-                    Active Users
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.filter((u) => u.is_active).length}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white p-6 rounded-lg shadow"
-            >
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Shield className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Admins</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {
-                      users.filter((u) =>
-                        u.roles.some((role) => role.name === "admin")
-                      ).length
-                    }
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white p-6 rounded-lg shadow"
-            >
-              <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Crown className="h-6 w-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">
-                    Restaurant Owners
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {
-                      users.filter((u) =>
-                        u.roles.some((role) => role.name === "owner")
-                      ).length
-                    }
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Filters and Search */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-              <div className="flex-1 max-w-lg">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search users..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-afghan-green focus:border-afghan-green"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center border border-gray-300 rounded-md">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2 ${
-                      viewMode === "grid"
-                        ? "bg-afghan-green text-white"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    <Grid className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`p-2 ${
-                      viewMode === "list"
-                        ? "bg-afghan-green text-white"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    <List className="h-4 w-4" />
-                  </button>
-                </div>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                </button>
-              </div>
+        {/* Users List */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading users...</p>
             </div>
-
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mt-4 pt-4 border-t border-gray-200"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Role
-                    </label>
-                    <select
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    >
-                      <option value="all">All Roles</option>
-                      <option value="admin">Admin</option>
-                      <option value="owner">Owner</option>
-                      <option value="manager">Manager</option>
-                      <option value="staff">Staff</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
-                    </label>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="active">Active</option>
-                      <option value="verified">Verified</option>
-                    </select>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedUsers.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-blue-800">
-                  {selectedUsers.length} user(s) selected
-                </p>
-                <div className="flex items-center space-x-3">
-                  <select
-                    value={bulkAction}
-                    onChange={(e) => setBulkAction(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-                  >
-                    <option value="">Select Action</option>
-                    <option value="activate">Activate</option>
-                    <option value="deactivate">Deactivate</option>
-                    <option value="verify">Verify Email</option>
-                    <option value="delete">Delete</option>
-                  </select>
-                  <button
-                    onClick={handleBulkAction}
-                    disabled={!bulkAction}
-                    className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    Apply
-                  </button>
-                  <button
-                    onClick={() => setSelectedUsers([])}
-                    className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm hover:bg-gray-700"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Users Grid/List */}
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredUsers.map((userData) => (
-                <motion.div
-                  key={userData.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
-                >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-2">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUserRoleColor(
-                            userData.roles
-                          )}`}
-                        >
-                          {getUserRoleIcon(userData.roles)}
-                          <span className="ml-1">
-                            {getUserRoleText(userData.roles)}
-                          </span>
-                        </span>
-                        {userData.email_verified && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(userData.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedUsers([...selectedUsers, userData.id]);
-                          } else {
-                            setSelectedUsers(
-                              selectedUsers.filter((id) => id !== userData.id)
-                            );
-                          }
-                        }}
-                        className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                      />
-                    </div>
-
-                    <div className="flex items-center space-x-4 mb-4">
-                      <div className="flex-shrink-0">
-                        {userData.avatar_url ? (
-                          <img
-                            src={userData.avatar_url}
-                            alt={`${userData.first_name} ${userData.last_name}`}
-                            className="h-12 w-12 rounded-full"
-                          />
-                        ) : (
-                          <div className="h-12 w-12 rounded-full bg-afghan-green flex items-center justify-center text-white font-semibold">
-                            {userData.first_name.charAt(0)}
-                            {userData.last_name.charAt(0)}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Roles
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Businesses
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Last Login
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            {user.avatar_url ? (
+                              <img
+                                src={user.avatar_url}
+                                alt={`${user.first_name} ${user.last_name}`}
+                                className="w-10 h-10 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <Users className="w-5 h-5 text-blue-600" />
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {user.first_name} {user.last_name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              ID: {user.id.slice(0, 8)}...
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {user.email}
+                        </div>
+                        {user.phone && (
+                          <div className="text-sm text-gray-500">
+                            {user.phone}
                           </div>
                         )}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {userData.first_name} {userData.last_name}
-                        </h3>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              user.is_active
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {user.is_active ? "Active" : "Inactive"}
+                          </span>
+                          {user.email_verified && (
+                            <UserCheck className="w-4 h-4 text-green-600" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-wrap gap-1">
+                          {user.staff_roles.map((role) => (
+                            <span
+                              key={role}
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(
+                                role
+                              )}`}
+                            >
+                              {role}
+                            </span>
+                          ))}
+                          {user.staff_roles.length === 0 && (
+                            <span className="text-gray-500 text-xs">
+                              No roles
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-1 text-sm text-gray-500">
+                          <Building className="w-4 h-4" />
+                          <span>{user.business_count}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.last_login_at
+                          ? formatDateTime(user.last_login_at)
+                          : "Never"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() =>
+                              router.push(`/admin/users/${user.id}`)
+                            }
+                            className="p-1 text-blue-600 hover:text-blue-900"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              router.push(`/admin/users/${user.id}/edit`)
+                            }
+                            className="p-1 text-gray-600 hover:text-gray-900"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleToggleStatus(user.id, user.is_active)
+                            }
+                            className={`p-1 ${
+                              user.is_active
+                                ? "text-red-600 hover:text-red-900"
+                                : "text-green-600 hover:text-green-900"
+                            }`}
+                          >
+                            {user.is_active ? (
+                              <UserX className="w-4 h-4" />
+                            ) : (
+                              <UserCheck className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowDeleteModal(true);
+                            }}
+                            className="p-1 text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && selectedUser && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start">
+                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                      <AlertCircle className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                      <h3 className="text-lg leading-6 font-medium text-gray-900">
+                        Delete User
+                      </h3>
+                      <div className="mt-2">
                         <p className="text-sm text-gray-500">
-                          {userData.email}
+                          Are you sure you want to delete "
+                          {selectedUser.first_name} {selectedUser.last_name}"?
+                          This action cannot be undone and will remove all
+                          associated data including business associations and
+                          analytics.
                         </p>
                       </div>
                     </div>
-
-                    <div className="space-y-2 mb-4">
-                      {userData.phone && (
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Phone className="h-4 w-4 mr-2" />
-                          <span>{userData.phone}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span>
-                          Joined{" "}
-                          {new Date(userData.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {userData.last_login_at && (
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Activity className="h-4 w-4 mr-2" />
-                          <span>
-                            Last login{" "}
-                            {new Date(
-                              userData.last_login_at
-                            ).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {userData.restaurants.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">
-                          Restaurants
-                        </h4>
-                        <div className="space-y-1">
-                          {userData.restaurants
-                            .slice(0, 2)
-                            .map((restaurant) => (
-                              <div
-                                key={restaurant.id}
-                                className="flex items-center text-sm text-gray-600"
-                              >
-                                <Building className="h-3 w-3 mr-2" />
-                                <span className="truncate">
-                                  {restaurant.name}
-                                </span>
-                                <span className="ml-2 text-xs bg-gray-100 px-1 rounded">
-                                  {restaurant.role}
-                                </span>
-                              </div>
-                            ))}
-                          {userData.restaurants.length > 2 && (
-                            <p className="text-xs text-gray-500">
-                              +{userData.restaurants.length - 2} more
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        {userData.is_active ? (
-                          <CheckCircle className="h-4 w-4 text-purple-500" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        <span className="text-sm text-gray-500">
-                          {userData.is_active ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center space-x-1">
-                        <Link
-                          href={`/admin/users/${userData.id}`}
-                          className="p-1 text-gray-400 hover:text-gray-600"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                        <Link
-                          href={`/admin/users/${userData.id}/edit`}
-                          className="p-1 text-blue-600 hover:text-blue-900"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Link>
-                        <button
-                          onClick={() => {
-                            // Handle send message
-                          }}
-                          className="p-1 text-green-600 hover:text-green-900"
-                        >
-                          <Send className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedUsers.length === filteredUsers.length &&
-                            filteredUsers.length > 0
-                          }
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedUsers(filteredUsers.map((u) => u.id));
-                            } else {
-                              setSelectedUsers([]);
-                            }
-                          }}
-                          className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                        />
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Role
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Contact
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Restaurants
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Last Login
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredUsers.map((userData) => (
-                      <motion.tr
-                        key={userData.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="checkbox"
-                            checked={selectedUsers.includes(userData.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedUsers([
-                                  ...selectedUsers,
-                                  userData.id,
-                                ]);
-                              } else {
-                                setSelectedUsers(
-                                  selectedUsers.filter(
-                                    (id) => id !== userData.id
-                                  )
-                                );
-                              }
-                            }}
-                            className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
-                              {userData.avatar_url ? (
-                                <img
-                                  src={userData.avatar_url}
-                                  alt={`${userData.first_name} ${userData.last_name}`}
-                                  className="h-10 w-10 rounded-full"
-                                />
-                              ) : (
-                                <div className="h-10 w-10 rounded-full bg-afghan-green flex items-center justify-center text-white font-semibold">
-                                  {userData.first_name.charAt(0)}
-                                  {userData.last_name.charAt(0)}
-                                </div>
-                              )}
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {userData.first_name} {userData.last_name}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {userData.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUserRoleColor(
-                              userData.roles
-                            )}`}
-                          >
-                            {getUserRoleIcon(userData.roles)}
-                            <span className="ml-1">
-                              {getUserRoleText(userData.roles)}
-                            </span>
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {userData.email}
-                          </div>
-                          {userData.phone && (
-                            <div className="text-sm text-gray-500">
-                              {userData.phone}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            {userData.is_active ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Active
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                <XCircle className="h-3 w-3 mr-1" />
-                                Inactive
-                              </span>
-                            )}
-                            {userData.email_verified && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Verified
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {userData.restaurants.length} restaurant(s)
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {userData.last_login_at
-                            ? new Date(
-                                userData.last_login_at
-                              ).toLocaleDateString()
-                            : "Never"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center space-x-2">
-                            <Link
-                              href={`/admin/users/${userData.id}/slides`}
-                              className="text-afghan-green hover:text-afghan-green-dark"
-                              title="View User Slides"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                            <Link
-                              href={`/admin/users/${userData.id}/edit`}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                            <button
-                              onClick={() => {
-                                // Handle send message
-                              }}
-                              className="text-green-600 hover:text-green-900"
-                            >
-                              <Send className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
+                </div>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    onClick={handleDeleteUser}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setSelectedUser(null);
+                    }}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
-          )}
-
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
-                No users found
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {searchTerm ||
-                selectedRole !== "all" ||
-                selectedStatus !== "all"
-                  ? "Try adjusting your filters or search terms."
-                  : "Get started by adding a new user."}
-              </p>
-              {!searchTerm &&
-                selectedRole === "all" &&
-                selectedStatus === "all" && (
-                  <div className="mt-6">
-                    <Link
-                      href="/admin/users/add"
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-afghan-green"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add User
-                    </Link>
-                  </div>
-                )}
-            </div>
-          )}
-        </div>
-      </AdminLayout>
-    </ProtectedRoute>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
   );
 }

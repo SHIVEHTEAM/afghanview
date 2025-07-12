@@ -15,7 +15,6 @@ interface VideoUploadStepProps {
   isUploading: boolean;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveVideo: (id: string) => void;
-  onNext: () => void;
   formatDuration: (ms: number) => string;
 }
 
@@ -24,19 +23,18 @@ export default function VideoUploadStep({
   isUploading,
   onFileUpload,
   onRemoveVideo,
-  onNext,
   formatDuration,
 }: VideoUploadStepProps) {
   return (
-    <div className="h-full flex flex-col">
-      <div className="text-center mb-6">
+    <div className="h-full flex flex-col min-h-0">
+      <div className="text-center mb-6 flex-shrink-0">
         <h3 className="text-lg font-semibold mb-2">Upload Videos</h3>
         <p className="text-gray-600">
           Add video files to create your slideshow
         </p>
       </div>
 
-      <div className="flex-1 space-y-4">
+      <div className="flex-1 overflow-y-auto space-y-4 pb-6 min-h-0">
         {/* Upload Area */}
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
           <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -127,18 +125,6 @@ export default function VideoUploadStep({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Navigation */}
-      <div className="flex justify-end mt-6">
-        <button
-          onClick={onNext}
-          disabled={videos.length === 0}
-          className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Next
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </button>
       </div>
     </div>
   );

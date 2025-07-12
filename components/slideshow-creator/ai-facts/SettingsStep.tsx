@@ -118,22 +118,6 @@ export default function SettingsStep({
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="p-6 border-t border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            {facts.length} facts • {settings.slideDuration / 1000}s per slide
-          </div>
-          <button
-            onClick={handleComplete}
-            className="px-6 py-2 bg-gradient-to-r from-purple-600 to-emerald-600 text-white rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all flex items-center gap-2"
-          >
-            <Play className="w-4 h-4" />
-            Create Slideshow
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

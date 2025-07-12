@@ -1588,6 +1588,11 @@ export class MenuSVGGenerator {
   }
 
   private static adjustColor(color: string, amount: number): string {
+    // Handle undefined or null color values
+    if (!color) {
+      return "#000000"; // Default to black if no color provided
+    }
+
     const hex = color.replace("#", "");
     const num = parseInt(hex, 16);
     const r = Math.max(0, Math.min(255, (num >> 16) + amount));

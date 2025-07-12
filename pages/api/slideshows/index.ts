@@ -1,317 +1,80 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { authenticateRequest } from "../../../lib/auth-middleware";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Increase body size limit for video uploads
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "50mb", // Allow up to 50MB for video uploads
-    },
-  },
-};
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Authenticate all requests
-  const authenticatedReq = await authenticateRequest(req, res);
-  if (!authenticatedReq) return;
-
   if (req.method === "GET") {
-    return getSlideshows(authenticatedReq, res);
-  } else if (req.method === "POST") {
-    return createSlideshow(authenticatedReq, res);
-  } else if (req.method === "PUT") {
-    return updateSlideshow(authenticatedReq, res);
-  } else if (req.method === "DELETE") {
-    return deleteSlideshow(authenticatedReq, res);
-  } else {
-    res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-}
+    try {
+      const { businessId } = req.query;
 
-async function getSlideshows(req: any, res: NextApiResponse) {
-  try {
-    let query = supabase
-      .from("slides")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    // Restaurant owners can only see their slides
-    if (req.user?.role === "restaurant_owner") {
-      query = query.eq("restaurant_id", req.user.restaurant_id);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Database error:", error);
-      return res
-        .status(500)
-        .json({ error: "Database error", details: error.message });
-    }
-
-    // Transform slides data to match expected slideshow format
-    const transformedSlideshows = (data || []).map((slide: any) => {
-      // Extract images from content or create default structure
-      let images = [];
-
-      if (slide.content?.images && Array.isArray(slide.content.images)) {
-        images = slide.content.images;
-      } else if (slide.content?.slides && Array.isArray(slide.content.slides)) {
-        images = slide.content.slides;
-      } else if (
-        slide.original_data?.images &&
-        Array.isArray(slide.original_data.images)
-      ) {
-        images = slide.original_data.images;
-      } else if (
-        slide.original_data?.slides &&
-        Array.isArray(slide.original_data.slides)
-      ) {
-        images = slide.original_data.slides;
-      } else {
-        // Create a default image structure if none exists
-        images = [
-          {
-            id: slide.id,
-            name: slide.name,
-            type: slide.type || "image",
-            file_path: slide.content?.file_path || slide.content?.url,
-            url: slide.content?.url || slide.content?.file_path,
-          },
-        ];
+      if (!businessId) {
+        return res.status(400).json({ error: "Missing businessId" });
       }
 
-      return {
-        id: slide.id,
-        name: slide.name,
-        images: images,
-        settings: {
-          defaultDuration: slide.duration || 5000,
-          duration: slide.duration || 5000,
-          transition: slide.styling?.transition || "fade",
-          transitionDuration: slide.styling?.transitionDuration || 1000,
-          backgroundMusic:
-            slide.styling?.backgroundMusic || slide.background_music_url,
-          musicVolume: slide.styling?.musicVolume || 50,
-          musicLoop: slide.styling?.musicLoop || true,
-          autoPlay: slide.styling?.autoPlay || true,
-          showControls: slide.styling?.showControls || true,
-          showProgress: slide.styling?.showProgress || true,
-          loopSlideshow: slide.styling?.loopSlideshow || true,
-          shuffleSlides: slide.styling?.shuffleSlides || false,
-          aspectRatio: slide.styling?.aspectRatio || "16:9",
-          quality: slide.styling?.quality || "high",
-        },
-        createdAt: slide.created_at,
-        updatedAt: slide.updated_at,
-        isActive: slide.is_active || false,
-        playCount: slide.content?.playCount || 0,
-        lastPlayed: slide.content?.lastPlayed,
-        publicLink: slide.content?.publicLink,
-        slug: slide.content?.slug,
-        isFavorite: slide.content?.isFavorite || false,
-        isTemplate: slide.content?.isTemplate || false,
-        mediaType: slide.content?.mediaType || slide.type,
-        slideshowType: slide.content?.slideshowType || slide.type,
-        originalData: slide.original_data,
-      };
-    });
+      // Simple approach: Get slideshows directly
+      const { data: slideshows, error } = await supabase
+        .from("slideshows")
+        .select("*")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false });
 
-    return res.status(200).json(transformedSlideshows);
-  } catch (error) {
-    console.error("Internal server error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+      if (error) {
+        console.error("Error fetching slideshows:", error);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      return res.status(200).json(slideshows || []);
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
   }
-}
 
-async function createSlideshow(req: any, res: NextApiResponse) {
-  try {
-    const frontendData = req.body;
+  if (req.method === "POST") {
+    try {
+      const { name, description, business_id, content, settings, created_by } =
+        req.body;
 
-    // Validate required fields
-    if (!frontendData.name) {
-      return res.status(400).json({ error: "Name is required" });
+      console.log("Received slideshow creation request:", req.body);
+
+      if (!name || !business_id) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Create slideshow with all fields
+      const { data: slideshow, error } = await supabase
+        .from("slideshows")
+        .insert({
+          title: name,
+          description: description || "",
+          business_id,
+          content: content || {},
+          settings: settings || {},
+          is_active: true,
+          created_by: created_by,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating slideshow:", error);
+        return res.status(500).json({ error: "Failed to create slideshow" });
+      }
+
+      console.log("Created slideshow:", slideshow);
+      return res.status(201).json(slideshow);
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({ error: "Internal server error" });
     }
-
-    // Map frontend data to database schema
-    const slideData = {
-      name: frontendData.name,
-      type:
-        frontendData.type === "video"
-          ? "custom"
-          : frontendData.type || "custom",
-      title: frontendData.name, // Use name as title if not provided
-      subtitle: frontendData.subtitle,
-      content: {
-        slides: frontendData.slides || [],
-        settings: frontendData.settings || {},
-        mediaType: frontendData.type === "video" ? "video" : "image",
-        slideshowType: frontendData.type,
-      },
-      styling: frontendData.settings || {},
-      duration: frontendData.settings?.duration || 6000,
-      order_index: frontendData.order_index || 0,
-      is_active: frontendData.is_active !== false, // Default to true
-      is_published: frontendData.is_published || false,
-      background_music_url: frontendData.settings?.backgroundMusic,
-      original_data: frontendData.originalData || null,
-      restaurant_id: frontendData.restaurantId || frontendData.restaurant_id,
-      created_by: req.user?.id,
-      updated_by: req.user?.id,
-    };
-
-    // Ensure restaurant owners can only create slides for their restaurant
-    if (req.user?.role === "restaurant_owner") {
-      slideData.restaurant_id = req.user.restaurant_id;
-    }
-
-    console.log("Creating slide with data:", slideData);
-
-    const { data, error } = await supabase
-      .from("slides")
-      .insert(slideData)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Database error:", error);
-      return res
-        .status(500)
-        .json({ error: "Database error", details: error.message });
-    }
-
-    return res.status(201).json(data);
-  } catch (error) {
-    console.error("Internal server error:", error);
-    return res.status(500).json({ error: "Internal server error" });
   }
-}
 
-async function updateSlideshow(req: any, res: NextApiResponse) {
-  try {
-    const { id, ...frontendData } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ error: "Slide ID is required" });
-    }
-
-    // Check if user has permission to update this slide
-    const { data: existingSlide, error: fetchError } = await supabase
-      .from("slides")
-      .select("restaurant_id, created_by")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !existingSlide) {
-      return res.status(404).json({ error: "Slide not found" });
-    }
-
-    // Restaurant owners can only update their own slides
-    if (
-      req.user?.role === "restaurant_owner" &&
-      existingSlide.restaurant_id !== req.user.restaurant_id
-    ) {
-      return res.status(403).json({ error: "Insufficient permissions" });
-    }
-
-    // Map frontend data to database schema
-    const updateData = {
-      name: frontendData.name,
-      title: frontendData.name,
-      subtitle: frontendData.subtitle,
-      type:
-        frontendData.type === "video"
-          ? "custom"
-          : frontendData.type || "custom",
-      content: {
-        slides: frontendData.slides || [],
-        settings: frontendData.settings || {},
-        mediaType: frontendData.type === "video" ? "video" : "image",
-        slideshowType: frontendData.type,
-      },
-      styling: frontendData.settings || {},
-      duration: frontendData.settings?.duration || 6000,
-      order_index: frontendData.order_index || 0,
-      is_active: frontendData.is_active !== false,
-      is_published: frontendData.is_published || false,
-      background_music_url: frontendData.settings?.backgroundMusic,
-      original_data: frontendData.originalData || null,
-      updated_by: req.user?.id,
-      updated_at: new Date().toISOString(),
-    };
-
-    console.log("Updating slide with data:", updateData);
-
-    const { data, error } = await supabase
-      .from("slides")
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Database error:", error);
-      return res
-        .status(500)
-        .json({ error: "Database error", details: error.message });
-    }
-
-    return res.status(200).json(data);
-  } catch (error) {
-    console.error("Internal server error:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-}
-
-async function deleteSlideshow(req: any, res: NextApiResponse) {
-  try {
-    const { id } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ error: "Slide ID is required" });
-    }
-
-    // Check if user has permission to delete this slide
-    const { data: existingSlide, error: fetchError } = await supabase
-      .from("slides")
-      .select("restaurant_id, created_by")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !existingSlide) {
-      return res.status(404).json({ error: "Slide not found" });
-    }
-
-    // Restaurant owners can only delete their own slides
-    if (
-      req.user?.role === "restaurant_owner" &&
-      existingSlide.restaurant_id !== req.user.restaurant_id
-    ) {
-      return res.status(403).json({ error: "Insufficient permissions" });
-    }
-
-    const { error } = await supabase.from("slides").delete().eq("id", id);
-
-    if (error) {
-      console.error("Database error:", error);
-      return res
-        .status(500)
-        .json({ error: "Database error", details: error.message });
-    }
-
-    return res.status(200).json({ message: "Slide deleted successfully" });
-  } catch (error) {
-    console.error("Internal server error:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
+  return res.status(405).json({ error: "Method not allowed" });
 }

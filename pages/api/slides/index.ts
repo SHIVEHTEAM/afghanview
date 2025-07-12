@@ -34,16 +34,19 @@ export default async function handler(
 
   if (req.method === "GET") {
     try {
-      // Only admins can see all slides, restaurant owners see only their slides
+      // Only admins can see all slides, business owners see only their slides
       let query = supabase.from("slides").select(
         `
           *,
-          restaurant:restaurants(id, name, slug)
+          business:businesses(id, name, slug)
         `
       );
 
-      if (authenticatedReq.user?.role === "restaurant_owner") {
-        query = query.eq("restaurant_id", authenticatedReq.user.restaurant_id);
+      if (
+        authenticatedReq.user?.role === "business_owner" &&
+        authenticatedReq.user.business_id
+      ) {
+        query = query.eq("business_id", authenticatedReq.user.business_id);
       }
 
       const { data, error } = await query.order("created_at", {
@@ -79,14 +82,14 @@ async function handlePost(req: any, res: NextApiResponse) {
       return res.status(400).json({ error: "Name and title are required" });
     }
 
-    // Ensure restaurant owners can only create slides for their restaurant
-    if (req.user?.role === "restaurant_owner") {
-      slideData.restaurant_id = req.user.restaurant_id;
+    // Ensure business owners can only create slides for their business
+    if (req.user?.role === "business_owner" && req.user.business_id) {
+      slideData.business_id = req.user.business_id;
     }
 
     // Map the data to match the database schema
     const cleanSlideData = {
-      restaurant_id: slideData.restaurant_id || null,
+      business_id: slideData.business_id || null,
       template_id: slideData.template_id || null,
       name: slideData.name,
       type: slideData.type || "image",

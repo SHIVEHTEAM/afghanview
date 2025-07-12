@@ -7,7 +7,7 @@ declare module "next-auth" {
       email: string;
       name?: string;
       role: "admin" | "client" | "viewer";
-      restaurant_id?: string;
+      business_id?: string;
     };
   }
 
@@ -16,7 +16,7 @@ declare module "next-auth" {
     email: string;
     name?: string;
     role: "admin" | "client" | "viewer";
-    restaurant_id?: string;
+    business_id?: string;
   }
 }
 
@@ -26,6 +26,6 @@ declare module "next-auth/jwt" {
     email: string;
     name?: string;
     role: "admin" | "client" | "viewer";
-    restaurant_id?: string;
+    business_id?: string;
   }
 }

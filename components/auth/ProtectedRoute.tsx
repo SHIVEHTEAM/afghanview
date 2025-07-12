@@ -4,7 +4,7 @@ import { useAuth } from "../../lib/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "admin" | "restaurant_owner";
+  requiredRole?: "admin" | "restaurant_owner" | "business_owner";
   redirectTo?: string;
 }
 
@@ -27,7 +27,10 @@ export default function ProtectedRoute({
         // Redirect to appropriate dashboard based on user role
         if (user.roles?.includes("admin")) {
           router.push("/admin");
-        } else if (user.roles?.includes("restaurant_owner")) {
+        } else if (
+          user.roles?.includes("restaurant_owner") ||
+          user.roles?.includes("business_owner")
+        ) {
           router.push("/client");
         } else {
           router.push("/");

@@ -79,8 +79,9 @@ const features = [
   },
   {
     icon: Users,
-    title: "Team Collaboration",
-    description: "Invite staff members to help create and manage your content.",
+    title: "Staff Management",
+    description:
+      "Invite staff members with role-based access (owner, manager, staff) to help create and manage your content.",
     color: "from-violet-500 to-purple-600",
   },
 ];

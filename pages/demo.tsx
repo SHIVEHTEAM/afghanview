@@ -15,35 +15,29 @@ export default function Demo() {
 
   const videoRef = React.useRef<HTMLDivElement>(null);
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      videoRef.current
-        ?.requestFullscreen()
-        .then(() => {
-          setIsFullscreen(true);
-        })
-        .catch((err) => {
-          console.log("Error attempting to enable fullscreen:", err);
-        });
-    } else {
-      document
-        .exitFullscreen()
-        .then(() => {
-          setIsFullscreen(false);
-        })
-        .catch((err) => {
-          console.log("Error attempting to exit fullscreen:", err);
-        });
+  const requestFullscreen = () => {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        // Fullscreen request failed
+      });
+    }
+  };
+
+  const exitFullscreen = () => {
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch((err) => {
+        // Exit fullscreen failed
+      });
     }
   };
 
   return (
     <>
       <Head>
-        <title>Demo - ShivehView</title>
+        <title>Demo - Shivehview</title>
         <meta
           name="description"
-          content="Experience ShivehView's AI-powered restaurant display platform in action"
+          content="Experience Shivehview's AI-powered restaurant display platform in action"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -65,7 +59,7 @@ export default function Demo() {
                 <div className="flex items-center gap-2">
                   <Eye className="w-5 h-5 text-purple-400" />
                   <span className="text-xl font-bold text-white tracking-tight">
-                    ShivehView
+                    Shivehview
                   </span>
                 </div>
               </div>
@@ -86,7 +80,7 @@ export default function Demo() {
                 Live Demo
               </h1>
               <p className="text-xl text-white/80 max-w-2xl mx-auto">
-                Experience how ShivehView transforms any Smart TV into a
+                Experience how Shivehview transforms any Smart TV into a
                 cultural showcase.
               </p>
             </motion.div>

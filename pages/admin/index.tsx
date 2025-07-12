@@ -1,92 +1,167 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
-import Link from "next/link";
-import { motion } from "framer-motion";
+import { useRouter } from "next/router";
 import {
-  Eye,
-  Clock,
-  TrendingUp,
   Users,
-  Plus,
-  Image,
-  Settings,
-  ArrowUpRight,
-  Calendar,
-  BarChart3,
   Building,
-  Package,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
+  BarChart3,
+  Settings,
+  TrendingUp,
+  DollarSign,
+  Activity,
+  Calendar,
+  Shield,
+  Database,
+  Server,
+  Globe,
+  Bell,
+  Search,
+  Plus,
+  Filter,
+  Download,
+  RefreshCw,
+  Eye,
   Edit,
   Trash2,
-  ExternalLink,
-  RefreshCw,
-  ArrowRight,
-  Sparkles,
+  MoreHorizontal,
+  ChevronRight,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
-import AdminLayout from "./layout";
-import { db, Restaurant, Slide } from "@/lib/supabase";
+
 import { useAuth } from "../../lib/auth";
-import { ProtectedRoute } from "../../components/auth";
+import { supabase } from "../../lib/supabase";
+import AdminLayout from "./layout";
+
+interface DashboardStats {
+  totalUsers: number;
+  totalBusinesses: number;
+  totalSlideshows: number;
+  totalSlides: number;
+  activeSubscriptions: number;
+  monthlyRevenue: number;
+  systemHealth: string;
+  recentActivity: any[];
+}
+
+interface Business {
+  id: string;
+  name: string;
+  category: { name: string; slug: string };
+  created_at: string;
+  is_active: boolean;
+  subscription?: {
+    status: string;
+    plan: { name: string };
+  };
+  staff_count: number;
+  slideshow_count: number;
+}
+
+interface User {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  created_at: string;
+  is_active: boolean;
+  business_count: number;
+  last_login_at: string;
+}
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const { user } = useAuth();
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [slides, setSlides] = useState<Slide[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState({
-    totalRestaurants: 0,
-    activeRestaurants: 0,
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalBusinesses: 0,
+    totalSlideshows: 0,
     totalSlides: 0,
-    activeSlides: 0,
-    lockedSlides: 0,
+    activeSubscriptions: 0,
+    monthlyRevenue: 0,
+    systemHealth: "Healthy",
+    recentActivity: [],
   });
-  const [totalSlides, setTotalSlides] = useState(0);
-  const [recentSlides, setRecentSlides] = useState<Slide[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Fetch restaurants
-      const restaurantsData = await db.getRestaurants();
-      setRestaurants(restaurantsData);
+      // Fetch all stats
+      const [
+        { count: userCount },
+        { count: businessCount },
+        { count: slideshowCount },
+        { count: slideCount },
+        { count: subscriptionCount },
+        { data: recentActivity },
+        { data: businessData },
+        { data: userData },
+      ] = await Promise.all([
+        supabase.from("users").select("*", { count: "exact", head: true }),
+        supabase.from("businesses").select("*", { count: "exact", head: true }),
+        supabase.from("slideshows").select("*", { count: "exact", head: true }),
+        supabase.from("slides").select("*", { count: "exact", head: true }),
+        supabase
+          .from("business_subscriptions")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "active"),
+        supabase
+          .from("analytics_events")
+          .select("*")
+          .order("occurred_at", { ascending: false })
+          .limit(10),
+        supabase
+          .from("businesses")
+          .select(
+            `
+            id,
+            name,
+            created_at,
+            is_active,
+            category:business_categories(name, slug),
+            subscription:business_subscriptions(
+              status,
+              plan:subscription_plans(name)
+            )
+          `
+          )
+          .order("created_at", { ascending: false })
+          .limit(5),
+        supabase
+          .from("users")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(5),
+      ]);
 
-      // Fetch all slides
-      const allSlides: Slide[] = [];
-      for (const restaurant of restaurantsData) {
-        try {
-          const restaurantSlides = await db.getSlides(restaurant.id);
-          allSlides.push(...restaurantSlides);
-        } catch (error) {
-          console.error(
-            `Error fetching slides for restaurant ${restaurant.id}:`,
-            error
-          );
-        }
-      }
-      setSlides(allSlides);
-
-      // Calculate stats
-      const activeRestaurants = restaurantsData.filter(
-        (r) => r.is_active
-      ).length;
-      const activeSlides = allSlides.filter((s) => s.is_active).length;
-      const lockedSlides = allSlides.filter((s) => s.is_locked).length;
+      // Calculate monthly revenue (mock data for now)
+      const monthlyRevenue = subscriptionCount * 29.99;
 
       setStats({
-        totalRestaurants: restaurantsData.length,
-        activeRestaurants,
-        totalSlides: allSlides.length,
-        activeSlides,
-        lockedSlides,
+        totalUsers: userCount || 0,
+        totalBusinesses: businessCount || 0,
+        totalSlideshows: slideshowCount || 0,
+        totalSlides: slideCount || 0,
+        activeSubscriptions: subscriptionCount || 0,
+        monthlyRevenue,
+        systemHealth: "Healthy",
+        recentActivity: recentActivity || [],
       });
+
+      setBusinesses(businessData || []);
+      setUsers(userData || []);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -94,423 +169,405 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchDashboardData();
-    setRefreshing(false);
+  const handleRefresh = () => {
+    fetchDashboardData();
   };
 
-  const handleToggleRestaurantStatus = async (restaurantId: string) => {
-    try {
-      const restaurant = restaurants.find((r) => r.id === restaurantId);
-      if (!restaurant) return;
-
-      await db.updateRestaurant(restaurantId, {
-        is_active: !restaurant.is_active,
-      });
-
-      // Refresh data
-      await fetchDashboardData();
-    } catch (error) {
-      console.error("Error toggling restaurant status:", error);
-    }
-  };
-
-  const handleDeleteRestaurant = async (restaurantId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this restaurant? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
-
-    try {
-      await db.deleteRestaurant(restaurantId);
-      await fetchDashboardData();
-    } catch (error) {
-      console.error("Error deleting restaurant:", error);
-    }
-  };
-
-  const getPackageColor = (packageType: string) => {
-    switch (packageType) {
-      case "starter":
-        return "bg-blue-100 text-blue-800";
-      case "professional":
-        return "bg-purple-100 text-green-800";
-      case "unlimited":
-        return "bg-purple-100 text-purple-800";
+  const getSystemHealthColor = (health: string) => {
+    switch (health.toLowerCase()) {
+      case "healthy":
+        return "text-green-600 bg-green-100";
+      case "warning":
+        return "text-yellow-600 bg-yellow-100";
+      case "critical":
+        return "text-red-600 bg-red-100";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "text-gray-600 bg-gray-100";
     }
   };
 
-  const getSlideUsage = (restaurantId: string) => {
-    const restaurant = restaurants.find((r) => r.id === restaurantId);
-    const restaurantSlides = slides.filter(
-      (s) => s.restaurant_id === restaurantId
-    );
-
-    if (!restaurant) return { used: 0, limit: 0, percentage: 0 };
-
-    const used = restaurantSlides.length;
-    const limit = restaurant.slide_limit;
-    const percentage = limit > 0 ? Math.round((used / limit) * 100) : 0;
-
-    return { used, limit, percentage };
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
   };
 
-  const dashboardStats = [
-    {
-      name: "Total Restaurants",
-      value: stats.totalRestaurants.toString(),
-      change: `+${stats.totalRestaurants}`,
-      changeType: "positive" as const,
-      icon: Building,
-    },
-    {
-      name: "Active Restaurants",
-      value: stats.activeRestaurants.toString(),
-      change: `${stats.activeRestaurants}/${stats.totalRestaurants}`,
-      changeType: "positive" as const,
-      icon: CheckCircle,
-    },
-    {
-      name: "Total Slides",
-      value: stats.totalSlides.toString(),
-      change: `+${stats.totalSlides}`,
-      changeType: "positive" as const,
-      icon: Image,
-    },
-    {
-      name: "Active Slides",
-      value: stats.activeSlides.toString(),
-      change: `${stats.activeSlides}/${stats.totalSlides}`,
-      changeType: "positive" as const,
-      icon: Eye,
-    },
-  ];
-
-  const handleViewAnalytics = () => {
-    window.open("/admin/analytics", "_blank");
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin dashboard...</p>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute requiredRole="admin">
-      <AdminLayout>
-        <Head>
-          <title>Admin Dashboard - ShivehView</title>
-          <meta name="description" content="Admin dashboard for ShivehView" />
-        </Head>
+    <AdminLayout>
+      <Head>
+        <title>Admin Dashboard - AfghanView</title>
+        <meta name="description" content="Admin dashboard for AfghanView" />
+      </Head>
 
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 Admin Dashboard
               </h1>
-              <p className="text-gray-600 mt-2">
-                Welcome back, {user?.email || "Admin"}
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                <RefreshCw
-                  className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
-                />
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </button>
-
-              <Link
-                href="/admin/restaurants/new"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Restaurant
-              </Link>
+              <p className="text-gray-600">System overview and management</p>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {dashboardStats.map((stat) => (
-              <motion.div
-                key={stat.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow p-6"
-              >
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <stat.icon className="h-8 w-8 text-afghan-green" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
-                      {stat.name}
-                    </p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {stat.value}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <span
-                    className={`text-sm font-medium ${
-                      stat.changeType === "positive"
-                        ? "text-purple-600"
-                        : "text-pink-600"
-                    }`}
-                  >
-                    {stat.change}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Restaurants Table */}
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Restaurants
-                </h2>
-                <Link
-                  href="/admin/restaurants"
-                  className="text-afghan-green hover:text-afghan-green-dark text-sm font-medium"
-                >
-                  View All
-                </Link>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Restaurant
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Package
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Slides
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {restaurants.slice(0, 5).map((restaurant) => {
-                    const slideUsage = getSlideUsage(restaurant.id);
-                    return (
-                      <tr key={restaurant.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {restaurant.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {restaurant.address}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPackageColor(
-                              restaurant.package_type
-                            )}`}
-                          >
-                            {restaurant.package_type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {slideUsage.used}/{slideUsage.limit}
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                            <div
-                              className={`h-2 rounded-full ${
-                                slideUsage.percentage > 80
-                                  ? "bg-pink-500"
-                                  : slideUsage.percentage > 60
-                                  ? "bg-yellow-500"
-                                  : "bg-purple-500"
-                              }`}
-                              style={{
-                                width: `${Math.min(
-                                  slideUsage.percentage,
-                                  100
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {restaurant.is_active ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Active
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-red-800">
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Inactive
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center space-x-2">
-                            <Link
-                              href={`/admin/restaurants/${restaurant.id}`}
-                              className="text-afghan-green hover:text-afghan-green-dark"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                            <button
-                              onClick={() =>
-                                handleToggleRestaurantStatus(restaurant.id)
-                              }
-                              className="text-gray-600 hover:text-gray-900"
-                            >
-                              {restaurant.is_active ? (
-                                <XCircle className="h-4 w-4" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleDeleteRestaurant(restaurant.id)
-                              }
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Recent Slides */}
-          <div className="mt-8 bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Recent Slides
-                </h2>
-                <Link
-                  href="/admin/slides"
-                  className="text-afghan-green hover:text-afghan-green-dark text-sm font-medium"
-                >
-                  View All
-                </Link>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Slide
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Restaurant
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {slides.slice(0, 5).map((slide) => {
-                    const restaurant = restaurants.find(
-                      (r) => r.id === slide.restaurant_id
-                    );
-                    return (
-                      <tr key={slide.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {slide.title}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {slide.name}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {restaurant?.name || "Unknown"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {slide.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            {slide.is_active ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Active
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                <XCircle className="h-3 w-3 mr-1" />
-                                Inactive
-                              </span>
-                            )}
-                            {slide.is_locked && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                <AlertTriangle className="h-3 w-3 mr-1" />
-                                Locked
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(slide.created_at).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleRefresh}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+            <div className="relative">
+              <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           </div>
         </div>
-      </AdminLayout>
-    </ProtectedRoute>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Users */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Users</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.totalUsers.toLocaleString()}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm">
+              <ArrowUpRight className="w-4 h-4 text-green-600 mr-1" />
+              <span className="text-green-600">+12%</span>
+              <span className="text-gray-500 ml-1">from last month</span>
+            </div>
+          </div>
+
+          {/* Total Businesses */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Businesses
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.totalBusinesses.toLocaleString()}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <Building className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm">
+              <ArrowUpRight className="w-4 h-4 text-green-600 mr-1" />
+              <span className="text-green-600">+8%</span>
+              <span className="text-gray-500 ml-1">from last month</span>
+            </div>
+          </div>
+
+          {/* Active Subscriptions */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Active Subscriptions
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.activeSubscriptions.toLocaleString()}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm">
+              <ArrowUpRight className="w-4 h-4 text-green-600 mr-1" />
+              <span className="text-green-600">+15%</span>
+              <span className="text-gray-500 ml-1">from last month</span>
+            </div>
+          </div>
+
+          {/* Monthly Revenue */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Monthly Revenue
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {formatCurrency(stats.monthlyRevenue)}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-yellow-600" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm">
+              <ArrowUpRight className="w-4 h-4 text-green-600 mr-1" />
+              <span className="text-green-600">+23%</span>
+              <span className="text-gray-500 ml-1">from last month</span>
+            </div>
+          </div>
+        </div>
+
+        {/* System Health & Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* System Health */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                System Health
+              </h3>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${getSystemHealthColor(
+                  stats.systemHealth
+                )}`}
+              >
+                {stats.systemHealth}
+              </span>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Database</span>
+                <span className="text-sm font-medium text-green-600">
+                  Online
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">API Services</span>
+                <span className="text-sm font-medium text-green-600">
+                  Online
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Storage</span>
+                <span className="text-sm font-medium text-green-600">
+                  Online
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Email Service</span>
+                <span className="text-sm font-medium text-green-600">
+                  Online
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Quick Actions
+            </h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => router.push("/admin/businesses")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Building className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-900">
+                    Manage Businesses
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </button>
+              <button
+                onClick={() => router.push("/admin/users")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Users className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium text-gray-900">
+                    Manage Users
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </button>
+              <button
+                onClick={() => router.push("/admin/analytics")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                  <span className="text-sm font-medium text-gray-900">
+                    View Analytics
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </button>
+              <button
+                onClick={() => router.push("/admin/settings")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Settings className="w-5 h-5 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-900">
+                    System Settings
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Recent Activity
+            </h3>
+            <div className="space-y-3">
+              {stats.recentActivity.slice(0, 5).map((activity, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 truncate">
+                      {activity.event_type}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatDate(activity.occurred_at)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Businesses & Users */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Businesses */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Recent Businesses
+                </h3>
+                <button
+                  onClick={() => router.push("/admin/businesses")}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  View all
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {businesses.map((business) => (
+                  <div
+                    key={business.id}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Building className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {business.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {business.category?.name || "Business"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-900">
+                        {formatDate(business.created_at)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {business.subscription?.status === "active"
+                          ? "Active"
+                          : "Inactive"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Users */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Recent Users
+                </h3>
+                <button
+                  onClick={() => router.push("/admin/users")}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  View all
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {users.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Users className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {user.first_name} {user.last_name}
+                        </p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-900">
+                        {formatDate(user.created_at)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {user.is_active ? "Active" : "Inactive"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }

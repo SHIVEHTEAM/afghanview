@@ -11,12 +11,15 @@ export default async function handler(
   }
 
   try {
-    const { restaurant_id, slide_orders } = req.body;
+    const { business_id, restaurant_id, slide_orders } = req.body;
 
-    if (!restaurant_id || !slide_orders || !Array.isArray(slide_orders)) {
+    // Support both old and new parameter names
+    const actualBusinessId = business_id || restaurant_id;
+
+    if (!actualBusinessId || !slide_orders || !Array.isArray(slide_orders)) {
       return res
         .status(400)
-        .json({ error: "Restaurant ID and slide orders array are required" });
+        .json({ error: "Business ID and slide orders array are required" });
     }
 
     // Update slide orders in a transaction
@@ -35,10 +38,11 @@ export default async function handler(
     }
 
     // Return the updated slides
-    const { data: updatedSlides, error: fetchError } = await supabase.rpc(
-      "get_restaurant_slides",
-      { restaurant_uuid: restaurant_id }
-    );
+    const { data: updatedSlides, error: fetchError } = await supabase
+      .from("slides")
+      .select("*")
+      .eq("business_id", actualBusinessId)
+      .order("sort_order", { ascending: true });
 
     if (fetchError) {
       console.error("Error fetching updated slides:", fetchError);

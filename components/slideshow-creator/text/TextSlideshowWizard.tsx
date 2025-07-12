@@ -416,7 +416,9 @@ export default function TextSlideshowWizard({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto p-6">{renderStepContent()}</div>
+      <div className="flex-1 overflow-y-auto p-6 pb-0">
+        {renderStepContent()}
+      </div>
 
       <WizardStepper
         steps={steps}

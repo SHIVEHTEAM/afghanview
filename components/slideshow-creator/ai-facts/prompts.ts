@@ -449,3 +449,188 @@ export const promptBank: PromptBank = {
     },
   ],
 };
+
+export const AI_FACTS_PROMPTS = [
+  {
+    id: "afghan-culture",
+    name: "Afghan Culture",
+    description: "Fascinating facts about Afghan traditions and customs",
+    prompt:
+      "Share an interesting and engaging fact about Afghan culture, traditions, or customs. Make it educational and inspiring. Include a relevant emoji and suggest a beautiful background color that complements the content.",
+    category: "Culture",
+    emoji: "🏛️",
+  },
+  {
+    id: "afghan-cuisine",
+    name: "Afghan Cuisine",
+    description: "Delicious facts about Afghan food and cooking",
+    prompt:
+      "Tell me about a traditional Afghan dish, ingredient, or cooking technique. Make it mouth-watering and educational. Include a food-related emoji and suggest a warm, appetizing background color.",
+    category: "Cuisine",
+    emoji: "🍽️",
+  },
+  {
+    id: "afghan-hospitality",
+    name: "Afghan Hospitality",
+    description: "Heartwarming facts about Afghan hospitality",
+    prompt:
+      "Share a beautiful story or fact about Afghan hospitality and guest traditions. Make it heartwarming and inspiring. Include a welcoming emoji and suggest a warm, inviting background color.",
+    category: "Hospitality",
+    emoji: "🤝",
+  },
+  {
+    id: "afghan-history",
+    name: "Afghan History",
+    description: "Historical facts about Afghanistan",
+    prompt:
+      "Share an interesting historical fact about Afghanistan, its people, or its significance in world history. Make it educational and engaging. Include a historical emoji and suggest a dignified background color.",
+    category: "History",
+    emoji: "📜",
+  },
+  {
+    id: "afghan-geography",
+    name: "Afghan Geography",
+    description: "Facts about Afghanistan's beautiful landscapes",
+    prompt:
+      "Describe a beautiful place, mountain, or landscape in Afghanistan. Make it vivid and inspiring. Include a nature emoji and suggest a color that matches the landscape described.",
+    category: "Geography",
+    emoji: "🏔️",
+  },
+  {
+    id: "afghan-poetry",
+    name: "Afghan Poetry",
+    description: "Beautiful Afghan poetry and literature",
+    prompt:
+      "Share a famous Afghan poem, quote, or literary work. Make it poetic and meaningful. Include a literary emoji and suggest an elegant background color.",
+    category: "Literature",
+    emoji: "📖",
+  },
+  {
+    id: "afghan-music",
+    name: "Afghan Music",
+    description: "Facts about Afghan music and instruments",
+    prompt:
+      "Tell me about traditional Afghan music, instruments, or musical traditions. Make it melodic and engaging. Include a music emoji and suggest a harmonious background color.",
+    category: "Music",
+    emoji: "🎵",
+  },
+  {
+    id: "afghan-art",
+    name: "Afghan Art",
+    description: "Facts about Afghan arts and crafts",
+    prompt:
+      "Share information about Afghan arts, crafts, or artistic traditions. Make it colorful and inspiring. Include an art emoji and suggest a vibrant background color.",
+    category: "Art",
+    emoji: "🎨",
+  },
+  {
+    id: "afghan-proverbs",
+    name: "Afghan Proverbs",
+    description: "Wisdom from Afghan proverbs",
+    prompt:
+      "Share a traditional Afghan proverb or saying with its meaning. Make it wise and thought-provoking. Include a wisdom emoji and suggest a contemplative background color.",
+    category: "Wisdom",
+    emoji: "💭",
+  },
+  {
+    id: "afghan-celebrations",
+    name: "Afghan Celebrations",
+    description: "Facts about Afghan festivals and celebrations",
+    prompt:
+      "Tell me about a traditional Afghan festival, celebration, or holiday. Make it festive and joyful. Include a celebration emoji and suggest a festive background color.",
+    category: "Celebrations",
+    emoji: "🎉",
+  },
+  {
+    id: "afghan-architecture",
+    name: "Afghan Architecture",
+    description: "Facts about Afghan buildings and architecture",
+    prompt:
+      "Share information about traditional Afghan architecture, buildings, or construction techniques. Make it impressive and educational. Include an architecture emoji and suggest a majestic background color.",
+    category: "Architecture",
+    emoji: "🏛️",
+  },
+  {
+    id: "afghan-trade",
+    name: "Afghan Trade",
+    description: "Facts about Afghan trade and commerce",
+    prompt:
+      "Tell me about traditional Afghan trade, markets, or commerce. Make it interesting and informative. Include a trade emoji and suggest a prosperous background color.",
+    category: "Trade",
+    emoji: "🛍️",
+  },
+  {
+    id: "afghan-nature",
+    name: "Afghan Nature",
+    description: "Facts about Afghanistan's natural beauty",
+    prompt:
+      "Share information about Afghanistan's natural resources, wildlife, or environmental features. Make it beautiful and inspiring. Include a nature emoji and suggest a natural background color.",
+    category: "Nature",
+    emoji: "🌿",
+  },
+  {
+    id: "afghan-innovation",
+    name: "Afghan Innovation",
+    description: "Facts about Afghan inventions and innovations",
+    prompt:
+      "Share information about Afghan inventions, innovations, or contributions to science and technology. Make it impressive and educational. Include an innovation emoji and suggest a modern background color.",
+    category: "Innovation",
+    emoji: "💡",
+  },
+  {
+    id: "afghan-heroes",
+    name: "Afghan Heroes",
+    description: "Facts about famous Afghan figures",
+    prompt:
+      "Tell me about a famous Afghan historical figure, leader, or hero. Make it inspiring and educational. Include a hero emoji and suggest a noble background color.",
+    category: "Heroes",
+    emoji: "👑",
+  },
+];
+
+export const CUSTOM_PROMPT_TEMPLATES = [
+  "Share an interesting fact about {topic} in Afghanistan",
+  "Tell me about traditional {topic} in Afghan culture",
+  "What makes Afghan {topic} unique and special?",
+  "Describe a beautiful {topic} from Afghanistan",
+  "Share a story about {topic} in Afghan history",
+  "What is the significance of {topic} in Afghan society?",
+  "Tell me about the art of {topic} in Afghanistan",
+  "Share wisdom about {topic} from Afghan traditions",
+  "Describe the beauty of {topic} in Afghan culture",
+  "What can we learn from Afghan {topic}?",
+];
+
+export const BACKGROUND_COLORS = [
+  "#1f2937", // Dark blue-gray
+  "#dc2626", // Red
+  "#059669", // Green
+  "#7c3aed", // Purple
+  "#ea580c", // Orange
+  "#0891b2", // Cyan
+  "#be185d", // Pink
+  "#854d0e", // Amber
+  "#166534", // Dark green
+  "#7c2d12", // Dark orange
+  "#1e40af", // Blue
+  "#9d174d", // Rose
+  "#15803d", // Emerald
+  "#a855f7", // Violet
+  "#f59e0b", // Yellow
+];
+
+export const getRandomBackgroundColor = (): string => {
+  return BACKGROUND_COLORS[
+    Math.floor(Math.random() * BACKGROUND_COLORS.length)
+  ];
+};
+
+export const getContrastColor = (backgroundColor: string): string => {
+  // Simple contrast calculation - for dark backgrounds, use white text
+  const hex = backgroundColor.replace("#", "");
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 128 ? "#000000" : "#ffffff";
+};

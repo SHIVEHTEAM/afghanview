@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { MenuItem, MenuSlideshowWizardProps } from "./types";
 import { SlideshowSettings } from "../shared/types";
 import { DEFAULT_SETTINGS } from "../shared/constants";
+import { menuThemes, layoutOptions } from "./constants";
 import SettingsPanel from "../shared/SettingsPanel";
 import WizardStepper from "../shared/WizardStepper";
 import MenuItemsList from "./MenuItemsList";
@@ -41,10 +42,10 @@ export default function MenuSlideshowWizard({
       : []
   );
   const [selectedTheme, setSelectedTheme] = useState(
-    formData.theme || initialData?.theme || {}
+    formData.theme || initialData?.theme || menuThemes[0]
   );
   const [selectedLayout, setSelectedLayout] = useState(
-    formData.layout || initialData?.layout || {}
+    formData.layout || initialData?.layout || layoutOptions[0]
   );
   const [currentStep, setCurrentStep] = useState(step);
   const [slideshowName, setSlideshowName] = useState(
@@ -111,17 +112,19 @@ export default function MenuSlideshowWizard({
     setIsCreating(true);
 
     try {
+      // Store menu data instead of large SVG strings
       const slides = menuItems.map((item, index) => ({
         id: `menu-${index}`,
-        file_path: MenuSVGGenerator.generateMenuSlide(
-          item,
-          selectedTheme,
-          selectedLayout
-        ),
+        file_path: `menu://${item.id}`, // Use a custom protocol to identify menu items
         name: item.name,
-        type: "image",
+        type: "menu", // Use custom type for menu items
         order_index: index,
         duration: settings.duration,
+        menuData: {
+          item: item,
+          theme: selectedTheme,
+          layout: selectedLayout,
+        },
         styling: {
           backgroundColor: selectedTheme.backgroundColor,
           textColor: selectedTheme.textColor,
@@ -298,7 +301,9 @@ export default function MenuSlideshowWizard({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto p-6">{renderStepContent()}</div>
+      <div className="flex-1 overflow-y-auto p-6 pb-0">
+        {renderStepContent()}
+      </div>
 
       <WizardStepper
         steps={steps}

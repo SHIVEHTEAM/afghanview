@@ -27,16 +27,44 @@ export default function About() {
     {
       name: "Ahmad Seyar Hasir",
       role: "Founder & CEO",
-      image:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-      bio: "Passionate about preserving and sharing Afghan culture through technology.",
+      image: "/seyarhasir.png",
+      bio: "Visionary founder, passionate about Afghan culture and technology.",
     },
     {
-      name: "Development Team",
-      role: "SHIVEH Agency",
-      image:
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-      bio: "Dedicated to building innovative solutions that connect cultures.",
+      name: "Maryam Parsa",
+      role: "Product Designer",
+      image: "/maryamParsa.jpg",
+      bio: "Designs beautiful, user-friendly experiences for Shivehview.",
+    },
+    {
+      name: "Waris Hasir",
+      role: "Business Development",
+      image: "/WarisHasir.jpg",
+      bio: "Connects Shivehview with partners and clients worldwide.",
+    },
+    {
+      name: "Shafi Yaftali",
+      role: "Marketing Lead",
+      image: "/ShafiYaftali.webp",
+      bio: "Spreads the word about Shivehview and Afghan culture.",
+    },
+    {
+      name: "Shayan Yaftali",
+      role: "Community Manager",
+      image: "/Shayan Yaftali.webp",
+      bio: "Engages with our amazing user community.",
+    },
+    {
+      name: "Amin Afshar",
+      role: "Web Developer",
+      image: "/Amin Afshar, Web Developer.webp",
+      bio: "Builds and maintains the Shivehview platform.",
+    },
+    {
+      name: "Yohmeh Bilingwe",
+      role: "Cultural Advisor",
+      image: "/Yohmeh Bilingwe.webp",
+      bio: "Ensures authenticity and cultural richness in all we do.",
     },
   ];
 
@@ -101,13 +129,13 @@ export default function About() {
   return (
     <>
       <Head>
-        <title>About Us - ShivehView</title>
+        <title>About Us - Shivehview</title>
         <meta
           name="description"
-          content="Learn about ShivehView's mission to preserve Afghan culture and support restaurant owners worldwide"
+          content="Learn about Shivehview's mission to preserve Afghan culture and support business owners worldwide."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/Shivehview Transparent Logo.png" />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
@@ -118,36 +146,33 @@ export default function About() {
               <Link href="/" className="flex items-center">
                 <img
                   src="/Shivehview Transparent Logo.png"
-                  alt="ShivehView Logo"
+                  alt="Shivehview Logo"
                   style={{ height: 40 }}
                 />
               </Link>
-              <div className="flex items-center space-x-4">
+              <nav className="flex space-x-6">
                 <Link
                   href="/"
-                  className="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-purple-600 transition-colors"
                 >
                   Home
                 </Link>
+                <Link href="/about" className="text-purple-600 font-medium">
+                  About
+                </Link>
                 <Link
                   href="/pricing"
-                  className="text-gray-700 hover:text-afghan-green px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-purple-600 transition-colors"
                 >
                   Pricing
                 </Link>
                 <Link
-                  href="/demo"
-                  className="text-gray-700 hover:text-afghan-green px-3 py-2 rounded-md text-sm font-medium"
+                  href="/blog"
+                  className="text-gray-600 hover:text-purple-600 transition-colors"
                 >
-                  Demo
+                  Blog
                 </Link>
-                <Link
-                  href="/auth/signup"
-                  className="bg-afghan-green text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-afghan-green/90"
-                >
-                  Get Started
-                </Link>
-              </div>
+              </nav>
             </div>
           </div>
         </nav>
@@ -188,7 +213,7 @@ export default function About() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                ShivehView was born from a deep love for Afghan culture and a
+                Shivehview was born from a deep love for Afghan culture and a
                 vision to help Afghan restaurants worldwide share their heritage
                 with customers through beautiful, AI-powered digital displays.
               </motion.p>
@@ -284,7 +309,7 @@ export default function About() {
                 transition={{ duration: 0.8, delay: 0.2 }}
                 viewport={{ once: true }}
               >
-                These principles guide everything we do at ShivehView
+                These principles guide everything we do at Shivehview
               </motion.p>
             </div>
 
@@ -467,7 +492,7 @@ export default function About() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Phone
                 </h3>
-                <p className="text-gray-600">+1 (555) 123-4567</p>
+                <p className="text-gray-600">+1 (703) 991-9655</p>
               </motion.div>
 
               <motion.div
@@ -481,9 +506,7 @@ export default function About() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Location
                 </h3>
-                <p className="text-gray-600">
-                  Global - Serving Afghan restaurants worldwide
-                </p>
+                <p className="text-gray-600">VA, United States</p>
               </motion.div>
             </div>
           </div>
@@ -533,9 +556,9 @@ export default function About() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div>
-                <h3 className="text-2xl font-bold mb-4">ShivehView</h3>
+                <h3 className="text-2xl font-bold mb-4">Shivehview</h3>
                 <p className="text-gray-400">
-                  AI-powered platform transforming restaurants into cultural
+                  AI-powered platform transforming businesses into cultural
                   experiences through beautiful digital displays.
                 </p>
               </div>
@@ -618,19 +641,41 @@ export default function About() {
                 </ul>
               </div>
             </div>
-            <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-              <p>
-                &copy; 2024 ShivehView. All rights reserved. Built & Maintained
-                by{" "}
-                <a
-                  href="https://shivehagency.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-afghan-green hover:text-afghan-gold transition-colors font-semibold"
-                >
-                  SHIVEH
-                </a>
-              </p>
+            <div className="border-t border-gray-800 mt-8 pt-8">
+              <div className="flex flex-col md:flex-row justify-between items-center text-gray-400">
+                <p>
+                  &copy; 2024 Shivehview. All rights reserved. Built &
+                  Maintained by{" "}
+                  <a
+                    href="https://shivehagency.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-400 hover:text-pink-400 font-semibold"
+                  >
+                    SHIVEH
+                  </a>
+                </p>
+                <div className="flex space-x-6 mt-4 md:mt-0">
+                  <Link
+                    href="/privacy-policy"
+                    className="hover:text-white text-sm"
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="/terms-of-service"
+                    className="hover:text-white text-sm"
+                  >
+                    Terms of Service
+                  </Link>
+                  <Link
+                    href="/cookie-policy"
+                    className="hover:text-white text-sm"
+                  >
+                    Cookie Policy
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </footer>

@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { supabase } from "../../../lib/supabase";
 
 export default async function handler(
   req: NextApiRequest,
@@ -9,28 +10,60 @@ export default async function handler(
   }
 
   try {
-    const { prompt } = req.body;
+    const { prompt, language = "en", group = "general" } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    // Use environment variable for API key
+    // Enhanced prompt with better instructions
+    const enhancedPrompt = `${prompt}
+
+IMPORTANT INSTRUCTIONS:
+1. Create an engaging, educational fact about Afghanistan
+2. Keep it concise (1-2 sentences maximum)
+3. Make it interesting and culturally relevant
+4. Include a relevant emoji at the beginning
+5. Suggest a beautiful, unique, and visually distinct background color (hex code like #1f2937) that is different from previous facts and looks good for slideshows
+6. Format your response as: "emoji fact text | background_color"
+
+Example format:
+"🏔️ The Hindu Kush mountains in Afghanistan are home to some of the world's highest peaks, with Noshaq reaching 7,492 meters above sea level. | #1e40af"
+
+Focus on making the content engaging and visually appealing for a slideshow. Do NOT use the same color for every fact. Always pick a different color for each fact.`;
+
+    // Call Anthropic API (or your preferred AI service)
     const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
-      return res.status(500).json({
-        error:
-          "API key not configured. Please add ANTHROPIC_API_KEY to your .env.local file.",
+      // Fallback response when API key is not available
+      const fallbackFacts = [
+        "🏔️ The Hindu Kush mountains in Afghanistan are home to some of the world's highest peaks, with Noshaq reaching 7,492 meters above sea level. | #1e40af",
+        "🍽️ Afghan cuisine is famous for its rich flavors, with dishes like Kabuli Pulao and Afghan kebabs being celebrated worldwide. | #dc2626",
+        "🤝 Afghan hospitality is legendary - guests are treated as gifts from God and offered the best food and accommodations. | #059669",
+        "📜 Afghanistan has been a crossroads of civilizations for over 2,000 years, connecting the East and West through the Silk Road. | #7c3aed",
+        "🎨 Afghan carpets are renowned for their intricate designs and vibrant colors, with each region having its unique style. | #ea580c",
+        "📖 Afghan poetry, especially the works of Rumi and Khushal Khan Khattak, has influenced literature worldwide. | #0891b2",
+        "🎵 Traditional Afghan music features instruments like the rubab, tabla, and harmonium, creating unique melodies. | #be185d",
+        "🏛️ The Blue Mosque in Mazar-i-Sharif is one of Afghanistan's most beautiful architectural wonders. | #854d0e",
+        "💎 Afghanistan is home to some of the world's finest lapis lazuli, a deep blue gemstone prized for centuries. | #166534",
+        "🌹 The Afghan rose is famous for its fragrance and is used to make rose water, a traditional ingredient in many dishes. | #7c2d12",
+      ];
+
+      const randomFact =
+        fallbackFacts[Math.floor(Math.random() * fallbackFacts.length)];
+      const [emojiAndFact, backgroundColor] = randomFact.split(" | ");
+      const emoji = emojiAndFact.match(/^[^\s]+/)?.[0] || "🏛️";
+      const fact = emojiAndFact.replace(/^[^\s]+\s*/, "");
+
+      return res.status(200).json({
+        fact,
+        emoji,
+        backgroundColor: backgroundColor || "#1f2937",
+        isFallback: true,
       });
     }
 
-    console.log(
-      "[Facts API] Generating fact with prompt:",
-      prompt.substring(0, 100) + "..."
-    );
-
-    // Call Anthropic API with Claude 3 Haiku
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -39,41 +72,12 @@ export default async function handler(
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-haiku-20240307", // Using Haiku for speed and cost efficiency
-        max_tokens: 500, // Increased for better responses
+        model: "claude-3-haiku-20240307",
+        max_tokens: 500,
         messages: [
           {
             role: "user",
-            content: `${prompt}
-
-You are an expert on Afghan culture and history. Generate an engaging, educational fact that would be perfect for displaying in an Afghan restaurant.
-
-IMPORTANT GUIDELINES:
-- Write in simple, clear language that everyone can understand
-- Focus on the specific topic or group mentioned in the prompt
-- If the prompt mentions a specific Afghan group (Pashtun, Hazara, Uzbek, Tajik, etc.), focus on that group
-- If no specific group is mentioned, you can write about Afghan culture in general
-- Be creative and interesting - avoid generic responses
-- If you truly don't know something specific, provide a related interesting fact instead of apologizing
-- Make it educational and engaging for restaurant customers
-- Keep it between 1-3 sentences
-- Be factual and accurate
-
-Please provide:
-1. A single, engaging fact that would be perfect for displaying in an Afghan restaurant
-2. A beautiful background color that complements the fact (in hex format like #1f2937)
-
-The background color should be:
-- Rich and visually appealing
-- Good contrast for white text
-- Professional and elegant
-- Thematic to the content
-
-Format your response as JSON:
-{
-  "fact": "your fact text here",
-  "backgroundColor": "#hexcolor"
-}`,
+            content: enhancedPrompt,
           },
         ],
       }),
@@ -81,80 +85,147 @@ Format your response as JSON:
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error("[Facts API] Anthropic API error:", errorData);
-      return res.status(response.status).json({
-        error: `Failed to generate fact: ${response.statusText}`,
-        details: errorData,
+      console.error("Anthropic API error:", response.status, errorData);
+
+      // Return a fallback response instead of error
+      const fallbackFacts = [
+        "🏔️ The Hindu Kush mountains in Afghanistan are home to some of the world's highest peaks, with Noshaq reaching 7,492 meters above sea level. | #1e40af",
+        "🍽️ Afghan cuisine is famous for its rich flavors, with dishes like Kabuli Pulao and Afghan kebabs being celebrated worldwide. | #dc2626",
+        "🤝 Afghan hospitality is legendary - guests are treated as gifts from God and offered the best food and accommodations. | #059669",
+      ];
+
+      const randomFact =
+        fallbackFacts[Math.floor(Math.random() * fallbackFacts.length)];
+      const [emojiAndFact, backgroundColor] = randomFact.split(" | ");
+      const emoji = emojiAndFact.match(/^[^\s]+/)?.[0] || "🏛️";
+      const fact = emojiAndFact.replace(/^[^\s]+\s*/, "");
+
+      return res.status(200).json({
+        fact,
+        emoji,
+        backgroundColor: backgroundColor || "#1f2937",
+        isFallback: true,
       });
     }
 
     const data = await response.json();
-    const content = data.content[0]?.text?.trim();
+    const aiResponse = data.content[0]?.text || "";
 
-    if (!content) {
-      return res.status(500).json({ error: "No content generated" });
+    // Parse the AI response to extract emoji, fact, and background color
+    const lines = aiResponse.split("\n").filter((line: string) => line.trim());
+    let fact = "";
+    let emoji = "🏛️";
+    let backgroundColor = "#1f2937";
+
+    for (const line of lines as string[]) {
+      if (line.includes("|")) {
+        const [emojiAndFact, color] = line
+          .split("|")
+          .map((s: string) => s.trim());
+        const emojiMatch = emojiAndFact.match(/^[^\s]+/);
+        if (emojiMatch) {
+          emoji = emojiMatch[0];
+          fact = emojiAndFact.replace(/^[^\s]+\s*/, "").trim();
+        }
+        if (color && color.match(/^#[0-9a-fA-F]{6}$/)) {
+          backgroundColor = color;
+        }
+        break;
+      } else if (line.match(/^[^\s]+\s/)) {
+        // If no pipe separator, try to extract emoji from the beginning
+        const emojiMatch = line.match(/^[^\s]+/);
+        if (emojiMatch) {
+          emoji = emojiMatch[0];
+          fact = line.replace(/^[^\s]+\s*/, "").trim();
+        } else {
+          fact = line.trim();
+        }
+      } else {
+        fact = line.trim();
+      }
     }
 
-    // Try to parse as JSON first
-    let fact, backgroundColor;
-    try {
-      const parsed = JSON.parse(content);
-      fact = parsed.fact;
-      backgroundColor = parsed.backgroundColor || "#1f2937"; // Default fallback
-    } catch (e) {
-      // If not JSON, treat as plain text fact
-      fact = content;
-      backgroundColor = "#1f2937"; // Default background
-    }
-
+    // Fallback if parsing failed
     if (!fact) {
-      return res.status(500).json({ error: "No fact generated" });
+      fact = aiResponse.trim();
     }
 
-    // Filter out apologetic responses
-    const apologeticPhrases = [
-      "i apologize",
-      "i'm sorry",
-      "unfortunately",
-      "i don't have",
-      "i cannot provide",
-      "i do not have",
-      "i'm unable to",
-      "i don't know",
-      "i cannot share",
-      "i do not have enough",
-      "i don't have enough",
-      "i'm not able to",
-      "i cannot give",
-      "i do not have any",
-      "i don't have any",
+    // Clean up the fact text
+    fact = fact
+      .replace(/^["']|["']$/g, "") // Remove quotes
+      .replace(/\|.*$/, "") // Remove any remaining pipe and content
+      .trim();
+
+    // Validate and set defaults
+    if (!fact) {
+      fact = "Afghanistan is a land of rich culture and beautiful traditions.";
+    }
+
+    if (!emoji || emoji.length > 4) {
+      emoji = "🏛️";
+    }
+
+    // After parsing backgroundColor from AI response, add a fallback:
+    // Curated palette of beautiful, distinct colors
+    const colorPalette = [
+      "#1e40af", // blue
+      "#dc2626", // red
+      "#059669", // green
+      "#7c3aed", // purple
+      "#ea580c", // orange
+      "#0891b2", // teal
+      "#be185d", // pink
+      "#854d0e", // brown
+      "#166534", // dark green
+      "#7c2d12", // dark orange
+      "#f59e42", // light orange
+      "#fbbf24", // yellow
+      "#10b981", // emerald
+      "#6366f1", // indigo
+      "#f43f5e", // rose
+      "#0ea5e9", // sky
+      "#a21caf", // violet
+      "#facc15", // gold
+      "#22d3ee", // cyan
+      "#eab308", // amber
     ];
 
-    const isApologetic = apologeticPhrases.some((phrase) =>
-      fact.toLowerCase().includes(phrase)
-    );
-
-    if (isApologetic) {
-      console.log(
-        "[Facts API] Filtered out apologetic response:",
-        fact.substring(0, 100) + "..."
-      );
-      return res.status(422).json({
-        error:
-          "Generated response was apologetic. Please try a different prompt.",
-        isApologetic: true,
-      });
+    if (!backgroundColor || !backgroundColor.match(/^#[0-9a-fA-F]{6}$/)) {
+      // Pick a random color from the palette
+      backgroundColor =
+        colorPalette[Math.floor(Math.random() * colorPalette.length)];
     }
 
-    console.log("[Facts API] Generated fact:", fact.substring(0, 100) + "...");
+    console.log("[Facts API] Generated fact:", fact);
     console.log("[Facts API] Background color:", backgroundColor);
 
-    return res.status(200).json({ fact, backgroundColor });
+    return res.status(200).json({
+      fact,
+      emoji,
+      backgroundColor,
+      isFallback: false,
+    });
   } catch (error) {
-    console.error("[Facts API] Error generating fact:", error);
-    return res.status(500).json({
-      error: "Internal server error",
-      details: error instanceof Error ? error.message : "Unknown error",
+    console.error("Error generating fact:", error);
+
+    // Return a fallback response instead of error
+    const fallbackFacts = [
+      "🏔️ The Hindu Kush mountains in Afghanistan are home to some of the world's highest peaks, with Noshaq reaching 7,492 meters above sea level. | #1e40af",
+      "🍽️ Afghan cuisine is famous for its rich flavors, with dishes like Kabuli Pulao and Afghan kebabs being celebrated worldwide. | #dc2626",
+      "🤝 Afghan hospitality is legendary - guests are treated as gifts from God and offered the best food and accommodations. | #059669",
+    ];
+
+    const randomFact =
+      fallbackFacts[Math.floor(Math.random() * fallbackFacts.length)];
+    const [emojiAndFact, backgroundColor] = randomFact.split(" | ");
+    const emoji = emojiAndFact.match(/^[^\s]+/)?.[0] || "🏛️";
+    const fact = emojiAndFact.replace(/^[^\s]+\s*/, "");
+
+    return res.status(200).json({
+      fact,
+      emoji,
+      backgroundColor: backgroundColor || "#1f2937",
+      isFallback: true,
     });
   }
 }

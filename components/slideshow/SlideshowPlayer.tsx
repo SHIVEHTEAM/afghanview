@@ -12,6 +12,7 @@ import {
   Settings,
   RotateCcw,
   Music,
+  Minimize,
 } from "lucide-react";
 
 interface Slide {
@@ -41,6 +42,8 @@ interface SlideshowPlayerProps {
       musicVolume?: number;
       musicLoop?: boolean;
     };
+    title?: string;
+    description?: string;
   };
   isFullscreen?: boolean;
   onFullscreenToggle?: () => void;
@@ -217,6 +220,16 @@ export default function SlideshowPlayer({
     }
   };
 
+  const toggleFullscreen = () => {
+    if (onFullscreenToggle) {
+      onFullscreenToggle();
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
+
   return (
     <div
       className={`relative bg-black ${
@@ -355,7 +368,7 @@ export default function SlideshowPlayer({
           </button>
 
           <button
-            onClick={() => setIsMuted(!isMuted)}
+            onClick={toggleMute}
             className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
           >
             {isMuted ? (
@@ -374,7 +387,7 @@ export default function SlideshowPlayer({
 
           {onFullscreenToggle && (
             <button
-              onClick={onFullscreenToggle}
+              onClick={toggleFullscreen}
               className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
             >
               <Maximize className="w-5 h-5" />
@@ -422,7 +435,7 @@ export default function SlideshowPlayer({
 
       {/* Slideshow Info */}
       <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded">
-        <h2 className="font-semibold">{slideshow.name}</h2>
+        <h2 className="font-semibold">{slideshow.title}</h2>
         <p className="text-sm opacity-90">{slideshow.images.length} slides</p>
       </div>
     </div>

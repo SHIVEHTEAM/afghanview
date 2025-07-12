@@ -125,17 +125,28 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
       // Store image metadata in database
       try {
-        await supabase.from("media_files").insert({
-          restaurant_id: restaurantId,
-          filename: fileName,
-          original_filename: file.name,
-          file_path: fileName,
-          file_size: file.size,
-          mime_type: file.type,
-          width: dimensions.width,
-          height: dimensions.height,
-          is_public: true,
-        });
+        const { data: mediaFile, error: dbError } = await supabase
+          .from("media_files")
+          .insert({
+            filename: fileName,
+            original_filename: file.name,
+            file_path: fileName,
+            file_size: file.size,
+            mime_type: file.type,
+            width: dimensions.width,
+            height: dimensions.height,
+            business_id: restaurantId,
+            uploaded_by: null, // Will be set by RLS policy
+            media_type: "image",
+            is_public: false,
+          })
+          .select()
+          .single();
+
+        if (dbError) {
+          console.warn("Failed to store image metadata in database:", dbError);
+          // Don't fail the upload if metadata storage fails
+        }
       } catch (dbError) {
         console.warn("Failed to store image metadata in database:", dbError);
         // Don't fail the upload if metadata storage fails

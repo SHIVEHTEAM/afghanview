@@ -5,6 +5,7 @@ import { AFGHAN_CULTURE_PROMPTS, DEFAULT_SETTINGS } from "./constants";
 import { generateFact } from "./utils";
 import PromptSelector from "./PromptSelector";
 import FactCard from "./FactCard";
+import { useToastNotifications } from "../../../lib/toast-utils";
 
 interface FactGenerationStepProps {
   onComplete: (facts: Fact[], settings: any) => void;
@@ -23,6 +24,7 @@ export default function FactGenerationStep({
   const [showCustomPrompt, setShowCustomPrompt] = useState(false);
   const [copiedFact, setCopiedFact] = useState<string | null>(null);
   const [selectedFacts, setSelectedFacts] = useState<Set<string>>(new Set());
+  const toast = useToastNotifications();
 
   const handlePromptSelected = (prompt: string) => {
     setSelectedPrompt(prompt);
@@ -30,7 +32,7 @@ export default function FactGenerationStep({
 
   const handleGenerateFact = async () => {
     if (!selectedPrompt) {
-      alert("Please select or enter a prompt.");
+      toast.showWarning("Please select or enter a prompt.");
       return;
     }
     setIsGenerating(true);
@@ -64,6 +66,7 @@ export default function FactGenerationStep({
         // If just Persian requested
         enhancedPrompt += `\n\nIMPORTANT: Only answer in Persian (فارسی) script. Do NOT translate to English. If you don't know, say 'I don't know.'`;
       } else if (wantsPashto) {
+        // If just Pashto requested
         enhancedPrompt += `\n\nIMPORTANT: Only answer in Pashto (پشتو) script. Do NOT translate to English. If you don't know, say 'I don't know.'`;
       }
       const data = await generateFact(enhancedPrompt);
@@ -84,11 +87,11 @@ export default function FactGenerationStep({
     } catch (error: any) {
       // Handle apologetic responses specifically
       if (error.message?.includes("apologetic") || error.status === 422) {
-        alert(
+        toast.showWarning(
           "The AI couldn't generate a good response for this prompt. Please try a different topic or write a custom prompt."
         );
       } else {
-        alert(
+        toast.showError(
           `Error generating fact: ${
             error instanceof Error ? error.message : "Unknown error"
           }`
@@ -135,7 +138,7 @@ export default function FactGenerationStep({
       } catch (error: any) {
         // If this is the last attempt, show an error
         if (i === fallbackPrompts.length - 1) {
-          alert(
+          toast.showError(
             "Could not generate any facts. Please try again later or use a custom prompt."
           );
         }
@@ -174,7 +177,7 @@ export default function FactGenerationStep({
         onComplete(facts, DEFAULT_SETTINGS);
       } else {
         // If no facts generated, show a message
-        alert(
+        toast.showError(
           "Please generate at least one fact before continuing to settings."
         );
         return;

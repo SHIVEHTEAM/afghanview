@@ -21,8 +21,6 @@ interface VideoCustomizeStepProps {
   ) => void;
   backgroundMusic: File | null;
   onBackgroundMusicUpload: (url: string) => void;
-  onNext: () => void;
-  onBack: () => void;
   formatDuration: (ms: number) => string;
 }
 
@@ -34,8 +32,6 @@ export default function VideoCustomizeStep({
   setTransition,
   backgroundMusic,
   onBackgroundMusicUpload,
-  onNext,
-  onBack,
   formatDuration,
 }: VideoCustomizeStepProps) {
   const [isUploadingMusic, setIsUploadingMusic] = useState(false);
@@ -175,13 +171,13 @@ export default function VideoCustomizeStep({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="text-center mb-6">
+    <div className="h-full flex flex-col min-h-0">
+      <div className="text-center mb-6 flex-shrink-0">
         <h3 className="text-lg font-semibold mb-2">Customize Your Slideshow</h3>
         <p className="text-gray-600">Set up your video slideshow settings</p>
       </div>
 
-      <div className="flex-1 space-y-6">
+      <div className="flex-1 overflow-y-auto space-y-6 pb-6 min-h-0">
         {/* Slideshow Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -299,24 +295,6 @@ export default function VideoCustomizeStep({
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </button>
-        <button
-          onClick={onNext}
-          className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-        >
-          Next
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </button>
       </div>
     </div>
   );

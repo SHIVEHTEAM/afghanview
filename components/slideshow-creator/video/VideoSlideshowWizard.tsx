@@ -215,6 +215,9 @@ export default function VideoSlideshowWizard({
         settings,
       };
 
+      console.log("Video wizard creating slideshow data:", slideshowData);
+      console.log("Video slides array:", videoSlides);
+
       updateFormData(slideshowData);
       onComplete(slideshowData);
     } catch (error) {
@@ -277,7 +280,6 @@ export default function VideoSlideshowWizard({
             isUploading={isUploading}
             onFileUpload={handleFileUpload}
             onRemoveVideo={removeVideo}
-            onNext={handleNext}
             formatDuration={formatDuration}
           />
         );
@@ -293,35 +295,37 @@ export default function VideoSlideshowWizard({
             ) => setSettings({ ...settings, transition })}
             backgroundMusic={null}
             onBackgroundMusicUpload={handleBackgroundMusicUpload}
-            onNext={handleNext}
-            onBack={handleBack}
             formatDuration={formatDuration}
           />
         );
       case 2:
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SettingsPanel
-              settings={settings}
-              onSettingsChange={setSettings}
-              slideshowName={slideshowName}
-              onSlideshowNameChange={setSlideshowName}
-            />
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-800 mb-3">Quick Preview</h4>
-              <div className="aspect-video bg-white rounded border">
-                {videos.length > 0 ? (
-                  <video
-                    src={URL.createObjectURL(videos[0].file)}
-                    className="w-full h-full object-cover rounded"
-                    muted
-                    loop
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">
-                    No videos uploaded
-                  </div>
-                )}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SettingsPanel
+                settings={settings}
+                onSettingsChange={setSettings}
+                slideshowName={slideshowName}
+                onSlideshowNameChange={setSlideshowName}
+              />
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-800 mb-3">
+                  Quick Preview
+                </h4>
+                <div className="aspect-video bg-white rounded border">
+                  {videos.length > 0 ? (
+                    <video
+                      src={URL.createObjectURL(videos[0].file)}
+                      className="w-full h-full object-cover rounded"
+                      muted
+                      loop
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      No videos uploaded
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -338,7 +342,6 @@ export default function VideoSlideshowWizard({
                 : null
             }
             isCreating={isCreating}
-            onBack={handleBack}
             onCreate={handleCreate}
             formatDuration={formatDuration}
           />
@@ -349,23 +352,23 @@ export default function VideoSlideshowWizard({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto p-6">{renderStepContent()}</div>
+    <div className="h-full flex flex-col max-h-[calc(90vh-200px)]">
+      <div className="flex-1 overflow-y-auto p-6 pb-0">
+        {renderStepContent()}
+      </div>
 
-      {currentStep !== 0 && currentStep !== 1 && currentStep !== 3 && (
-        <WizardStepper
-          steps={steps}
-          currentStep={currentStep}
-          onStepClick={handleStepClick}
-          canGoNext={canGoNext()}
-          canGoBack={canGoBack}
-          onNext={handleNext}
-          onBack={handleBack}
-          onComplete={handleCreate}
-          isCreating={isCreating}
-          createButtonText={isEditing ? "Update Slideshow" : "Create Slideshow"}
-        />
-      )}
+      <WizardStepper
+        steps={steps}
+        currentStep={currentStep}
+        onStepClick={handleStepClick}
+        canGoNext={canGoNext()}
+        canGoBack={canGoBack}
+        onNext={handleNext}
+        onBack={handleBack}
+        onComplete={handleCreate}
+        isCreating={isCreating}
+        createButtonText={isEditing ? "Update Slideshow" : "Create Slideshow"}
+      />
     </div>
   );
 }

@@ -3,46 +3,28 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Check if environment variables are properly configured
-if (
-  !supabaseUrl ||
-  !supabaseAnonKey ||
-  supabaseUrl === "your_supabase_project_url" ||
-  supabaseAnonKey === "your_supabase_anon_key"
-) {
-  console.error("❌ Supabase environment variables not configured!");
-  console.error(
-    "Please update your .env.local file with your actual Supabase credentials:"
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    "Missing Supabase environment variables. Please check your .env.local file."
   );
-  console.error("1. Go to https://supabase.com/dashboard");
-  console.error("2. Create a new project or select existing one");
-  console.error("3. Go to Settings > API");
-  console.error("4. Copy the URL and anon key to your .env.local file");
-  console.error("");
-  console.error("Example .env.local:");
-  console.error("NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co");
-  console.error("NEXT_PUBLIC_SUPABASE_ANON_KEY=your-actual-anon-key");
-  console.error("SUPABASE_SERVICE_ROLE_KEY=your-actual-service-role-key");
 }
 
-// Create Supabase client with fallback for development
-export const supabase = createClient(
-  supabaseUrl || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder-key"
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database types
-export interface Restaurant {
+export interface Business {
   id: string;
   name: string;
   description: string;
-  address: string;
-  phone: string;
-  website: string;
-  owner_email: string;
-  package_type: "starter" | "professional" | "unlimited";
-  slide_limit: number;
+  address: any;
+  contact_info: any;
+  business_hours: any;
+  social_media: any;
+  branding: any;
+  settings: any;
   is_active: boolean;
+  is_verified: boolean;
+  verified_at: string;
   created_at: string;
   updated_at: string;
 }
@@ -62,7 +44,7 @@ export interface SlideImage {
 
 export interface Slide {
   id: string;
-  restaurant_id: string;
+  business_id: string;
   template_id?: string;
   name: string;
   type: "image" | "menu" | "promo" | "quote" | "hours" | "custom";
@@ -120,65 +102,65 @@ export interface Admin {
 
 // Database functions
 export const db = {
-  // Restaurant functions
-  async getRestaurants() {
+  // Business functions
+  async getBusinesses() {
     const { data, error } = await supabase
-      .from("restaurants")
+      .from("businesses")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data as Restaurant[];
+    return data as Business[];
   },
 
-  async getRestaurant(id: string) {
+  async getBusiness(id: string) {
     const { data, error } = await supabase
-      .from("restaurants")
+      .from("businesses")
       .select("*")
       .eq("id", id)
       .single();
 
     if (error) throw error;
-    return data as Restaurant;
+    return data as Business;
   },
 
-  async createRestaurant(
-    restaurant: Omit<Restaurant, "id" | "created_at" | "updated_at">
+  async createBusiness(
+    business: Omit<Business, "id" | "created_at" | "updated_at">
   ) {
     const { data, error } = await supabase
-      .from("restaurants")
-      .insert([restaurant])
+      .from("businesses")
+      .insert([business])
       .select()
       .single();
 
     if (error) throw error;
-    return data as Restaurant;
+    return data as Business;
   },
 
-  async updateRestaurant(id: string, updates: Partial<Restaurant>) {
+  async updateBusiness(id: string, updates: Partial<Business>) {
     const { data, error } = await supabase
-      .from("restaurants")
+      .from("businesses")
       .update(updates)
       .eq("id", id)
       .select()
       .single();
 
     if (error) throw error;
-    return data as Restaurant;
+    return data as Business;
   },
 
-  async deleteRestaurant(id: string) {
-    const { error } = await supabase.from("restaurants").delete().eq("id", id);
+  async deleteBusiness(id: string) {
+    const { error } = await supabase.from("businesses").delete().eq("id", id);
 
     if (error) throw error;
   },
 
   // Enhanced Slide functions
-  async getSlides(restaurantId: string, includeImages: boolean = true) {
+  async getSlides(businessId: string, includeImages: boolean = true) {
     let query = supabase
       .from("slides")
       .select("*")
-      .eq("restaurant_id", restaurantId)
+      .eq("business_id", businessId)
       .order("sort_order", { ascending: true });
 
     const { data, error } = await query;
@@ -363,7 +345,7 @@ export const db = {
   },
 
   // Reorder slides
-  async reorderSlides(restaurantId: string, slideIds: string[]) {
+  async reorderSlides(businessId: string, slideIds: string[]) {
     const updates = slideIds.map((id, index) => ({
       id,
       sort_order: index,

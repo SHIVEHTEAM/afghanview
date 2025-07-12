@@ -2,57 +2,56 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { SimpleImageViewer } from "../../../components/slideshow";
+import { MenuSVGGenerator } from "../../../components/slideshow-creator/menu/svg-generator";
 
-interface Slide {
+interface Slideshow {
   id: string;
-  name: string;
   title: string;
-  subtitle?: string;
-  content: {
-    images: any[];
-    videos: any[];
-    text: {
-      title: string;
-      subtitle: string;
-      description: string;
-    };
-    styling: any;
-    animation: any;
-    mediaCount: number;
-    hasVideos: boolean;
-    hasImages: boolean;
+  name?: string;
+  description?: string;
+  content?: {
+    slides?: any[];
+    images?: any[];
+    [key: string]: any;
   };
-  styling: any;
-  duration: number;
+  settings?: {
+    duration?: number;
+    transition?: string;
+    background_music?: string;
+    [key: string]: any;
+  };
+  images?: any[];
 }
 
-export default function SlidePreview() {
+export default function SlideshowPreview() {
   const router = useRouter();
   const { id } = router.query;
-  const [slide, setSlide] = useState<Slide | null>(null);
+  const [slideshow, setSlideshow] = useState<Slideshow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (id) {
-      fetchSlide();
+      fetchSlideshow();
     }
   }, [id]);
 
-  const fetchSlide = async () => {
+  const fetchSlideshow = async () => {
     try {
-      const response = await fetch(`/api/slides/${id}`);
+      const response = await fetch(`/api/slideshows/${id}`);
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to load slide");
+        throw new Error(errorData.error || "Failed to load slideshow");
       }
 
       const data = await response.json();
-      setSlide(data);
+      setSlideshow(data);
     } catch (error) {
-      console.error("Error fetching slide:", error);
-      setError(error instanceof Error ? error.message : "Failed to load slide");
+      console.error("Error fetching slideshow:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to load slideshow"
+      );
     } finally {
       setLoading(false);
     }
@@ -66,50 +65,91 @@ export default function SlidePreview() {
     );
   }
 
-  if (error || !slide) {
+  if (error || !slideshow) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center text-white">
-          <h1 className="text-2xl font-bold mb-4">Slide Not Found</h1>
+          <h1 className="text-2xl font-bold mb-4">Slideshow Not Found</h1>
           <p className="text-gray-400">
-            {error || "The slide could not be found"}
+            {error || "The slideshow could not be found"}
           </p>
         </div>
       </div>
     );
   }
 
-  // Convert slide content to SimpleImageViewer format - include both images and videos
+  // Convert slideshow content to SimpleImageViewer format
   const allMedia = [
-    ...(slide.content.images || []).map((img, index) => ({
-      id: img.id || `img-${index}`,
-      name: img.alt || `Image ${index + 1}`,
-      url: img.url,
-      file_path: img.file_path,
-      type: "image" as const,
-    })),
-    ...(slide.content.videos || []).map((vid, index) => ({
+    // Handle slides array (new format)
+    ...(slideshow.content?.slides || []).map((slide: any, index: number) => {
+      // Handle menu items by generating SVG on-demand
+      if (slide.type === "menu" && slide.menuData) {
+        const svgDataUrl = MenuSVGGenerator.generateMenuSlide(
+          slide.menuData.item,
+          slide.menuData.theme,
+          slide.menuData.layout
+        );
+        return {
+          id: slide.id || `slide-${index}`,
+          name: slide.name || slide.alt || `Slide ${index + 1}`,
+          url: svgDataUrl,
+          file_path: svgDataUrl,
+          type: "image" as const,
+        };
+      }
+
+      // Handle regular slides
+      return {
+        id: slide.id || `slide-${index}`,
+        name: slide.name || slide.alt || `Slide ${index + 1}`,
+        url: slide.url || slide.file_path,
+        file_path: slide.file_path || slide.url,
+        type: slide.type || ("image" as const),
+      };
+    }),
+    // Handle images array (legacy format)
+    ...(slideshow.content?.images || slideshow.images || []).map(
+      (img: any, index: number) => ({
+        id: img.id || `img-${index}`,
+        name: img.name || img.alt || `Image ${index + 1}`,
+        url: img.url || img.file_path,
+        file_path: img.file_path || img.url,
+        type: "image" as const,
+      })
+    ),
+    // Handle videos array (legacy format)
+    ...(slideshow.content?.videos || []).map((vid: any, index: number) => ({
       id: vid.id || `vid-${index}`,
-      name: vid.alt || `Video ${index + 1}`,
-      url: vid.url,
-      file_path: vid.file_path,
+      name: vid.name || vid.alt || `Video ${index + 1}`,
+      url: vid.url || vid.file_path,
+      file_path: vid.file_path || vid.url,
       type: "video" as const,
     })),
   ];
 
   const settings = {
-    duration: slide.duration || 5000,
-    transition: slide.content.animation?.type || "fade",
+    duration: slideshow.settings?.duration || 5000,
+    transition: slideshow.settings?.transition || "fade",
     autoPlay: true,
     showControls: true,
     tvMode: false,
+    backgroundMusic:
+      slideshow.settings?.backgroundMusic ||
+      slideshow.settings?.background_music,
+    musicVolume:
+      slideshow.settings?.musicVolume || slideshow.settings?.music_volume || 50,
+    musicLoop:
+      slideshow.settings?.musicLoop || slideshow.settings?.music_loop || true,
   };
 
   return (
     <>
       <Head>
-        <title>{slide.name} - Preview</title>
-        <meta name="description" content={`Preview: ${slide.title}`} />
+        <title>{slideshow.title || slideshow.name} - Preview</title>
+        <meta
+          name="description"
+          content={`Preview: ${slideshow.title || slideshow.name}`}
+        />
       </Head>
 
       <SimpleImageViewer

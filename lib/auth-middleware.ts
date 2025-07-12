@@ -12,7 +12,8 @@ export interface AuthenticatedRequest extends NextApiRequest {
     email: string;
     name: string;
     role: string;
-    restaurant_id?: string;
+    business_id?: string;
+    staff_role?: "owner" | "manager" | "staff";
   };
 }
 
@@ -53,13 +54,22 @@ export async function authenticateRequest(
       return null;
     }
 
+    // Get user's business information
+    const { data: staffMember, error: staffError } = await supabase
+      .from("business_staff")
+      .select("business_id, role")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single();
+
     const authenticatedReq = req as AuthenticatedRequest;
     authenticatedReq.user = {
       id: user.id,
       email: user.email!,
       name: profile.full_name || `${profile.first_name} ${profile.last_name}`,
       role: profile.role,
-      restaurant_id: profile.restaurant_id,
+      business_id: staffMember?.business_id,
+      staff_role: staffMember?.role as "owner" | "manager" | "staff",
     };
 
     return authenticatedReq;
@@ -88,6 +98,6 @@ export function requireAdmin() {
   return requireRole("admin");
 }
 
-export function requireRestaurantOwner() {
-  return requireRole("restaurant_owner");
+export function requireBusinessOwner() {
+  return requireRole("business_owner");
 }

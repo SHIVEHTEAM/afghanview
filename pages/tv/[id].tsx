@@ -88,7 +88,30 @@ export default function TvDisplay() {
       }
     };
     fetchSlideshow();
-  }, [id]);
+
+    // Set up polling to check slideshow status every 5 seconds
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/slideshows/${id}`, { method: "HEAD" });
+        if (res.status === 403) {
+          // Slideshow was paused/deactivated
+          setError(
+            "This slideshow has been paused. Please activate it in the dashboard."
+          );
+          setIsPlaying(false);
+        } else if (res.ok) {
+          // Slideshow is still active, clear any previous error
+          if (error) {
+            setError(null);
+          }
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, [id, error]);
 
   // Background music functionality
   useEffect(() => {
@@ -96,32 +119,15 @@ export default function TvDisplay() {
       slideshow?.settings?.backgroundMusic &&
       slideshow.settings.backgroundMusic !== "none"
     ) {
-      console.log(
-        "[TV Display] Setting up background music:",
-        slideshow.settings.backgroundMusic
-      );
-
       if (!audioRef.current) {
         const audio = new Audio(slideshow.settings.backgroundMusic);
         audio.loop = slideshow.settings.musicLoop ?? true;
         audio.volume = (slideshow.settings.musicVolume ?? 50) / 100;
         audio.preload = "auto";
 
-        // Add event listeners for debugging
-        audio.addEventListener("loadstart", () =>
-          console.log("[TV Display] Music: loadstart")
-        );
-        audio.addEventListener("canplay", () =>
-          console.log("[TV Display] Music: canplay")
-        );
-        audio.addEventListener("canplaythrough", () =>
-          console.log("[TV Display] Music: canplaythrough")
-        );
+        // Add event listeners for error handling
         audio.addEventListener("error", (e) =>
           console.error("[TV Display] Music error:", e)
-        );
-        audio.addEventListener("stalled", () =>
-          console.log("[TV Display] Music: stalled")
         );
 
         audioRef.current = audio;
@@ -130,10 +136,8 @@ export default function TvDisplay() {
       // Try to start playing music with user interaction fallback
       const startMusic = async () => {
         try {
-          console.log("[TV Display] Attempting to play background music...");
           await audioRef.current!.play();
           setIsMusicPlaying(true);
-          console.log("[TV Display] Background music started successfully");
         } catch (error) {
           console.error("[TV Display] Failed to play background music:", error);
           // If autoplay fails, we'll need user interaction
@@ -144,9 +148,6 @@ export default function TvDisplay() {
             try {
               await audioRef.current!.play();
               setIsMusicPlaying(true);
-              console.log(
-                "[TV Display] Background music started on user interaction"
-              );
             } catch (e) {
               console.error(
                 "[TV Display] Failed to start music on user interaction:",
@@ -162,7 +163,6 @@ export default function TvDisplay() {
 
       startMusic();
     } else {
-      console.log("[TV Display] No background music configured");
     }
 
     return () => {
@@ -178,33 +178,15 @@ export default function TvDisplay() {
   useEffect(() => {
     if (!slideshow) return;
     const convertImagesToUrls = async () => {
-      console.log(
-        "[TV Display] Starting image URL conversion for slideshow:",
-        slideshow.name
-      );
-      console.log(
-        "[TV Display] Slideshow type:",
-        slideshow.mediaType || slideshow.slideshowType
-      );
-      console.log(
-        "[TV Display] Total images to process:",
-        slideshow.images.length
-      );
-
       const urls: string[] = [];
       for (let i = 0; i < slideshow.images.length; i++) {
         const image = slideshow.images[i];
         let url = "";
 
-        // Debug log to see what we're working with
-        console.log(`[TV Display] Processing image ${i}:`, image);
-
         if (image.base64) {
           url = image.base64;
-          console.log(`[TV Display] Using base64 for image ${i}`);
         } else if (image.url) {
           url = image.url;
-          console.log(`[TV Display] Using url for image ${i}:`, url);
         } else if (image.file_path) {
           // Check if file_path is already a full URL or base64 data
           if (
@@ -212,102 +194,55 @@ export default function TvDisplay() {
             image.file_path.startsWith("https://")
           ) {
             url = image.file_path;
-            console.log(
-              `[TV Display] Using full URL from file_path for image ${i}:`,
-              url
-            );
           } else if (image.file_path.startsWith("data:")) {
             // Handle base64 data URLs (like AI facts)
             url = image.file_path;
-            console.log(
-              `[TV Display] Using base64 data URL from file_path for image ${i}`
-            );
           } else {
             // It's a relative path, construct the full URL
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
             if (supabaseUrl) {
               // Try multiple possible URL patterns
               const possibleUrls = [
-                // Direct file path
+                // Try the full path first
                 `${supabaseUrl}/storage/v1/object/public/slideshow-media/${image.file_path}`,
-                // Without restaurant prefix
-                `${supabaseUrl}/storage/v1/object/public/slideshow-media/${image.file_path.replace(
-                  /^restaurants\//,
-                  ""
-                )}`,
-                // Slide images bucket
-                `${supabaseUrl}/storage/v1/object/public/slide-images/${image.file_path}`,
-                `${supabaseUrl}/storage/v1/object/public/slide-images/${image.file_path.replace(
-                  /^restaurants\//,
-                  ""
-                )}`,
-                // Try with different bucket names
-                `${supabaseUrl}/storage/v1/object/public/media/${image.file_path}`,
-                `${supabaseUrl}/storage/v1/object/public/images/${image.file_path}`,
                 // Try with just the filename
                 `${supabaseUrl}/storage/v1/object/public/slideshow-media/${image.file_path
                   .split("/")
                   .pop()}`,
               ];
 
-              console.log(
-                `[TV Display] Trying URLs for image ${i}:`,
-                image.file_path
-              );
               for (const testUrl of possibleUrls) {
                 try {
-                  console.log(
-                    `[TV Display] Testing URL for image ${i}:`,
-                    testUrl
-                  );
                   const response = await fetch(testUrl, { method: "HEAD" });
                   if (response.ok) {
                     url = testUrl;
-                    console.log(
-                      `[TV Display] Found working URL for image ${i}:`,
-                      url
-                    );
                     break;
                   }
                 } catch (error) {
-                  console.log(
-                    `[TV Display] URL failed for image ${i}:`,
-                    testUrl,
-                    error
-                  );
+                  // URL failed, try next one
                 }
               }
 
               if (!url) {
                 // Fallback to the most likely URL
                 url = `${supabaseUrl}/storage/v1/object/public/slideshow-media/${image.file_path}`;
-                console.log(
-                  `[TV Display] Using fallback URL for image ${i}:`,
-                  url
-                );
               }
             }
           }
         } else if (image.image_url) {
           // Handle AI facts and other slideshows that might use image_url
           url = image.image_url;
-          console.log(`[TV Display] Using image_url for image ${i}:`, url);
         }
 
         if (!url) {
           // Placeholder image
           url =
             "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik05NjAgNTQwQzk0MC4wOSA1NDAgOTI0IDUyMy45MSA5MjQgNTA0QzkyNCA0ODQuMDkgOTQwLjA5IDQ2OCA5NjAgNDY4Qzk3OS45MSA0NjggOTk2IDQ4NC4wOSA5OTYgNTA0Qzk5NiA1MjMuOTEgOTc5LjkxIDU0MCA5NjAgNTQwWiIgZmlsbD0iIzlCOUJBQCIvPgo8cGF0aCBkPSJNOTI0IDY3MkM5MjQgNjUyLjA5IDk0MC4wOSA2MzYgOTYwIDYzNkM5NzkuOTEgNjM2IDk5NiA2NTIuMDkgOTk2IDY3MlY3MjBDOTk2IDczOS45MSA5NzkuOTEgNzU2IDk2MCA3NTZDOTQwLjA5IDc1NiA5MjQgNzM5LjkxIDkyNCA3MjBWNjcyWiIgZmlsbD0iIzlCOUJBQCIvPgo8L3N2Zz4K";
-          console.log(
-            `[TV Display] Using placeholder for image ${i} - no valid URL found`
-          );
         }
 
         urls.push(url);
-        console.log(`[TV Display] Final URL for image ${i}:`, url);
       }
       setImageUrls(urls);
-      console.log("[TV Display] All URLs processed:", urls);
     };
     convertImagesToUrls();
   }, [slideshow]);
@@ -328,16 +263,9 @@ export default function TvDisplay() {
       imageUrls[currentIndex] &&
       isVideoFile(imageUrls[currentIndex], slideshow?.images[currentIndex])
     ) {
-      console.log(
-        `[TV Display] Attempting to play video for index ${currentIndex}`
-      );
-
       const playVideo = async () => {
         try {
           await videoRef.current!.play();
-          console.log(
-            `[TV Display] Video play successful for index ${currentIndex}`
-          );
         } catch (error) {
           console.error(
             `[TV Display] Video play failed for index ${currentIndex}:`,
@@ -443,13 +371,11 @@ export default function TvDisplay() {
   const isVideoFile = (url: string, image: any): boolean => {
     // First check the type field
     if (image && image.type === "video") {
-      console.log("[TV Display] ✅ Video detected by type field");
       return true;
     }
 
     // Defensive: url must be a string
     if (typeof url !== "string") {
-      console.warn("[TV Display] isVideoFile: url is not a string", url);
       return false;
     }
 
@@ -461,7 +387,6 @@ export default function TvDisplay() {
       lowerUrl.includes("video") ||
       lowerUrl.includes("type=video");
 
-    console.log("[TV Display] Video detection by URL:", isVideoByUrl);
     return isVideoByUrl;
   };
 
@@ -473,23 +398,19 @@ export default function TvDisplay() {
       ogg: video.canPlayType('video/ogg; codecs="theora, vorbis"'),
     };
 
-    console.log("[TV Display] Browser video support:", supportedFormats);
     return supportedFormats;
   };
 
   // Handle video loading states
   const handleVideoLoadStart = (index: number) => {
-    console.log(`[TV Display] Video load start for index ${index}`);
     setVideoLoading((prev) => ({ ...prev, [index]: true }));
   };
 
   const handleVideoCanPlay = (index: number) => {
-    console.log(`[TV Display] Video can play for index ${index}`);
     setVideoLoading((prev) => ({ ...prev, [index]: false }));
   };
 
   const handleVideoError = async (index: number) => {
-    console.log(`[TV Display] Video error for index ${index}`);
     setVideoLoading((prev) => ({ ...prev, [index]: false }));
 
     const currentImage = slideshow?.images[index];
@@ -501,9 +422,6 @@ export default function TvDisplay() {
     // Try to get a fresh signed URL first
     if (currentImage.file_path && !currentImage.file_path.startsWith("data:")) {
       try {
-        console.log(
-          `[TV Display] Attempting to get fresh signed URL for video ${index}`
-        );
         const response = await fetch(
           `/api/media/signed-url?path=${encodeURIComponent(
             currentImage.file_path
@@ -511,10 +429,6 @@ export default function TvDisplay() {
         );
         if (response.ok) {
           const { url } = await response.json();
-          console.log(
-            `[TV Display] Got fresh signed URL for video ${index}:`,
-            url
-          );
 
           // Update the URL to use the fresh signed URL
           setImageUrls((prev) => {
@@ -534,9 +448,6 @@ export default function TvDisplay() {
 
     // Try to show thumbnail as fallback
     if (currentImage.thumbnail) {
-      console.log(
-        `[TV Display] Using thumbnail as fallback for video ${index}`
-      );
       // Update the URL to use thumbnail
       setImageUrls((prev) => {
         const newUrls = [...prev];
@@ -548,17 +459,11 @@ export default function TvDisplay() {
     }
   };
 
-  const handleVideoPlay = (index: number) => {
-    console.log(`[TV Display] Video play event for index ${index}`);
-  };
+  const handleVideoPlay = (index: number) => {};
 
-  const handleVideoPause = (index: number) => {
-    console.log(`[TV Display] Video pause event for index ${index}`);
-  };
+  const handleVideoPause = (index: number) => {};
 
-  const handleVideoEnded = (index: number) => {
-    console.log(`[TV Display] Video ended for index ${index}`);
-  };
+  const handleVideoEnded = (index: number) => {};
 
   if (isLoading) {
     return (

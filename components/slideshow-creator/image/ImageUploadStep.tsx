@@ -23,6 +23,10 @@ export default function ImageUploadStep({
   ) => {
     const files = event.target.files;
     if (!files) return;
+
+    // Store reference to the input element before async operations
+    const inputElement = event.target;
+
     setIsUploading(true);
     const newImages: SlideMedia[] = [];
 
@@ -62,7 +66,11 @@ export default function ImageUploadStep({
 
     onImagesChange([...images, ...newImages]);
     setIsUploading(false);
-    event.target.value = "";
+
+    // Clear the input value safely
+    if (inputElement) {
+      inputElement.value = "";
+    }
   };
 
   const removeImage = (id: string) => {

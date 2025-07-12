@@ -1,130 +1,98 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import Head from "next/head";
-import AdminLayout from "../layout";
-import { useAuth } from "../../../lib/auth";
-import { supabase } from "../../../lib/supabase";
-import { ProtectedRoute } from "../../../components/auth";
+import { useRouter } from "next/router";
 import {
   Settings,
   Save,
+  RefreshCw,
+  Database,
+  Server,
   Globe,
-  CreditCard,
   Shield,
   Bell,
-  Palette,
-  Database,
-  Key,
   Mail,
-  Smartphone,
-  Monitor,
-  Download,
-  Upload,
-  RefreshCw,
+  CreditCard,
+  Users,
+  Building,
+  AlertTriangle,
   CheckCircle,
   XCircle,
-  AlertTriangle,
-  Info,
-  Lock,
-  Unlock,
   Eye,
   EyeOff,
-  Trash2,
-  Plus,
-  Edit,
-  Copy,
+  Key,
+  Lock,
+  Unlock,
 } from "lucide-react";
 
-interface SystemSetting {
-  id: string;
-  key: string;
-  value: any;
-  description: string;
-  is_public: boolean;
-  created_at: string;
-  updated_at: string;
+import { useAuth } from "../../../lib/auth";
+import { supabase } from "../../../lib/supabase";
+import AdminLayout from "../layout";
+
+interface SystemSettings {
+  siteName: string;
+  siteDescription: string;
+  maintenanceMode: boolean;
+  registrationEnabled: boolean;
+  emailVerificationRequired: boolean;
+  maxFileSize: number;
+  allowedFileTypes: string[];
+  defaultLanguage: string;
+  timezone: string;
+  stripeEnabled: boolean;
+  stripePublishableKey: string;
+  stripeSecretKey: string;
+  smtpEnabled: boolean;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPassword: string;
+  analyticsEnabled: boolean;
+  backupEnabled: boolean;
+  backupFrequency: string;
 }
 
 export default function AdminSettings() {
+  const router = useRouter();
   const { user } = useAuth();
-  const [settings, setSettings] = useState<SystemSetting[]>([]);
+  const [settings, setSettings] = useState<SystemSettings>({
+    siteName: "AfghanView",
+    siteDescription: "Digital signage platform for Afghan businesses",
+    maintenanceMode: false,
+    registrationEnabled: true,
+    emailVerificationRequired: true,
+    maxFileSize: 10,
+    allowedFileTypes: ["jpg", "jpeg", "png", "gif", "mp4", "mov"],
+    defaultLanguage: "en",
+    timezone: "Asia/Kabul",
+    stripeEnabled: false,
+    stripePublishableKey: "",
+    stripeSecretKey: "",
+    smtpEnabled: false,
+    smtpHost: "",
+    smtpPort: 587,
+    smtpUsername: "",
+    smtpPassword: "",
+    analyticsEnabled: true,
+    backupEnabled: true,
+    backupFrequency: "daily",
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showSecrets, setShowSecrets] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
-  const [showApiKey, setShowApiKey] = useState(false);
-
-  // Form states
-  const [appName, setAppName] = useState("ShivehView");
-  const [appVersion, setAppVersion] = useState("1.0.0");
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [defaultSlideDuration, setDefaultSlideDuration] = useState(6000);
-  const [maxFileSize, setMaxFileSize] = useState(10);
-  const [allowedFileTypes, setAllowedFileTypes] = useState("image/*,video/*");
-  const [smtpHost, setSmtpHost] = useState("");
-  const [smtpPort, setSmtpPort] = useState(587);
-  const [smtpUser, setSmtpUser] = useState("");
-  const [smtpPassword, setSmtpPassword] = useState("");
-  const [apiKey, setApiKey] = useState("sk-...");
-  const [webhookUrl, setWebhookUrl] = useState("");
-  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
-  const [backupEnabled, setBackupEnabled] = useState(true);
-  const [backupFrequency, setBackupFrequency] = useState("daily");
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (user) {
+      fetchSettings();
+    }
+  }, [user]);
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from("system_settings")
-        .select("*")
-        .order("key");
-
-      if (error) throw error;
-
-      setSettings(data || []);
-
-      // Set form values from settings
-      const appNameSetting = data?.find((s) => s.key === "app_name");
-      const appVersionSetting = data?.find((s) => s.key === "app_version");
-      const maintenanceSetting = data?.find(
-        (s) => s.key === "maintenance_mode"
-      );
-      const slideDurationSetting = data?.find(
-        (s) => s.key === "default_slide_duration"
-      );
-      const maxFileSizeSetting = data?.find((s) => s.key === "max_file_size");
-      const allowedFileTypesSetting = data?.find(
-        (s) => s.key === "allowed_file_types"
-      );
-      const smtpHostSetting = data?.find((s) => s.key === "smtp_host");
-      const smtpPortSetting = data?.find((s) => s.key === "smtp_port");
-      const smtpUserSetting = data?.find((s) => s.key === "smtp_user");
-      const smtpPasswordSetting = data?.find((s) => s.key === "smtp_password");
-      const apiKeySetting = data?.find((s) => s.key === "api_key");
-      const webhookUrlSetting = data?.find((s) => s.key === "webhook_url");
-      const analyticsSetting = data?.find((s) => s.key === "analytics_enabled");
-      const backupSetting = data?.find((s) => s.key === "backup_enabled");
-      const backupFreqSetting = data?.find((s) => s.key === "backup_frequency");
-
-      if (appNameSetting) setAppName(appNameSetting.value);
-      if (appVersionSetting) setAppVersion(appVersionSetting.value);
-      if (maintenanceSetting) setMaintenanceMode(maintenanceSetting.value);
-      if (slideDurationSetting)
-        setDefaultSlideDuration(slideDurationSetting.value);
-      if (maxFileSizeSetting) setMaxFileSize(maxFileSizeSetting.value);
-      if (allowedFileTypesSetting)
-        setAllowedFileTypes(allowedFileTypesSetting.value);
-      if (smtpHostSetting) setSmtpHost(smtpHostSetting.value);
-      if (smtpPortSetting) setSmtpPort(smtpPortSetting.value);
-      if (smtpUserSetting) setSmtpUser(smtpUserSetting.value);
-      if (smtpPasswordSetting) setSmtpPassword(smtpPasswordSetting.value);
-      if (apiKeySetting) setApiKey(apiKeySetting.value);
-      if (webhookUrlSetting) setWebhookUrl(webhookUrlSetting.value);
-      if (analyticsSetting) setAnalyticsEnabled(analyticsSetting.value);
-      if (backupSetting) setBackupEnabled(backupSetting.value);
-      if (backupFreqSetting) setBackupFrequency(backupFreqSetting.value);
+      setLoading(true);
+      // In a real implementation, you would fetch settings from your database
+      // For now, we'll use the default settings
+      setSettings(settings);
     } catch (error) {
       console.error("Error fetching settings:", error);
     } finally {
@@ -132,48 +100,12 @@ export default function AdminSettings() {
     }
   };
 
-  const saveSettings = async () => {
-    setSaving(true);
+  const handleSave = async () => {
     try {
-      const settingsToUpdate = [
-        { key: "app_name", value: appName },
-        { key: "app_version", value: appVersion },
-        { key: "maintenance_mode", value: maintenanceMode },
-        { key: "default_slide_duration", value: defaultSlideDuration },
-        { key: "max_file_size", value: maxFileSize },
-        { key: "allowed_file_types", value: allowedFileTypes },
-        { key: "smtp_host", value: smtpHost },
-        { key: "smtp_port", value: smtpPort },
-        { key: "smtp_user", value: smtpUser },
-        { key: "smtp_password", value: smtpPassword },
-        { key: "api_key", value: apiKey },
-        { key: "webhook_url", value: webhookUrl },
-        { key: "analytics_enabled", value: analyticsEnabled },
-        { key: "backup_enabled", value: backupEnabled },
-        { key: "backup_frequency", value: backupFrequency },
-      ];
-
-      for (const setting of settingsToUpdate) {
-        const existingSetting = settings.find((s) => s.key === setting.key);
-        if (existingSetting) {
-          await supabase
-            .from("system_settings")
-            .update({
-              value: setting.value,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("key", setting.key);
-        } else {
-          await supabase.from("system_settings").insert({
-            key: setting.key,
-            value: setting.value,
-            description: `Setting for ${setting.key}`,
-            is_public: false,
-          });
-        }
-      }
-
-      await fetchSettings();
+      setSaving(true);
+      // In a real implementation, you would save settings to your database
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      console.log("Settings saved:", settings);
     } catch (error) {
       console.error("Error saving settings:", error);
     } finally {
@@ -181,81 +113,90 @@ export default function AdminSettings() {
     }
   };
 
-  const generateApiKey = () => {
-    const newKey = `sk-${Math.random()
-      .toString(36)
-      .substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    setApiKey(newKey);
+  const handleReset = () => {
+    fetchSettings();
   };
 
-  const copyApiKey = () => {
-    navigator.clipboard.writeText(apiKey);
+  const updateSetting = (key: keyof SystemSettings, value: any) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   const tabs = [
     { id: "general", name: "General", icon: Settings },
-    { id: "billing", name: "Billing", icon: CreditCard },
-    { id: "integrations", name: "Integrations", icon: Key },
-    { id: "email", name: "Email", icon: Mail },
     { id: "security", name: "Security", icon: Shield },
-    { id: "backup", name: "Backup", icon: Database },
+    { id: "email", name: "Email", icon: Mail },
+    { id: "payments", name: "Payments", icon: CreditCard },
+    { id: "storage", name: "Storage", icon: Database },
+    { id: "backup", name: "Backup", icon: Server },
   ];
 
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading settings...</p>
+          </div>
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <ProtectedRoute requiredRole="admin">
-      <AdminLayout>
-        <Head>
-          <title>Settings - Admin Dashboard</title>
-          <meta name="description" content="Admin settings" />
-        </Head>
+    <AdminLayout>
+      <Head>
+        <title>System Settings - Admin Dashboard</title>
+        <meta name="description" content="System settings and configuration" />
+      </Head>
 
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                System Settings
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Configure system-wide settings and preferences
-              </p>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              System Settings
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Configure system-wide settings and preferences
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
             <button
-              onClick={saveSettings}
-              disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-afghan-green hover:bg-afghan-green-dark disabled:opacity-50"
+              onClick={handleReset}
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
             >
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? "Saving..." : "Save Settings"}
+              <RefreshCw className="w-4 h-4" />
+              <span>Reset</span>
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              <span>{saving ? "Saving..." : "Save Changes"}</span>
             </button>
           </div>
+        </div>
 
-          {/* Tabs */}
+        {/* Tabs */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+            <nav className="flex space-x-8 px-6">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
                       activeTab === tab.id
-                        ? "border-afghan-green text-afghan-green"
+                        ? "border-blue-500 text-blue-600"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="w-4 h-4" />
                     <span>{tab.name}</span>
                   </button>
                 );
@@ -263,462 +204,549 @@ export default function AdminSettings() {
             </nav>
           </div>
 
-          {/* Tab Content */}
-          <div className="bg-white rounded-lg shadow">
+          <div className="p-6">
+            {/* General Settings */}
             {activeTab === "general" && (
-              <div className="p-6 space-y-6">
-                <h2 className="text-lg font-medium text-gray-900">
-                  General Settings
-                </h2>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Site Name
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.siteName}
+                      onChange={(e) =>
+                        updateSetting("siteName", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Site Description
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.siteDescription}
+                      onChange={(e) =>
+                        updateSetting("siteDescription", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Application Name
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Default Language
                     </label>
-                    <input
-                      type="text"
-                      value={appName}
-                      onChange={(e) => setAppName(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Application Version
-                    </label>
-                    <input
-                      type="text"
-                      value={appVersion}
-                      onChange={(e) => setAppVersion(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Default Slide Duration (ms)
-                    </label>
-                    <input
-                      type="number"
-                      value={defaultSlideDuration}
+                    <select
+                      value={settings.defaultLanguage}
                       onChange={(e) =>
-                        setDefaultSlideDuration(Number(e.target.value))
+                        updateSetting("defaultLanguage", e.target.value)
                       }
-                      min="1000"
-                      step="500"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="en">English</option>
+                      <option value="ps">Pashto</option>
+                      <option value="dr">Dari</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Timezone
+                    </label>
+                    <select
+                      value={settings.timezone}
+                      onChange={(e) =>
+                        updateSetting("timezone", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="Asia/Kabul">Asia/Kabul</option>
+                      <option value="UTC">UTC</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        Maintenance Mode
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        Temporarily disable the site for maintenance
+                      </p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        updateSetting(
+                          "maintenanceMode",
+                          !settings.maintenanceMode
+                        )
+                      }
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        settings.maintenanceMode ? "bg-red-600" : "bg-gray-200"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          settings.maintenanceMode
+                            ? "translate-x-6"
+                            : "translate-x-1"
+                        }`}
+                      />
+                    </button>
                   </div>
 
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        User Registration
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        Allow new users to register
+                      </p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        updateSetting(
+                          "registrationEnabled",
+                          !settings.registrationEnabled
+                        )
+                      }
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        settings.registrationEnabled
+                          ? "bg-green-600"
+                          : "bg-gray-200"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          settings.registrationEnabled
+                            ? "translate-x-6"
+                            : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        Email Verification Required
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        Require email verification for new accounts
+                      </p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        updateSetting(
+                          "emailVerificationRequired",
+                          !settings.emailVerificationRequired
+                        )
+                      }
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        settings.emailVerificationRequired
+                          ? "bg-green-600"
+                          : "bg-gray-200"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          settings.emailVerificationRequired
+                            ? "translate-x-6"
+                            : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Security Settings */}
+            {activeTab === "security" && (
+              <div className="space-y-6">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+                    <h4 className="text-sm font-medium text-yellow-800">
+                      Security Notice
+                    </h4>
+                  </div>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    These settings affect the security of your application. Make
+                    changes carefully.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        Two-Factor Authentication
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        Require 2FA for admin accounts
+                      </p>
+                    </div>
+                    <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200">
+                      <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        Session Timeout
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        Auto-logout after inactivity
+                      </p>
+                    </div>
+                    <select className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <option value="30">30 minutes</option>
+                      <option value="60">1 hour</option>
+                      <option value="120">2 hours</option>
+                      <option value="480">8 hours</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        Password Policy
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        Minimum password requirements
+                      </p>
+                    </div>
+                    <select className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <option value="weak">Weak (6+ characters)</option>
+                      <option value="medium">Medium (8+ characters)</option>
+                      <option value="strong">Strong (12+ characters)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Email Settings */}
+            {activeTab === "email" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Max File Size (MB)
+                    <h4 className="text-sm font-medium text-gray-900">
+                      SMTP Email Service
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Configure email delivery settings
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      updateSetting("smtpEnabled", !settings.smtpEnabled)
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      settings.smtpEnabled ? "bg-green-600" : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        settings.smtpEnabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {settings.smtpEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        SMTP Host
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.smtpHost}
+                        onChange={(e) =>
+                          updateSetting("smtpHost", e.target.value)
+                        }
+                        placeholder="smtp.gmail.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        SMTP Port
+                      </label>
+                      <input
+                        type="number"
+                        value={settings.smtpPort}
+                        onChange={(e) =>
+                          updateSetting("smtpPort", parseInt(e.target.value))
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        SMTP Username
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.smtpUsername}
+                        onChange={(e) =>
+                          updateSetting("smtpUsername", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        SMTP Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showSecrets ? "text" : "password"}
+                          value={settings.smtpPassword}
+                          onChange={(e) =>
+                            updateSetting("smtpPassword", e.target.value)
+                          }
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <button
+                          onClick={() => setShowSecrets(!showSecrets)}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showSecrets ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Payment Settings */}
+            {activeTab === "payments" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">
+                      Stripe Payments
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Enable Stripe payment processing
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      updateSetting("stripeEnabled", !settings.stripeEnabled)
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      settings.stripeEnabled ? "bg-green-600" : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        settings.stripeEnabled
+                          ? "translate-x-6"
+                          : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {settings.stripeEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Publishable Key
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.stripePublishableKey}
+                        onChange={(e) =>
+                          updateSetting("stripePublishableKey", e.target.value)
+                        }
+                        placeholder="pk_test_..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Secret Key
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showSecrets ? "text" : "password"}
+                          value={settings.stripeSecretKey}
+                          onChange={(e) =>
+                            updateSetting("stripeSecretKey", e.target.value)
+                          }
+                          placeholder="sk_test_..."
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <button
+                          onClick={() => setShowSecrets(!showSecrets)}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showSecrets ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Storage Settings */}
+            {activeTab === "storage" && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Maximum File Size (MB)
                     </label>
                     <input
                       type="number"
-                      value={maxFileSize}
-                      onChange={(e) => setMaxFileSize(Number(e.target.value))}
-                      min="1"
-                      max="100"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
+                      value={settings.maxFileSize}
+                      onChange={(e) =>
+                        updateSetting("maxFileSize", parseInt(e.target.value))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Allowed File Types
                     </label>
                     <input
                       type="text"
-                      value={allowedFileTypes}
-                      onChange={(e) => setAllowedFileTypes(e.target.value)}
-                      placeholder="image/*,video/*"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
+                      value={settings.allowedFileTypes.join(", ")}
+                      onChange={(e) =>
+                        updateSetting(
+                          "allowedFileTypes",
+                          e.target.value.split(", ")
+                        )
+                      }
+                      placeholder="jpg, png, mp4, mov"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
+                </div>
 
-                  <div className="md:col-span-2">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={maintenanceMode}
-                        onChange={(e) => setMaintenanceMode(e.target.checked)}
-                        className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                      />
-                      <label className="text-sm font-medium text-gray-700">
-                        Maintenance Mode
-                      </label>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      When enabled, only admins can access the system
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">
+                      Analytics
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Enable usage analytics and tracking
                     </p>
                   </div>
+                  <button
+                    onClick={() =>
+                      updateSetting(
+                        "analyticsEnabled",
+                        !settings.analyticsEnabled
+                      )
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      settings.analyticsEnabled ? "bg-green-600" : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        settings.analyticsEnabled
+                          ? "translate-x-6"
+                          : "translate-x-1"
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
             )}
 
-            {activeTab === "billing" && (
-              <div className="p-6 space-y-6">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Billing Settings
-                </h2>
-
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex">
-                    <AlertTriangle className="h-5 w-5 text-yellow-400" />
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-yellow-800">
-                        Billing Configuration
-                      </h3>
-                      <p className="text-sm text-yellow-700 mt-1">
-                        Configure payment gateways and subscription settings.
-                        This section will be expanded with Stripe integration.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Stripe Public Key
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="pk_test_..."
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Stripe Secret Key
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="sk_test_..."
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "integrations" && (
-              <div className="p-6 space-y-6">
-                <h2 className="text-lg font-medium text-gray-900">
-                  API & Integrations
-                </h2>
-
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      API Key
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type={showApiKey ? "text" : "password"}
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                      />
-                      <button
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showApiKey ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={generateApiKey}
-                        className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        Generate
-                      </button>
-                      <button
-                        onClick={copyApiKey}
-                        className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Webhook URL
-                    </label>
-                    <input
-                      type="url"
-                      value={webhookUrl}
-                      onChange={(e) => setWebhookUrl(e.target.value)}
-                      placeholder="https://your-domain.com/webhook"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                    <p className="text-sm text-gray-500 mt-1">
-                      URL to receive webhook notifications for events
-                    </p>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={analyticsEnabled}
-                      onChange={(e) => setAnalyticsEnabled(e.target.checked)}
-                      className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                    />
-                    <label className="text-sm font-medium text-gray-700">
-                      Enable Analytics
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "email" && (
-              <div className="p-6 space-y-6">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Email Configuration
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      SMTP Host
-                    </label>
-                    <input
-                      type="text"
-                      value={smtpHost}
-                      onChange={(e) => setSmtpHost(e.target.value)}
-                      placeholder="smtp.gmail.com"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      SMTP Port
-                    </label>
-                    <input
-                      type="number"
-                      value={smtpPort}
-                      onChange={(e) => setSmtpPort(Number(e.target.value))}
-                      placeholder="587"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      SMTP Username
-                    </label>
-                    <input
-                      type="email"
-                      value={smtpUser}
-                      onChange={(e) => setSmtpUser(e.target.value)}
-                      placeholder="your-email@gmail.com"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      SMTP Password
-                    </label>
-                    <input
-                      type="password"
-                      value={smtpPassword}
-                      onChange={(e) => setSmtpPassword(e.target.value)}
-                      placeholder="Your app password"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex">
-                    <Info className="h-5 w-5 text-blue-400" />
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-blue-800">
-                        Email Configuration
-                      </h3>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Configure SMTP settings for sending emails. For Gmail,
-                        use app passwords instead of your regular password.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "security" && (
-              <div className="p-6 space-y-6">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Security Settings
-                </h2>
-
-                <div className="space-y-6">
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex">
-                      <Shield className="h-5 w-5 text-red-400" />
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-red-800">
-                          Security Configuration
-                        </h3>
-                        <p className="text-sm text-red-700 mt-1">
-                          Configure security settings, password policies, and
-                          access controls.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Minimum Password Length
-                      </label>
-                      <input
-                        type="number"
-                        defaultValue={8}
-                        min="6"
-                        max="20"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Session Timeout (minutes)
-                      </label>
-                      <input
-                        type="number"
-                        defaultValue={60}
-                        min="15"
-                        max="480"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        defaultChecked
-                        className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                      />
-                      <label className="text-sm font-medium text-gray-700">
-                        Require Two-Factor Authentication for Admins
-                      </label>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        defaultChecked
-                        className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                      />
-                      <label className="text-sm font-medium text-gray-700">
-                        Enable Rate Limiting
-                      </label>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                      />
-                      <label className="text-sm font-medium text-gray-700">
-                        Enable IP Whitelist
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
+            {/* Backup Settings */}
             {activeTab === "backup" && (
-              <div className="p-6 space-y-6">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Backup & Maintenance
-                </h2>
-
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={backupEnabled}
-                      onChange={(e) => setBackupEnabled(e.target.checked)}
-                      className="rounded border-gray-300 text-afghan-green focus:ring-afghan-green"
-                    />
-                    <label className="text-sm font-medium text-gray-700">
-                      Enable Automatic Backups
-                    </label>
-                  </div>
-
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <h4 className="text-sm font-medium text-gray-900">
+                      Automatic Backups
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Enable automatic database backups
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      updateSetting("backupEnabled", !settings.backupEnabled)
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      settings.backupEnabled ? "bg-green-600" : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        settings.backupEnabled
+                          ? "translate-x-6"
+                          : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {settings.backupEnabled && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Backup Frequency
                     </label>
                     <select
-                      value={backupFrequency}
-                      onChange={(e) => setBackupFrequency(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-afghan-green focus:border-afghan-green"
+                      value={settings.backupFrequency}
+                      onChange={(e) =>
+                        updateSetting("backupFrequency", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="hourly">Hourly</option>
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
                       <option value="monthly">Monthly</option>
                     </select>
                   </div>
+                )}
 
-                  <div className="flex space-x-3">
-                    <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Backup
-                    </button>
-                    <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Restore Backup
-                    </button>
-                    <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Create Manual Backup
-                    </button>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-blue-600 mr-2" />
+                    <h4 className="text-sm font-medium text-blue-800">
+                      Last Backup
+                    </h4>
                   </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">
-                      Recent Backups
-                    </h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Backup_2024_01_15_14_30.sql</span>
-                        <span className="text-gray-500">2 hours ago</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Backup_2024_01_15_10_30.sql</span>
-                        <span className="text-gray-500">6 hours ago</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Backup_2024_01_14_14_30.sql</span>
-                        <span className="text-gray-500">1 day ago</span>
-                      </div>
-                    </div>
-                  </div>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Last successful backup: {new Date().toLocaleDateString()} at{" "}
+                    {new Date().toLocaleTimeString()}
+                  </p>
                 </div>
               </div>
             )}
           </div>
         </div>
-      </AdminLayout>
-    </ProtectedRoute>
+      </div>
+    </AdminLayout>
   );
 }

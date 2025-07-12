@@ -35,17 +35,26 @@ interface AuthContextType {
   signIn: (
     email: string,
     password: string
-  ) => Promise<{ success: boolean; error?: string }>;
-  signUp: (
-    userData: any
   ) => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
+  signUp: (userData: any) => Promise<{
     success: boolean;
     error?: string;
     requiresEmailVerification?: boolean;
   }>;
-  signOut: () => void;
-  checkAuth: () => Promise<void>;
-  resendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
+  signOut: () => Promise<void>;
+  resendVerificationEmail: () => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
+  checkOnboardingStatus: (userId: string) => Promise<{
+    completed: boolean;
+    business: any;
+    restaurant: any;
+    role?: string;
+  }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,7 +85,7 @@ export const authOptions: NextAuthConfig = {
             return null;
           }
 
-          // Get user profile with role and restaurant info
+          // Get user profile with role and business info
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("*")
@@ -92,7 +101,7 @@ export const authOptions: NextAuthConfig = {
             email: user.email!,
             name: profile.full_name,
             role: profile.role,
-            restaurant_id: profile.restaurant_id,
+            business: profile.business,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -108,7 +117,7 @@ export const authOptions: NextAuthConfig = {
         token.email = user.email;
         token.name = user.name;
         token.role = user.role;
-        token.restaurant_id = user.restaurant_id;
+        token.business_id = user.business_id;
       }
       return token;
     },
@@ -118,7 +127,7 @@ export const authOptions: NextAuthConfig = {
         (session.user as any).email = token.email;
         (session.user as any).name = token.name;
         (session.user as any).role = token.role;
-        (session.user as any).restaurant_id = token.restaurant_id;
+        (session.user as any).business_id = token.business_id;
       }
       return session;
     },
@@ -330,6 +339,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const checkOnboardingStatus = async (userId: string) => {
+    try {
+      // Check if user has a business and staff role
+      const { data: staffRecord, error: staffError } = await supabase
+        .from("business_staff")
+        .select(
+          `
+          role,
+          business:businesses!inner(
+            id,
+            name,
+            slug,
+            is_active
+          )
+        `
+        )
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .single();
+
+      // business can be array or object depending on join
+      const business = Array.isArray(staffRecord?.business)
+        ? staffRecord.business[0]
+        : staffRecord?.business;
+
+      if (staffError || !staffRecord || !business || !business.is_active) {
+        return { completed: false, business: null, restaurant: null };
+      }
+
+      return {
+        completed: true,
+        business,
+        restaurant: business, // for backward compatibility
+        role: staffRecord.role,
+      };
+    } catch (error) {
+      console.error("Onboarding check error:", error);
+      return { completed: false, business: null, restaurant: null };
+    }
+  };
+
   const signOut = async () => {
     try {
       await fetch("/api/auth/signout", {
@@ -377,6 +427,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     checkAuth,
     resendVerificationEmail,
+    checkOnboardingStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

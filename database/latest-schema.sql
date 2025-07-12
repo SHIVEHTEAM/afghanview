@@ -3,7 +3,7 @@
 
 CREATE TABLE public.analytics_events (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  restaurant_id uuid,
+  business_id uuid,
   session_id uuid,
   event_type text NOT NULL,
   event_data jsonb DEFAULT '{}'::jsonb,
@@ -11,7 +11,6 @@ CREATE TABLE public.analytics_events (
   user_agent text,
   ip_address inet,
   CONSTRAINT analytics_events_pkey PRIMARY KEY (id),
-  CONSTRAINT analytics_events_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(id),
   CONSTRAINT analytics_events_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.display_sessions(id)
 );
 CREATE TABLE public.api_keys (
@@ -24,8 +23,7 @@ CREATE TABLE public.api_keys (
   expires_at timestamp with time zone,
   is_active boolean DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT api_keys_pkey PRIMARY KEY (id),
-  CONSTRAINT api_keys_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT api_keys_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.auto_generation_settings (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -45,7 +43,7 @@ CREATE TABLE public.auto_generation_settings (
 );
 CREATE TABLE public.billing_history (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  restaurant_id uuid,
+  business_id uuid,
   subscription_id uuid,
   amount integer NOT NULL,
   currency text DEFAULT 'USD'::text,
@@ -55,8 +53,92 @@ CREATE TABLE public.billing_history (
   paid_at timestamp with time zone,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT billing_history_pkey PRIMARY KEY (id),
-  CONSTRAINT billing_history_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(id),
-  CONSTRAINT billing_history_subscription_id_fkey FOREIGN KEY (subscription_id) REFERENCES public.restaurant_subscriptions(id)
+  CONSTRAINT billing_history_subscription_id_fkey FOREIGN KEY (subscription_id) REFERENCES public.business_subscriptions(id)
+);
+CREATE TABLE public.business_categories (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL UNIQUE,
+  slug text NOT NULL UNIQUE,
+  description text,
+  icon text,
+  color text,
+  features jsonb DEFAULT '{}'::jsonb,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT business_categories_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.business_staff (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL,
+  business_type text NOT NULL CHECK (business_type = ANY (ARRAY['restaurant'::text, 'retail'::text, 'service'::text, 'entertainment'::text, 'healthcare'::text, 'education'::text, 'other'::text])),
+  user_id uuid NOT NULL,
+  role text NOT NULL CHECK (role = ANY (ARRAY['owner'::text, 'manager'::text, 'staff'::text])),
+  permissions jsonb DEFAULT '{}'::jsonb,
+  joined_at timestamp with time zone DEFAULT now(),
+  invited_by uuid,
+  is_active boolean DEFAULT true,
+  CONSTRAINT business_staff_pkey PRIMARY KEY (id),
+  CONSTRAINT business_staff_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT business_staff_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES auth.users(id),
+  CONSTRAINT business_staff_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+);
+CREATE TABLE public.business_subscriptions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  business_id uuid,
+  plan_id uuid,
+  status text NOT NULL CHECK (status = ANY (ARRAY['active'::text, 'cancelled'::text, 'expired'::text, 'trial'::text])),
+  current_period_start timestamp with time zone NOT NULL,
+  current_period_end timestamp with time zone NOT NULL,
+  trial_start timestamp with time zone,
+  trial_end timestamp with time zone,
+  cancelled_at timestamp with time zone,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  stripe_subscription_id text,
+  stripe_customer_id text,
+  CONSTRAINT business_subscriptions_pkey PRIMARY KEY (id),
+  CONSTRAINT business_subscriptions_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT business_subscriptions_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES public.subscription_plans(id)
+);
+CREATE TABLE public.business_type_configs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  business_type USER-DEFINED NOT NULL UNIQUE,
+  name text NOT NULL,
+  description text,
+  allowed_slideshow_types jsonb DEFAULT '[]'::jsonb,
+  default_settings jsonb DEFAULT '{}'::jsonb,
+  features jsonb DEFAULT '{}'::jsonb,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT business_type_configs_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.businesses (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid UNIQUE,
+  name text NOT NULL,
+  type text NOT NULL DEFAULT 'restaurant'::text,
+  description text,
+  address text,
+  phone text,
+  website text,
+  logo_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  is_active boolean DEFAULT true,
+  slug text UNIQUE,
+  business_type text DEFAULT 'restaurant'::text,
+  created_by uuid,
+  is_verified boolean DEFAULT false,
+  subscription_plan text DEFAULT 'free'::text,
+  ai_credits integer DEFAULT 10 CHECK (ai_credits >= 0),
+  ai_credits_used integer DEFAULT 0 CHECK (ai_credits_used >= 0),
+  max_slideshows integer DEFAULT 1 CHECK (max_slideshows >= 1),
+  max_staff_members integer DEFAULT 1 CHECK (max_staff_members >= 1),
+  CONSTRAINT businesses_pkey PRIMARY KEY (id),
+  CONSTRAINT businesses_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.content_analytics (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -68,12 +150,11 @@ CREATE TABLE public.content_analytics (
   last_viewed_at timestamp with time zone,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT content_analytics_pkey PRIMARY KEY (id),
-  CONSTRAINT content_analytics_slide_id_fkey FOREIGN KEY (slide_id) REFERENCES public.slides(id),
   CONSTRAINT content_analytics_fact_id_fkey FOREIGN KEY (fact_id) REFERENCES public.facts(id)
 );
 CREATE TABLE public.display_sessions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  restaurant_id uuid,
+  business_id uuid,
   device_id text,
   device_info jsonb,
   location_info jsonb,
@@ -82,8 +163,7 @@ CREATE TABLE public.display_sessions (
   total_duration integer,
   slides_shown integer DEFAULT 0,
   interactions integer DEFAULT 0,
-  CONSTRAINT display_sessions_pkey PRIMARY KEY (id),
-  CONSTRAINT display_sessions_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(id)
+  CONSTRAINT display_sessions_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.email_logs (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -116,8 +196,7 @@ CREATE TABLE public.fact_slides (
   slide_id uuid,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT fact_slides_pkey PRIMARY KEY (id),
-  CONSTRAINT fact_slides_fact_id_fkey FOREIGN KEY (fact_id) REFERENCES public.facts(id),
-  CONSTRAINT fact_slides_slide_id_fkey FOREIGN KEY (slide_id) REFERENCES public.slides(id)
+  CONSTRAINT fact_slides_fact_id_fkey FOREIGN KEY (fact_id) REFERENCES public.facts(id)
 );
 CREATE TABLE public.facts (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -132,9 +211,15 @@ CREATE TABLE public.facts (
   updated_at timestamp with time zone DEFAULT now(),
   created_by uuid,
   updated_by uuid,
+  business_id uuid,
+  font_color character varying DEFAULT '#ffffff'::character varying,
+  emoji text,
+  is_auto_generated boolean DEFAULT false,
+  generation_prompt text,
   CONSTRAINT facts_pkey PRIMARY KEY (id),
   CONSTRAINT facts_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
-  CONSTRAINT facts_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id)
+  CONSTRAINT facts_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id),
+  CONSTRAINT facts_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
 );
 CREATE TABLE public.media_collection_items (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -148,7 +233,7 @@ CREATE TABLE public.media_collection_items (
 );
 CREATE TABLE public.media_collections (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  restaurant_id uuid,
+  business_id uuid,
   name text NOT NULL,
   description text,
   is_system boolean DEFAULT false,
@@ -157,13 +242,13 @@ CREATE TABLE public.media_collections (
   created_by uuid,
   updated_by uuid,
   CONSTRAINT media_collections_pkey PRIMARY KEY (id),
-  CONSTRAINT media_collections_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(id),
-  CONSTRAINT media_collections_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT media_collections_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id)
+  CONSTRAINT media_collections_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT media_collections_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
+  CONSTRAINT media_collections_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.media_files (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  restaurant_id uuid,
+  business_id uuid,
   filename text NOT NULL,
   original_filename text NOT NULL,
   file_path text NOT NULL,
@@ -179,9 +264,15 @@ CREATE TABLE public.media_files (
   media_type character varying DEFAULT 'image'::character varying CHECK (media_type::text = ANY (ARRAY['image'::character varying, 'video'::character varying]::text[])),
   duration_ms integer,
   video_metadata jsonb,
+  url text,
+  public_url text,
+  restaurant_id uuid,
+  thumbnail_url text,
+  processing_status text DEFAULT 'completed'::text,
+  processing_error text,
   CONSTRAINT media_files_pkey PRIMARY KEY (id),
-  CONSTRAINT media_files_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(id),
-  CONSTRAINT media_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id)
+  CONSTRAINT media_files_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT media_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -193,8 +284,7 @@ CREATE TABLE public.notifications (
   is_read boolean DEFAULT false,
   read_at timestamp with time zone,
   created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT notifications_pkey PRIMARY KEY (id),
-  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT notifications_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.organization_members (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -206,9 +296,7 @@ CREATE TABLE public.organization_members (
   invited_by uuid,
   is_active boolean DEFAULT true,
   CONSTRAINT organization_members_pkey PRIMARY KEY (id),
-  CONSTRAINT organization_members_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT organization_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT organization_members_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.users(id)
+  CONSTRAINT organization_members_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
 );
 CREATE TABLE public.organizations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -226,9 +314,7 @@ CREATE TABLE public.organizations (
   updated_at timestamp with time zone DEFAULT now(),
   created_by uuid,
   updated_by uuid,
-  CONSTRAINT organizations_pkey PRIMARY KEY (id),
-  CONSTRAINT organizations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT organizations_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id)
+  CONSTRAINT organizations_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
@@ -236,71 +322,18 @@ CREATE TABLE public.profiles (
   last_name text,
   phone text,
   roles ARRAY DEFAULT '{}'::text[],
-  restaurant jsonb,
+  business jsonb,
   migrated_from_old_system boolean DEFAULT false,
   original_user_id uuid,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  ai_credits integer DEFAULT 10 CHECK (ai_credits >= 0),
+  ai_credits_used integer DEFAULT 0 CHECK (ai_credits_used >= 0),
+  subscription_plan text DEFAULT 'free'::text,
+  subscription_status text DEFAULT 'active'::text,
+  subscription_expires_at timestamp with time zone,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
-);
-CREATE TABLE public.restaurant_staff (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  restaurant_id uuid,
-  user_id uuid,
-  role text NOT NULL CHECK (role = ANY (ARRAY['owner'::text, 'manager'::text, 'staff'::text])),
-  permissions jsonb DEFAULT '{}'::jsonb,
-  joined_at timestamp with time zone DEFAULT now(),
-  invited_by uuid,
-  is_active boolean DEFAULT true,
-  CONSTRAINT restaurant_staff_pkey PRIMARY KEY (id),
-  CONSTRAINT restaurant_staff_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(id),
-  CONSTRAINT restaurant_staff_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT restaurant_staff_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.users(id)
-);
-CREATE TABLE public.restaurant_subscriptions (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  restaurant_id uuid,
-  plan_id uuid,
-  status text NOT NULL CHECK (status = ANY (ARRAY['active'::text, 'cancelled'::text, 'expired'::text, 'trial'::text])),
-  current_period_start timestamp with time zone NOT NULL,
-  current_period_end timestamp with time zone NOT NULL,
-  trial_start timestamp with time zone,
-  trial_end timestamp with time zone,
-  cancelled_at timestamp with time zone,
-  metadata jsonb DEFAULT '{}'::jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT restaurant_subscriptions_pkey PRIMARY KEY (id),
-  CONSTRAINT restaurant_subscriptions_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(id),
-  CONSTRAINT restaurant_subscriptions_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES public.subscription_plans(id)
-);
-CREATE TABLE public.restaurants (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  organization_id uuid,
-  name text NOT NULL,
-  slug text NOT NULL UNIQUE,
-  description text,
-  cuisine_type text,
-  address jsonb NOT NULL,
-  contact_info jsonb NOT NULL,
-  business_hours jsonb,
-  social_media jsonb,
-  branding jsonb DEFAULT '{}'::jsonb,
-  settings jsonb DEFAULT '{}'::jsonb,
-  is_active boolean DEFAULT true,
-  is_verified boolean DEFAULT false,
-  verified_at timestamp with time zone,
-  verified_by uuid,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  created_by uuid,
-  updated_by uuid,
-  CONSTRAINT restaurants_pkey PRIMARY KEY (id),
-  CONSTRAINT restaurants_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
-  CONSTRAINT restaurants_verified_by_fkey FOREIGN KEY (verified_by) REFERENCES public.users(id),
-  CONSTRAINT restaurants_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT restaurants_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.roles (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -326,9 +359,7 @@ CREATE TABLE public.slide_templates (
   updated_at timestamp with time zone DEFAULT now(),
   created_by uuid,
   updated_by uuid,
-  CONSTRAINT slide_templates_pkey PRIMARY KEY (id),
-  CONSTRAINT slide_templates_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT slide_templates_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id)
+  CONSTRAINT slide_templates_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.slide_versions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -338,9 +369,7 @@ CREATE TABLE public.slide_versions (
   styling jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
   created_by uuid,
-  CONSTRAINT slide_versions_pkey PRIMARY KEY (id),
-  CONSTRAINT slide_versions_slide_id_fkey FOREIGN KEY (slide_id) REFERENCES public.slides(id),
-  CONSTRAINT slide_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+  CONSTRAINT slide_versions_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.slide_views (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -350,40 +379,93 @@ CREATE TABLE public.slide_views (
   duration integer,
   interaction_type text CHECK (interaction_type = ANY (ARRAY['view'::text, 'click'::text, 'swipe'::text])),
   CONSTRAINT slide_views_pkey PRIMARY KEY (id),
-  CONSTRAINT slide_views_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.display_sessions(id),
-  CONSTRAINT slide_views_slide_id_fkey FOREIGN KEY (slide_id) REFERENCES public.slides(id)
+  CONSTRAINT slide_views_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.display_sessions(id)
 );
 CREATE TABLE public.slides (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  restaurant_id uuid,
-  template_id uuid,
-  name text NOT NULL,
-  type text NOT NULL CHECK (type = ANY (ARRAY['image'::text, 'menu'::text, 'promo'::text, 'quote'::text, 'hours'::text, 'custom'::text])),
-  title text NOT NULL,
-  subtitle text,
-  content jsonb NOT NULL,
-  styling jsonb DEFAULT '{}'::jsonb,
-  duration integer DEFAULT 6000,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  slideshow_id uuid,
+  title text,
+  content text,
+  media_url text,
+  media_type text,
   order_index integer DEFAULT 0,
-  is_active boolean DEFAULT true,
-  is_published boolean DEFAULT false,
-  published_at timestamp with time zone,
-  published_by uuid,
+  settings jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  created_by uuid,
-  updated_by uuid,
-  is_locked boolean DEFAULT false,
-  background_music_url text,
-  is_auto_generated boolean DEFAULT false,
-  auto_generation_source character varying,
-  original_data jsonb,
   CONSTRAINT slides_pkey PRIMARY KEY (id),
-  CONSTRAINT slides_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(id),
-  CONSTRAINT slides_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.slide_templates(id),
-  CONSTRAINT slides_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
-  CONSTRAINT slides_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id),
-  CONSTRAINT slides_published_by_fkey FOREIGN KEY (published_by) REFERENCES auth.users(id)
+  CONSTRAINT slides_slideshow_id_fkey FOREIGN KEY (slideshow_id) REFERENCES public.slideshows(id)
+);
+CREATE TABLE public.slideshow_slides (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  slideshow_id uuid,
+  slide_id uuid,
+  order_index integer DEFAULT 0,
+  CONSTRAINT slideshow_slides_pkey PRIMARY KEY (id),
+  CONSTRAINT slideshow_slides_slide_id_fkey FOREIGN KEY (slide_id) REFERENCES public.slides(id),
+  CONSTRAINT slideshow_slides_slideshow_id_fkey FOREIGN KEY (slideshow_id) REFERENCES public.slideshows(id)
+);
+CREATE TABLE public.slideshows (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  business_id uuid,
+  title text NOT NULL,
+  description text,
+  settings jsonb DEFAULT '{}'::jsonb,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  name text,
+  play_count integer DEFAULT 0,
+  last_played timestamp with time zone,
+  is_favorite boolean DEFAULT false,
+  content jsonb DEFAULT '{}'::jsonb,
+  images jsonb DEFAULT '[]'::jsonb,
+  slug text,
+  created_by uuid,
+  is_locked boolean DEFAULT false,
+  is_template boolean DEFAULT false,
+  background_music text,
+  music_volume integer DEFAULT 50 CHECK (music_volume >= 0 AND music_volume <= 100),
+  music_loop boolean DEFAULT true,
+  auto_play boolean DEFAULT true,
+  show_controls boolean DEFAULT true,
+  show_progress boolean DEFAULT true,
+  loop_slideshow boolean DEFAULT true,
+  shuffle_slides boolean DEFAULT false,
+  aspect_ratio text DEFAULT '16:9'::text CHECK (aspect_ratio = ANY (ARRAY['16:9'::text, '4:3'::text, '1:1'::text, 'auto'::text])),
+  quality text DEFAULT 'medium'::text CHECK (quality = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text])),
+  transition_duration integer DEFAULT 800,
+  auto_random_fact boolean DEFAULT false,
+  random_fact_interval integer DEFAULT 6,
+  CONSTRAINT slideshows_pkey PRIMARY KEY (id),
+  CONSTRAINT slideshows_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
+);
+CREATE TABLE public.staff_invitations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL,
+  email text NOT NULL,
+  role text NOT NULL CHECK (role = ANY (ARRAY['owner'::text, 'manager'::text, 'staff'::text])),
+  invited_by uuid NOT NULL,
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'accepted'::text, 'expired'::text, 'declined'::text])),
+  invited_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone NOT NULL,
+  accepted_at timestamp with time zone,
+  accepted_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT staff_invitations_pkey PRIMARY KEY (id),
+  CONSTRAINT staff_invitations_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT staff_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES auth.users(id),
+  CONSTRAINT staff_invitations_accepted_by_fkey FOREIGN KEY (accepted_by) REFERENCES auth.users(id)
+);
+CREATE TABLE public.staff_members (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  business_id uuid,
+  user_id uuid,
+  role text NOT NULL DEFAULT 'staff'::text,
+  permissions jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT staff_members_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.subscription_plans (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -399,6 +481,20 @@ CREATE TABLE public.subscription_plans (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT subscription_plans_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.subscriptions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  business_id uuid,
+  stripe_subscription_id text,
+  stripe_customer_id text,
+  plan_type text NOT NULL DEFAULT 'free'::text,
+  status text NOT NULL DEFAULT 'active'::text,
+  current_period_start timestamp with time zone,
+  current_period_end timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT subscriptions_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.system_settings (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -419,27 +515,5 @@ CREATE TABLE public.user_roles (
   expires_at timestamp with time zone,
   is_active boolean DEFAULT true,
   CONSTRAINT user_roles_pkey PRIMARY KEY (id),
-  CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT user_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id),
-  CONSTRAINT user_roles_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public.users(id)
-);
-CREATE TABLE public.users (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  email text NOT NULL UNIQUE,
-  password_hash text NOT NULL,
-  first_name text NOT NULL,
-  last_name text NOT NULL,
-  phone text,
-  avatar_url text,
-  email_verified boolean DEFAULT false,
-  email_verified_at timestamp with time zone,
-  last_login_at timestamp with time zone,
-  is_active boolean DEFAULT true,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  created_by uuid,
-  updated_by uuid,
-  CONSTRAINT users_pkey PRIMARY KEY (id),
-  CONSTRAINT users_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT users_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id)
+  CONSTRAINT user_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id)
 );

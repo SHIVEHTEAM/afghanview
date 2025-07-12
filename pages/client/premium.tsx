@@ -77,33 +77,52 @@ export default function PremiumPage() {
         setBusiness(businessData);
       }
 
-      // Get business subscription data
+      // Get business subscription data - check business table first, then business_subscriptions
       if (businessData) {
-        const { data: subscriptionData, error: subscriptionError } =
-          await supabase
-            .from("business_subscriptions")
-            .select(
-              `
-              *,
-              plan:subscription_plans(name, slug, features, limits)
-            `
-            )
-            .eq("business_id", businessData.id)
-            .eq("status", "active")
-            .single();
-
-        if (subscriptionError && subscriptionError.code !== "PGRST116") {
-          console.error("Error fetching subscription:", subscriptionError);
-        }
-
-        if (subscriptionData) {
+        // First check if business has a direct subscription plan
+        if (
+          businessData.subscription_plan &&
+          businessData.subscription_plan !== "free"
+        ) {
           setSubscription({
-            id: subscriptionData.id,
-            status: subscriptionData.status,
-            plan: subscriptionData.plan?.name || "Free",
-            current_period_end: subscriptionData.current_period_end,
+            id: "business",
+            status: "active",
+            plan:
+              businessData.subscription_plan.charAt(0).toUpperCase() +
+              businessData.subscription_plan.slice(1), // Capitalize first letter
+            current_period_end: new Date(
+              Date.now() + 365 * 24 * 60 * 60 * 1000
+            ).toISOString(), // Default to 1 year
             cancel_at_period_end: false,
           });
+        } else {
+          // Check business_subscriptions table
+          const { data: subscriptionData, error: subscriptionError } =
+            await supabase
+              .from("business_subscriptions")
+              .select(
+                `
+                *,
+                plan:subscription_plans(name, slug, features, limits)
+              `
+              )
+              .eq("business_id", businessData.id)
+              .eq("status", "active")
+              .single();
+
+          if (subscriptionError && subscriptionError.code !== "PGRST116") {
+            console.error("Error fetching subscription:", subscriptionError);
+          }
+
+          if (subscriptionData) {
+            setSubscription({
+              id: subscriptionData.id,
+              status: subscriptionData.status,
+              plan: subscriptionData.plan?.name || "Free",
+              current_period_end: subscriptionData.current_period_end,
+              cancel_at_period_end: false,
+            });
+          }
         }
       }
 

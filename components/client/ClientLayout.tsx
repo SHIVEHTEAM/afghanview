@@ -84,29 +84,42 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         console.error("Error fetching business:", businessError);
       }
 
-      // Get business subscription data
+      // Get business subscription data - check business table first, then business_subscriptions
       let subscriptionPlan = "Free";
       let aiCredits = 10;
       let aiCreditsUsed = 0;
 
       if (businessData) {
-        const { data: subscriptionData, error: subscriptionError } =
-          await supabase
-            .from("business_subscriptions")
-            .select(
-              `
-              *,
-              plan:subscription_plans(name, slug, features, limits)
-            `
-            )
-            .eq("business_id", businessData.id)
-            .eq("status", "active")
-            .single();
-
-        if (subscriptionData && !subscriptionError) {
-          subscriptionPlan = subscriptionData.plan?.name || "Free";
+        // First check if business has a direct subscription plan
+        if (
+          businessData.subscription_plan &&
+          businessData.subscription_plan !== "free"
+        ) {
+          subscriptionPlan =
+            businessData.subscription_plan.charAt(0).toUpperCase() +
+            businessData.subscription_plan.slice(1); // Capitalize first letter
           aiCredits = businessData.ai_credits || 10;
           aiCreditsUsed = businessData.ai_credits_used || 0;
+        } else {
+          // Check business_subscriptions table
+          const { data: subscriptionData, error: subscriptionError } =
+            await supabase
+              .from("business_subscriptions")
+              .select(
+                `
+                *,
+                plan:subscription_plans(name, slug, features, limits)
+              `
+              )
+              .eq("business_id", businessData.id)
+              .eq("status", "active")
+              .single();
+
+          if (subscriptionData && !subscriptionError) {
+            subscriptionPlan = subscriptionData.plan?.name || "Free";
+            aiCredits = businessData.ai_credits || 10;
+            aiCreditsUsed = businessData.ai_credits_used || 0;
+          }
         }
       } else if (profileData) {
         subscriptionPlan = profileData.subscription_plan || "Free";

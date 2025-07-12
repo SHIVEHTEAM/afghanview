@@ -82,14 +82,13 @@ export default async function handler(
         .select(
           `
           *,
-          user:user_id(
+          user:profiles!user_id(
             id,
             first_name,
             last_name,
-            email,
-            avatar_url
+            email
           ),
-          invited_by:invited_by(
+          invited_by:profiles!invited_by(
             first_name,
             last_name,
             email
@@ -176,12 +175,11 @@ export default async function handler(
         .select(
           `
           *,
-          user:user_id(
+          user:profiles!user_id(
             id,
             first_name,
             last_name,
-            email,
-            avatar_url
+            email
           )
         `
         )
@@ -235,12 +233,11 @@ export default async function handler(
         .select(
           `
           *,
-          user:user_id(
+          user:profiles!user_id(
             id,
             first_name,
             last_name,
-            email,
-            avatar_url
+            email
           )
         `
         )

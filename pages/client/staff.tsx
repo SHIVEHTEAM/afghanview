@@ -247,9 +247,9 @@ export default function StaffManagementPage() {
         return { staff: 1, canInvite: false };
       case "starter":
         return { staff: 3, canInvite: true };
-      case "pro":
+      case "professional":
         return { staff: 10, canInvite: true };
-      case "enterprise":
+      case "unlimited":
         return { staff: 50, canInvite: true };
       default:
         return { staff: 1, canInvite: false };

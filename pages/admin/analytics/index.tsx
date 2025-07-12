@@ -116,7 +116,7 @@ export default function AdminAnalytics() {
 
       // Process category data
       const categoryCounts = (categoryData || []).reduce((acc: any, item) => {
-        const categoryName = item.category?.name || "Unknown";
+        const categoryName = (item as any).category?.name || "Unknown";
         acc[categoryName] = (acc[categoryName] || 0) + 1;
         return acc;
       }, {});
@@ -146,7 +146,7 @@ export default function AdminAnalytics() {
       // Process subscription data
       const subscriptionCounts = (subscriptionData || []).reduce(
         (acc: any, item) => {
-          const planName = item.plan?.name || "Unknown";
+          const planName = (item as any).plan?.name || "Unknown";
           if (!acc[planName]) {
             acc[planName] = { plan: planName, count: 0, revenue: 0 };
           }
@@ -166,7 +166,7 @@ export default function AdminAnalytics() {
       const revenueGrowth = 23.1;
 
       // Calculate monthly revenue
-      const monthlyRevenue = subscriptionCount * 29.99;
+      const monthlyRevenue = (subscriptionCount || 0) * 29.99;
 
       setAnalytics({
         totalUsers: userCount || 0,
@@ -179,8 +179,8 @@ export default function AdminAnalytics() {
         businessGrowth,
         revenueGrowth,
         topCategories,
-        recentActivity,
-        subscriptionStats,
+        recentActivity: recentActivity as any,
+        subscriptionStats: subscriptionStats as any,
       });
     } catch (error) {
       console.error("Error fetching analytics:", error);

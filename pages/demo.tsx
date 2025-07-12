@@ -13,6 +13,15 @@ export default function Demo() {
 
   const toggleMute = () => setIsMuted(!isMuted);
 
+  const toggleFullscreen = () => {
+    if (isFullscreen) {
+      exitFullscreen();
+    } else {
+      requestFullscreen();
+    }
+    setIsFullscreen(!isFullscreen);
+  };
+
   const videoRef = React.useRef<HTMLDivElement>(null);
 
   const requestFullscreen = () => {

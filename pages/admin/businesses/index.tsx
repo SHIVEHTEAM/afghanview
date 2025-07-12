@@ -160,7 +160,7 @@ export default function AdminBusinesses() {
       );
 
       console.log("Final businesses data:", businessesWithCounts);
-      setBusinesses(businessesWithCounts);
+      setBusinesses(businessesWithCounts as any);
     } catch (error) {
       console.error("Error fetching businesses:", error);
     } finally {

@@ -32,7 +32,7 @@ export default function TestData() {
         console.error("Businesses error:", businessesError);
       } else {
         console.log("Businesses data:", businessesData);
-        setBusinesses(businessesData || []);
+        setBusinesses((businessesData || []) as any);
       }
 
       // Fetch users
@@ -45,7 +45,7 @@ export default function TestData() {
         console.error("Users error:", usersError);
       } else {
         console.log("Users data:", usersData);
-        setUsers(usersData || []);
+        setUsers((usersData || []) as any);
       }
 
       // Fetch subscriptions
@@ -56,7 +56,7 @@ export default function TestData() {
         console.error("Subscriptions error:", subscriptionsError);
       } else {
         console.log("Subscriptions data:", subscriptionsData);
-        setSubscriptions(subscriptionsData || []);
+        setSubscriptions((subscriptionsData || []) as any);
       }
     } catch (error) {
       console.error("Error fetching data:", error);

@@ -1,9 +1,6 @@
 // Auth Components
 export * from "./auth";
 
-// Client Components
-export * from "./client";
-
 // Common Components
 export * from "./common";
 
@@ -12,9 +9,6 @@ export * from "./editor";
 
 // Home Components
 export * from "./home";
-
-// Restaurant Components
-export * from "./restaurant";
 
 // Slideshow Components
 export * from "./slideshow";

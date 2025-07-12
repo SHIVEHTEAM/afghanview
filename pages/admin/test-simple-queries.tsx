@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import AdminLayout from "./layout";
 
 export default function TestSimpleQueries() {
-  const { data: session } = useSession();
+  const session = useSession();
+  const { data } = session || {};
   const [results, setResults] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
@@ -154,10 +155,10 @@ export default function TestSimpleQueries() {
   };
 
   useEffect(() => {
-    if (session) {
+    if (data) {
       runTests();
     }
-  }, [session]);
+  }, [data]);
 
   return (
     <AdminLayout>

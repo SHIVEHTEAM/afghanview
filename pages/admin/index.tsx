@@ -147,7 +147,7 @@ export default function AdminDashboard() {
       ]);
 
       // Calculate monthly revenue (mock data for now)
-      const monthlyRevenue = subscriptionCount * 29.99;
+      const monthlyRevenue = (subscriptionCount || 0) * 29.99;
 
       setStats({
         totalUsers: userCount || 0,
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
         recentActivity: recentActivity || [],
       });
 
-      setBusinesses(businessData || []);
+      setBusinesses((businessData || []) as any);
       setUsers(userData || []);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);

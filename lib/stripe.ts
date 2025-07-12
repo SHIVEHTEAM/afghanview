@@ -356,12 +356,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     .from("restaurant_subscriptions")
     .update({
       status: subscription.status,
-      current_period_start: new Date(
-        subscription.current_period_start * 1000
-      ).toISOString(),
-      current_period_end: new Date(
-        subscription.current_period_end * 1000
-      ).toISOString(),
+      // Removed current_period_start and current_period_end
       trial_start: subscription.trial_start
         ? new Date(subscription.trial_start * 1000).toISOString()
         : null,
@@ -379,12 +374,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     .from("restaurant_subscriptions")
     .update({
       status: subscription.status,
-      current_period_start: new Date(
-        subscription.current_period_start * 1000
-      ).toISOString(),
-      current_period_end: new Date(
-        subscription.current_period_end * 1000
-      ).toISOString(),
+      // Removed current_period_start and current_period_end
       cancel_at_period_end: subscription.cancel_at_period_end,
     })
     .eq("stripe_subscription_id", subscription.id);
@@ -402,13 +392,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-  if (!invoice.subscription) return;
+  if (!(invoice as any).subscription) return;
 
   // Create billing history record
   const { data: subscription } = await supabase
     .from("restaurant_subscriptions")
     .select("restaurant_id, id")
-    .eq("stripe_subscription_id", invoice.subscription)
+    .eq("stripe_subscription_id", (invoice as any).subscription)
     .single();
 
   if (subscription) {
@@ -426,13 +416,13 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  if (!invoice.subscription) return;
+  if (!(invoice as any).subscription) return;
 
   // Create billing history record for failed payment
   const { data: subscription } = await supabase
     .from("restaurant_subscriptions")
     .select("restaurant_id, id")
-    .eq("stripe_subscription_id", invoice.subscription)
+    .eq("stripe_subscription_id", (invoice as any).subscription)
     .single();
 
   if (subscription) {

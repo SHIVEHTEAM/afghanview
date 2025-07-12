@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import ClientLayout from "../../components/client/ClientLayout";
-import { CollaborationTools } from "../../components/client/CollaborationTools";
+import CollaborationTools from "../../components/client/CollaborationTools";
 
 export default function CollaborationPage() {
   const { user } = useAuth();

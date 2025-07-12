@@ -136,7 +136,9 @@ export default function AdminCreateSlideshow() {
   };
 
   const getBusinessesInCategory = (categoryId: string) => {
-    return businesses.filter((business) => business.category.id === categoryId);
+    return businesses.filter(
+      (business) => (business as any).category.id === categoryId
+    );
   };
 
   const getSelectedBusinesses = () => {
@@ -321,7 +323,7 @@ export default function AdminCreateSlideshow() {
                         {business.name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {business.category?.name || "Business"}
+                        {(business as any).category?.name || "Business"}
                       </p>
                     </div>
                   </div>

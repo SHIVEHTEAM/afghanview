@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
+import getServerSession from "next-auth";
 import { authOptions } from "../../../lib/auth";
 import { supabase } from "../../../lib/supabase";
 import {
@@ -16,10 +16,12 @@ export default async function handler(
   }
 
   try {
-    const session = await getServerSession(req, res, authOptions);
-    if (!session?.user?.id) {
+    const session = await getServerSession(authOptions);
+    if (!(session as any)?.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
+
+    const userId = (session as any).user.id;
 
     const { planSlug } = req.body;
 
@@ -48,7 +50,7 @@ export default async function handler(
             await supabase
               .from("business_staff")
               .select("business_id")
-              .eq("user_id", session.user.id)
+              .eq("user_id", userId)
               .eq("is_active", true)
               .single()
           ).data?.business_id
@@ -62,7 +64,7 @@ export default async function handler(
 
     // For now, we'll simulate a successful upgrade
     // In production, you'd integrate with Stripe or another payment processor
-    const upgradeSuccess = await upgradeSubscription(session.user.id, planSlug);
+    const upgradeSuccess = await upgradeSubscription(userId, planSlug);
 
     if (!upgradeSuccess) {
       return res.status(500).json({ error: "Failed to upgrade subscription" });

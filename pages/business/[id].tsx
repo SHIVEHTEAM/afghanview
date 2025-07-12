@@ -140,15 +140,7 @@ export default function BusinessDisplay() {
 
         {/* Slideshow */}
         {business.slides && business.slides.length > 0 ? (
-          <Slideshow
-            slides={business.slides}
-            currentSlide={currentSlide}
-            onSlideChange={setCurrentSlide}
-            autoPlay={true}
-            loop={true}
-            showControls={false}
-            showProgress={false}
-          />
+          <Slideshow slides={business.slides} currentSlide={currentSlide} />
         ) : (
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center text-white">

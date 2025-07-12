@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import ClientLayout from "../../components/client/ClientLayout";
-import { ContentCalendar } from "../../components/client/ContentCalendar";
+import ContentCalendar from "../../components/client/ContentCalendar";
 
 export default function CalendarPage() {
   const { user } = useAuth();

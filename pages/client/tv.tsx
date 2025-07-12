@@ -3,7 +3,6 @@ import Head from "next/head";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import ClientLayout from "../../components/client/ClientLayout";
-import TvManager from "../../components/tv/TvManager";
 import { motion } from "framer-motion";
 import {
   Tv,
@@ -253,13 +252,6 @@ export default function TvManagementPage() {
       </>
     );
   }
-
-  // Convert slideshows to the format expected by TvManager
-  const slideshowsForTvManager = slideshows.map((slideshow) => ({
-    id: slideshow.id,
-    name: slideshow.title,
-    slug: slideshow.id,
-  }));
 
   return (
     <>

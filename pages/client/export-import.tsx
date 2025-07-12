@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import ClientLayout from "../../components/client/ClientLayout";
-import { ExportImport } from "../../components/client/ExportImport";
+import ExportImport from "../../components/client/ExportImport";
 
 export default function ExportImportPage() {
   const { user } = useAuth();
@@ -42,7 +42,7 @@ export default function ExportImportPage() {
 
   return (
     <ClientLayout>
-      <ExportImport businessId={businessId} />
+      <ExportImport />
     </ClientLayout>
   );
 }

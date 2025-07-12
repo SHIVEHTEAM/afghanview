@@ -105,7 +105,7 @@ export default function AdminSubscriptions() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setSubscriptions(data || []);
+      setSubscriptions((data || []) as any);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
     } finally {

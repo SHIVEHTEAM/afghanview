@@ -22,7 +22,6 @@ import {
   Wrench,
   HardDrive,
   Cpu,
-  Memory,
   Network,
 } from "lucide-react";
 

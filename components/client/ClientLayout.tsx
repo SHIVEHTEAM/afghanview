@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { useAuth } from "../../lib/auth";
 import { useSlideshowStore } from "../../stores/slideshowStore";
 import { SlideshowCreator } from "../slideshow-creator";
+import { supabase } from "../../lib/supabase";
 import {
   LayoutDashboard,
   Image,
@@ -28,20 +29,147 @@ interface ClientLayoutProps {
   children: React.ReactNode;
 }
 
+interface UserPlan {
+  name: string;
+  credits: number;
+  usedCredits: number;
+  features: string[];
+  upgradeUrl: string;
+}
+
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [upgradeDropdownOpen, setUpgradeDropdownOpen] = useState(false);
+  const [userPlan, setUserPlan] = useState<UserPlan>({
+    name: "Free",
+    credits: 10,
+    usedCredits: 0,
+    features: ["1 slideshow", "Basic templates", "Email support"],
+    upgradeUrl: "/pricing",
+  });
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { showSlideshowCreator, setShowSlideshowCreator } = useSlideshowStore();
 
-  // Mock user plan data - in real app, this would come from user profile
-  const userPlan = {
-    name: "Free Forever",
-    credits: 10,
-    usedCredits: 3,
-    features: ["1 slideshow", "Basic templates", "Email support"],
-    upgradeUrl: "/pricing",
+  useEffect(() => {
+    if (user) {
+      fetchUserPlanData();
+    }
+  }, [user]);
+
+  const fetchUserPlanData = async () => {
+    try {
+      if (!user) return;
+
+      // Get user profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+      }
+
+      // Get business data
+      const { data: businessData, error: businessError } = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (businessError && businessError.code !== "PGRST116") {
+        console.error("Error fetching business:", businessError);
+      }
+
+      // Get business subscription data
+      let subscriptionPlan = "Free";
+      let aiCredits = 10;
+      let aiCreditsUsed = 0;
+
+      if (businessData) {
+        const { data: subscriptionData, error: subscriptionError } =
+          await supabase
+            .from("business_subscriptions")
+            .select(
+              `
+              *,
+              plan:subscription_plans(name, slug, features, limits)
+            `
+            )
+            .eq("business_id", businessData.id)
+            .eq("status", "active")
+            .single();
+
+        if (subscriptionData && !subscriptionError) {
+          subscriptionPlan = subscriptionData.plan?.name || "Free";
+          aiCredits = businessData.ai_credits || 10;
+          aiCreditsUsed = businessData.ai_credits_used || 0;
+        }
+      } else if (profileData) {
+        subscriptionPlan = profileData.subscription_plan || "Free";
+        aiCredits = profileData.ai_credits || 10;
+        aiCreditsUsed = profileData.ai_credits_used || 0;
+      }
+
+      // Get plan features based on subscription
+      const planFeatures = getPlanFeatures(subscriptionPlan, businessData);
+
+      setUserPlan({
+        name: subscriptionPlan,
+        credits: aiCredits,
+        usedCredits: aiCreditsUsed,
+        features: planFeatures,
+        upgradeUrl: "/pricing",
+      });
+    } catch (error) {
+      console.error("Error fetching user plan data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPlanFeatures = (plan: string, business: any) => {
+    const features = {
+      Free: [
+        `${business?.max_slideshows || 1} slideshow${
+          business?.max_slideshows !== 1 ? "s" : ""
+        }`,
+        "Basic templates",
+        "Email support",
+        "1 TV display",
+      ],
+      Starter: [
+        "5 slideshows",
+        "Premium templates",
+        "Priority support",
+        "5 TV displays",
+        "Basic analytics",
+      ],
+      Professional: [
+        "20 slideshows",
+        "All templates",
+        "Priority support",
+        "Unlimited TV displays",
+        "Advanced analytics",
+        "Team management",
+        "Custom branding",
+      ],
+      Unlimited: [
+        "Unlimited slideshows",
+        "All templates",
+        "Priority support",
+        "Unlimited TV displays",
+        "Enterprise analytics",
+        "Unlimited team members",
+        "Custom branding",
+        "API access",
+        "White-label solution",
+      ],
+    };
+    return features[plan as keyof typeof features] || features.Free;
   };
 
   const upgradePlans = [

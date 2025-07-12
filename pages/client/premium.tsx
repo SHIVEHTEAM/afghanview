@@ -26,68 +26,96 @@ interface Subscription {
   cancel_at_period_end: boolean;
 }
 
+interface UserProfile {
+  subscription_plan: string;
+  subscription_status: string;
+  subscription_expires_at: string;
+  ai_credits: number;
+  ai_credits_used: number;
+}
+
 export default function PremiumPage() {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [business, setBusiness] = useState<any>(null);
 
   useEffect(() => {
-    fetchSubscriptionData();
-  }, []);
+    if (user) {
+      fetchSubscriptionData();
+    }
+  }, [user]);
 
   const fetchSubscriptionData = async () => {
     try {
       if (!user) return;
 
-      // Get business
-      const { data: businessData } = await supabase
+      // Get user profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+      } else {
+        setUserProfile(profileData);
+      }
+
+      // Get business data
+      const { data: businessData, error: businessError } = await supabase
         .from("businesses")
         .select("*")
         .eq("user_id", user.id)
         .single();
 
-      if (businessData) {
+      if (businessError && businessError.code !== "PGRST116") {
+        console.error("Error fetching business:", businessError);
+      } else if (businessData) {
         setBusiness(businessData);
       }
 
-      // Get real subscription data
-      const { data: subscriptionData, error: subscriptionError } =
-        await supabase
-          .from("business_subscriptions")
-          .select("*")
-          .eq("business_id", businessData?.id)
-          .eq("status", "active")
-          .single();
+      // Get business subscription data
+      if (businessData) {
+        const { data: subscriptionData, error: subscriptionError } =
+          await supabase
+            .from("business_subscriptions")
+            .select(
+              `
+              *,
+              plan:subscription_plans(name, slug, features, limits)
+            `
+            )
+            .eq("business_id", businessData.id)
+            .eq("status", "active")
+            .single();
 
-      if (subscriptionError && subscriptionError.code !== "PGRST116") {
-        console.error("Error fetching subscription:", subscriptionError);
+        if (subscriptionError && subscriptionError.code !== "PGRST116") {
+          console.error("Error fetching subscription:", subscriptionError);
+        }
+
+        if (subscriptionData) {
+          setSubscription({
+            id: subscriptionData.id,
+            status: subscriptionData.status,
+            plan: subscriptionData.plan?.name || "Free",
+            current_period_end: subscriptionData.current_period_end,
+            cancel_at_period_end: false,
+          });
+        }
       }
 
-      if (subscriptionData) {
-        // Get plan details
-        const { data: planData } = await supabase
-          .from("subscription_plans")
-          .select("*")
-          .eq("id", subscriptionData.plan_id)
-          .single();
-
+      // If no business subscription, use profile subscription
+      if (!subscription && profileData) {
         setSubscription({
-          id: subscriptionData.id,
-          status: subscriptionData.status,
-          plan: planData?.name || "Free",
-          current_period_end: subscriptionData.current_period_end,
-          cancel_at_period_end: false, // Add this field to your schema if needed
-        });
-      } else {
-        // No active subscription, show free plan
-        setSubscription({
-          id: "free",
-          status: "active",
-          plan: "Free",
-          current_period_end: new Date(
-            Date.now() + 365 * 24 * 60 * 60 * 1000
-          ).toISOString(),
+          id: "profile",
+          status: profileData.subscription_status || "active",
+          plan: profileData.subscription_plan || "Free",
+          current_period_end:
+            profileData.subscription_expires_at ||
+            new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
           cancel_at_period_end: false,
         });
       }
@@ -107,33 +135,37 @@ export default function PremiumPage() {
         "Basic templates",
         "Email support",
         "1 TV display",
-        `${business?.ai_credits || 0} AI credits`,
+        `${business?.ai_credits || userProfile?.ai_credits || 10} AI credits`,
       ],
       Starter: [
-        "25 slideshows",
+        "5 slideshows",
         "Premium templates",
         "Priority support",
         "5 TV displays",
         "Basic analytics",
-        "10 AI credits",
+        "100 AI credits",
       ],
-      Pro: [
-        "Unlimited slideshows",
+      Professional: [
+        "20 slideshows",
         "All templates",
         "Priority support",
         "Unlimited TV displays",
         "Advanced analytics",
         "Team management",
         "Custom branding",
-        "50 AI credits",
+        "500 AI credits",
       ],
-      Enterprise: [
-        "Everything in Pro",
-        "Dedicated support",
-        "Custom integrations",
-        "White-label solution",
-        "API access",
+      Unlimited: [
+        "Unlimited slideshows",
+        "All templates",
+        "Priority support",
+        "Unlimited TV displays",
+        "Enterprise analytics",
+        "Unlimited team members",
+        "Custom branding",
         "Unlimited AI credits",
+        "API access",
+        "White-label solution",
       ],
     };
     return features[plan as keyof typeof features] || features.Free;
@@ -141,15 +173,31 @@ export default function PremiumPage() {
 
   const getPlanColor = (plan: string) => {
     switch (plan) {
-      case "Pro":
+      case "Professional":
         return "from-purple-500 to-pink-500";
       case "Starter":
         return "from-blue-500 to-cyan-500";
-      case "Enterprise":
+      case "Unlimited":
         return "from-yellow-500 to-orange-500";
       default:
         return "from-gray-500 to-gray-600";
     }
+  };
+
+  const getCurrentPlanName = () => {
+    return subscription?.plan || userProfile?.subscription_plan || "Free";
+  };
+
+  const getCurrentAICredits = () => {
+    return business?.ai_credits || userProfile?.ai_credits || 10;
+  };
+
+  const getCurrentMaxSlideshows = () => {
+    return business?.max_slideshows || 1;
+  };
+
+  const getCurrentMaxStaffMembers = () => {
+    return business?.max_staff_members || 1;
   };
 
   if (loading) {
@@ -219,7 +267,7 @@ export default function PremiumPage() {
                   Current Plan
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {subscription?.plan || "Free"}
+                  {getCurrentPlanName()}
                 </p>
               </div>
               <div className="p-3 bg-purple-100 rounded-xl">
@@ -233,7 +281,7 @@ export default function PremiumPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600">AI Credits</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {business?.ai_credits || 0}
+                  {getCurrentAICredits()}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
@@ -249,7 +297,7 @@ export default function PremiumPage() {
                   Max Slideshows
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {business?.max_slideshows || 1}
+                  {getCurrentMaxSlideshows()}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
@@ -265,7 +313,7 @@ export default function PremiumPage() {
                   Staff Members
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {business?.max_staff_members || 1}
+                  {getCurrentMaxStaffMembers()}
                 </p>
               </div>
               <div className="p-3 bg-orange-100 rounded-xl">
@@ -281,14 +329,12 @@ export default function PremiumPage() {
             Your Plan Features
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {getPlanFeatures(subscription?.plan || "Free").map(
-              (feature, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <span className="text-gray-700">{feature}</span>
-                </div>
-              )
-            )}
+            {getPlanFeatures(getCurrentPlanName()).map((feature, index) => (
+              <div key={index} className="flex items-center space-x-3">
+                <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <span className="text-gray-700">{feature}</span>
+              </div>
+            ))}
           </div>
         </div>
 

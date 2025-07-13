@@ -64,13 +64,13 @@ export default async function handler(
       // Check if user is staff member of this business
       const { data: staffMember } = await supabase
         .from("business_staff")
-        .select("business_id, role")
+        .select("business_id, role, is_active")
         .eq("user_id", user.id)
         .eq("business_id", business_id)
         .eq("is_active", true)
         .single();
 
-      // User must either own the business or be a staff member
+      // User must either own the business or be an active staff member
       if (!ownedBusiness && !staffMember) {
         return res
           .status(403)
@@ -85,6 +85,12 @@ export default async function handler(
         .eq("is_active", true)
         .order("joined_at", { ascending: false });
 
+      console.log("🔍 Debug: Staff query result:", {
+        business_id,
+        staffMembers: staffMembers?.length || 0,
+        error: staffError,
+      });
+
       if (staffError) {
         console.error("Error fetching staff:", staffError);
         return res.status(500).json({ error: "Failed to fetch staff" });
@@ -93,12 +99,103 @@ export default async function handler(
       // Then get user profiles for each staff member
       const staffWithProfiles = await Promise.all(
         (staffMembers || []).map(async (staffMember) => {
+          console.log(
+            `🔍 Debug: Processing staff member: ${staffMember.user_id}`
+          );
+
           // Get user profile
-          const { data: userProfile } = await supabase
+          let { data: userProfile, error: profileError } = await supabase
             .from("profiles")
-            .select("id, first_name, last_name, email")
+            .select("id, first_name, last_name")
             .eq("id", staffMember.user_id)
             .single();
+
+          console.log(`🔍 Debug: Profile query result:`, {
+            user_id: staffMember.user_id,
+            userProfile,
+            profileError: profileError?.message,
+          });
+
+          // If profile not found, try to get user from auth and create profile
+          if (!userProfile && profileError?.code === "PGRST116") {
+            console.log(
+              `🔍 Debug: Profile not found for user ${staffMember.user_id}, checking auth...`
+            );
+
+            // Get user from auth
+            const { data: authUser, error: authError } =
+              await supabase.auth.admin.getUserById(staffMember.user_id);
+
+            console.log(`🔍 Debug: Auth user query result:`, {
+              user_id: staffMember.user_id,
+              authUser: authUser?.user
+                ? {
+                    id: authUser.user.id,
+                    email: authUser.user.email,
+                    metadata: authUser.user.user_metadata,
+                  }
+                : null,
+              authError: authError?.message,
+            });
+
+            if (authUser?.user && !authError) {
+              console.log(
+                `🔍 Debug: Found user in auth: ${authUser.user.email}`
+              );
+
+              // Create profile for the user
+              const profileData = {
+                id: staffMember.user_id,
+                first_name: authUser.user.user_metadata?.first_name || "",
+                last_name: authUser.user.user_metadata?.last_name || "",
+                roles: ["staff_member"],
+              };
+
+              console.log(`🔍 Debug: Creating profile with data:`, profileData);
+
+              const { data: newProfile, error: createError } = await supabase
+                .from("profiles")
+                .insert(profileData)
+                .select("id, first_name, last_name")
+                .single();
+
+              console.log(`🔍 Debug: Profile creation result:`, {
+                newProfile,
+                createError: createError?.message,
+              });
+
+              if (newProfile && !createError) {
+                userProfile = newProfile;
+                console.log(
+                  `🔍 Debug: Created profile for user: ${authUser.user.email}`
+                );
+              } else {
+                console.error("Error creating profile:", createError);
+              }
+            } else {
+              console.error("Error getting user from auth:", authError);
+            }
+          }
+
+          // Get user email from auth
+          let userEmail = "unknown@example.com";
+          if (!userProfile) {
+            // Try to get email from auth if profile doesn't exist
+            const { data: authUser } = await supabase.auth.admin.getUserById(
+              staffMember.user_id
+            );
+            if (authUser?.user) {
+              userEmail = authUser.user.email || "unknown@example.com";
+            }
+          } else {
+            // Get email from auth for existing profile
+            const { data: authUser } = await supabase.auth.admin.getUserById(
+              staffMember.user_id
+            );
+            if (authUser?.user) {
+              userEmail = authUser.user.email || "unknown@example.com";
+            }
+          }
 
           // Get invited by profile
           let invitedByProfile = null;
@@ -111,16 +208,24 @@ export default async function handler(
             invitedByProfile = inviterProfile;
           }
 
-          return {
+          const result = {
             ...staffMember,
             user: userProfile || {
               id: staffMember.user_id,
               first_name: "Unknown",
               last_name: "User",
-              email: "unknown@example.com",
+              email: userEmail,
             },
             invited_by: invitedByProfile,
           };
+
+          console.log(`🔍 Debug: Final staff member result:`, {
+            user_id: staffMember.user_id,
+            user: result.user,
+            has_profile: !!userProfile,
+          });
+
+          return result;
         })
       );
 
@@ -201,11 +306,50 @@ export default async function handler(
       }
 
       // Get user profile for the created staff member
-      const { data: userProfile } = await supabase
+      let { data: userProfile, error: profileError } = await supabase
         .from("profiles")
         .select("id, first_name, last_name, email")
         .eq("id", staff.user_id)
         .single();
+
+      // If profile not found, try to get user from auth and create profile
+      if (!userProfile && profileError?.code === "PGRST116") {
+        console.log(
+          `🔍 Debug: Profile not found for user ${staff.user_id}, checking auth...`
+        );
+
+        // Get user from auth
+        const { data: authUser, error: authError } =
+          await supabase.auth.admin.getUserById(staff.user_id);
+
+        if (authUser?.user && !authError) {
+          console.log(`🔍 Debug: Found user in auth: ${authUser.user.email}`);
+
+          // Create profile for the user
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: staff.user_id,
+              email: authUser.user.email,
+              first_name: authUser.user.user_metadata?.first_name || "",
+              last_name: authUser.user.user_metadata?.last_name || "",
+              roles: ["staff_member"],
+            })
+            .select("id, first_name, last_name, email")
+            .single();
+
+          if (newProfile && !createError) {
+            userProfile = newProfile;
+            console.log(
+              `🔍 Debug: Created profile for user: ${userProfile.email}`
+            );
+          } else {
+            console.error("Error creating profile:", createError);
+          }
+        } else {
+          console.error("Error getting user from auth:", authError);
+        }
+      }
 
       const staffWithProfile = {
         ...staff,
@@ -266,11 +410,50 @@ export default async function handler(
       }
 
       // Get user profile for the updated staff member
-      const { data: userProfile } = await supabase
+      let { data: userProfile, error: profileError } = await supabase
         .from("profiles")
         .select("id, first_name, last_name, email")
         .eq("id", staff.user_id)
         .single();
+
+      // If profile not found, try to get user from auth and create profile
+      if (!userProfile && profileError?.code === "PGRST116") {
+        console.log(
+          `🔍 Debug: Profile not found for user ${staff.user_id}, checking auth...`
+        );
+
+        // Get user from auth
+        const { data: authUser, error: authError } =
+          await supabase.auth.admin.getUserById(staff.user_id);
+
+        if (authUser?.user && !authError) {
+          console.log(`🔍 Debug: Found user in auth: ${authUser.user.email}`);
+
+          // Create profile for the user
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: staff.user_id,
+              email: authUser.user.email,
+              first_name: authUser.user.user_metadata?.first_name || "",
+              last_name: authUser.user.user_metadata?.last_name || "",
+              roles: ["staff_member"],
+            })
+            .select("id, first_name, last_name, email")
+            .single();
+
+          if (newProfile && !createError) {
+            userProfile = newProfile;
+            console.log(
+              `🔍 Debug: Created profile for user: ${userProfile.email}`
+            );
+          } else {
+            console.error("Error creating profile:", createError);
+          }
+        } else {
+          console.error("Error getting user from auth:", authError);
+        }
+      }
 
       const staffWithProfile = {
         ...staff,

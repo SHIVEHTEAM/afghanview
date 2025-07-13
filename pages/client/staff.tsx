@@ -27,7 +27,7 @@ import ClientLayout from "../../components/client/ClientLayout";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import { useToastNotifications } from "../../lib/toast-utils";
-import { ErrorMessage } from "../../components/ui";
+import { ErrorMessage, SuccessMessage, Toast } from "../../components/ui";
 
 interface StaffMember {
   id: string;
@@ -78,11 +78,51 @@ export default function StaffManagementPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("staff");
+  const [inviteFirstName, setInviteFirstName] = useState("");
+  const [inviteLastName, setInviteLastName] = useState("");
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState("");
 
   useEffect(() => {
     fetchBusinessAndStaff();
+  }, [user?.id]);
+
+  // Redirect staff members away from this page
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!user?.id) return;
+
+      try {
+        // Check if user owns a business
+        const { data: ownedBusiness } = await supabase
+          .from("businesses")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .single();
+
+        if (!ownedBusiness) {
+          // Check if user is a staff member with management permissions
+          const { data: staffMember } = await supabase
+            .from("business_staff")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("is_active", true)
+            .in("role", ["owner", "manager"])
+            .single();
+
+          if (!staffMember) {
+            // User doesn't have management permissions, redirect to dashboard
+            window.location.href = "/client";
+          }
+        }
+      } catch (error) {
+        console.error("Error checking access:", error);
+        window.location.href = "/client";
+      }
+    };
+
+    checkAccess();
   }, [user?.id]);
 
   const fetchBusinessAndStaff = async () => {
@@ -202,16 +242,8 @@ export default function StaffManagementPage() {
     }
   };
 
-  const filteredStaff = staff.filter((member) => {
-    const matchesSearch =
-      member.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.user.last_name.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesRole = filterRole === "all" || member.role === filterRole;
-
-    return matchesSearch && matchesRole;
-  });
+  // Only show active staff in the UI
+  const filteredStaff = staff.filter((member) => member.is_active);
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -268,6 +300,11 @@ export default function StaffManagementPage() {
       return;
     }
 
+    if (!inviteFirstName.trim() || !inviteLastName.trim()) {
+      toast.validationError("Please enter both first name and last name");
+      return;
+    }
+
     if (!canInviteMore()) {
       toast.showWarning(
         "You have reached the maximum number of staff members for your plan"
@@ -279,31 +316,51 @@ export default function StaffManagementPage() {
     setInviteError("");
 
     try {
-      // Create invitation in database
-      const { data: invitation, error } = await supabase
-        .from("staff_invitations")
-        .insert({
-          business_id: business.id,
-          email: inviteEmail.trim().toLowerCase(),
-          role: inviteRole,
-          invited_by: user?.id,
-          status: "pending",
-          expires_at: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000
-          ).toISOString(), // 7 days
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
+      // Get session for API authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("No authentication token available");
       }
 
-      setInvitations((prev) => [invitation, ...prev]);
+      // Send invitation using the new API
+      const response = await fetch("/api/business/staff/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          role: inviteRole,
+          business_id: business.id,
+          firstName: inviteFirstName.trim(),
+          lastName: inviteLastName.trim(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to send invitation");
+      }
+
+      // Add the new invitation to the list
+      setInvitations((prev) => [result.invitation, ...prev]);
       setInviteEmail("");
       setInviteRole("staff");
+      setInviteFirstName("");
+      setInviteLastName("");
       setShowInviteModal(false);
-      toast.showSuccess(`Invitation sent to ${inviteEmail}`);
+
+      if (result.emailSent) {
+        toast.showSuccess(`Invitation sent to ${inviteEmail}`);
+      } else {
+        toast.showWarning(
+          `Invitation created but email delivery failed. The user can still access the invitation through the system.`
+        );
+      }
     } catch (err) {
       console.error("Error inviting staff:", err);
       const errorMessage =
@@ -358,25 +415,39 @@ export default function StaffManagementPage() {
   };
 
   const handleRemoveStaff = async (memberId: string) => {
-    if (!confirm("Are you sure you want to remove this staff member?")) {
-      return;
-    }
-
     try {
-      const { error } = await supabase
-        .from("business_staff")
-        .update({ is_active: false })
-        .eq("id", memberId);
-
-      if (error) {
-        throw error;
+      setLoading(true);
+      setError(null);
+      // Get session for API authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("No authentication token available");
       }
-
-      setStaff((prev) => prev.filter((member) => member.id !== memberId));
-      toast.showSuccess("Staff member removed successfully");
+      // Remove staff using API
+      const response = await fetch(
+        `/api/business/staff?business_id=${business?.id}&staff_id=${memberId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to remove staff member");
+      }
+      // Refetch staff list after removal
+      await fetchBusinessAndStaff();
     } catch (err) {
-      console.error("Error removing staff:", err);
-      toast.showError("Failed to remove staff member");
+      console.error("Error removing staff member:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to remove staff member"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -398,7 +469,7 @@ export default function StaffManagementPage() {
       <ClientLayout>
         <div className="flex items-center justify-center py-12">
           <div className="text-center max-w-md">
-            <ErrorMessage message={error} type="error" className="mb-4" />
+            <ErrorMessage message={error} />
             <button
               onClick={fetchBusinessAndStaff}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
@@ -655,6 +726,33 @@ export default function StaffManagementPage() {
               </div>
 
               <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={inviteFirstName}
+                      onChange={(e) => setInviteFirstName(e.target.value)}
+                      placeholder="John"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={inviteLastName}
+                      onChange={(e) => setInviteLastName(e.target.value)}
+                      placeholder="Doe"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address
@@ -682,11 +780,7 @@ export default function StaffManagementPage() {
                   </select>
                 </div>
 
-                {inviteError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-sm text-red-600">{inviteError}</p>
-                  </div>
-                )}
+                {inviteError && <ErrorMessage message={inviteError} />}
 
                 <div className="flex items-center justify-end space-x-3 pt-4">
                   <button
@@ -697,9 +791,17 @@ export default function StaffManagementPage() {
                   </button>
                   <button
                     onClick={handleInviteStaff}
-                    disabled={inviting || !inviteEmail}
+                    disabled={
+                      inviting ||
+                      !inviteEmail ||
+                      !inviteFirstName.trim() ||
+                      !inviteLastName.trim()
+                    }
                     className={`px-4 py-2 rounded-lg font-medium flex items-center ${
-                      inviting || !inviteEmail
+                      inviting ||
+                      !inviteEmail ||
+                      !inviteFirstName.trim() ||
+                      !inviteLastName.trim()
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700 text-white"
                     }`}

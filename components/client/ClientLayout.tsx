@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
-import { useAuth } from "../../lib/auth";
+import { useAuth, getUserRole } from "../../lib/auth";
 import { useSlideshowStore } from "../../stores/slideshowStore";
 import { SlideshowCreator } from "../slideshow-creator";
 import { supabase } from "../../lib/supabase";
@@ -48,6 +48,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     upgradeUrl: "/pricing",
   });
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { showSlideshowCreator, setShowSlideshowCreator } = useSlideshowStore();
@@ -55,8 +56,19 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   useEffect(() => {
     if (user) {
       fetchUserPlanData();
+      fetchUserRole();
     }
   }, [user]);
+
+  const fetchUserRole = async () => {
+    if (!user?.id) return;
+    try {
+      const role = await getUserRole(user.id);
+      setUserRole(role);
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+    }
+  };
 
   const fetchUserPlanData = async () => {
     try {
@@ -73,15 +85,55 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         console.error("Error fetching profile:", profileError);
       }
 
-      // Get business data
-      const { data: businessData, error: businessError } = await supabase
-        .from("businesses")
-        .select("*")
+      // First, check if user is a staff member and get their business
+      const { data: staffMember, error: staffError } = await supabase
+        .from("business_staff")
+        .select(
+          `
+          business:businesses!inner(
+            id,
+            name,
+            subscription_plan,
+            ai_credits,
+            ai_credits_used,
+            max_slideshows,
+            max_staff_members
+          )
+        `
+        )
         .eq("user_id", user.id)
-        .single();
+        .eq("is_active", true)
+        .maybeSingle();
 
-      if (businessError && businessError.code !== "PGRST116") {
-        console.error("Error fetching business:", businessError);
+      let businessData = null;
+      if (staffMember?.business) {
+        // Handle both array and object
+        businessData = Array.isArray(staffMember.business)
+          ? staffMember.business[0]
+          : staffMember.business;
+        console.log(
+          "🔍 Debug: User is staff member, using business:",
+          businessData.name
+        );
+      }
+
+      // If not found as staff, try as owner
+      if (!businessData) {
+        const { data: userBusiness, error: businessError } = await supabase
+          .from("businesses")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (businessError && businessError.code !== "PGRST116") {
+          console.error("Error fetching business:", businessError);
+        } else if (userBusiness) {
+          businessData = userBusiness;
+          console.log(
+            "🔍 Debug: User is business owner, using own business:",
+            businessData.name
+          );
+        }
       }
 
       // Get business subscription data - check business table first, then business_subscriptions
@@ -243,39 +295,49 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       href: "/client",
       icon: LayoutDashboard,
       current: router.pathname === "/client",
+      roles: ["owner", "manager", "staff"],
     },
     {
       name: "TV Management",
       href: "/client/tv",
       icon: Tv,
       current: router.pathname.startsWith("/client/tv"),
+      roles: ["owner", "manager", "staff"],
     },
     {
       name: "Premium",
       href: "/client/premium",
       icon: Crown,
       current: router.pathname.startsWith("/client/premium"),
+      roles: ["owner"],
     },
-
     {
       name: "Analytics",
       href: "/client/analytics",
       icon: BarChart3,
       current: router.pathname.startsWith("/client/analytics"),
+      roles: ["owner", "manager"],
     },
     {
       name: "Staff",
       href: "/client/staff",
       icon: Users,
       current: router.pathname.startsWith("/client/staff"),
+      roles: ["owner"],
     },
     {
       name: "Settings",
       href: "/client/settings",
       icon: Settings,
       current: router.pathname.startsWith("/client/settings"),
+      roles: ["owner", "manager"],
     },
   ];
+
+  // Filter navigation based on user role
+  const filteredNavigation = navigation.filter(
+    (item) => !item.roles || item.roles.includes(userRole || "")
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -324,7 +386,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               </div>
             </div>
             <nav className="mt-8 px-2 space-y-1">
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -403,7 +465,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               </div>
             </div>
             <nav className="mt-8 flex-1 px-2 space-y-1">
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -482,7 +544,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <div className="flex-1 px-4 flex justify-between">
             <div className="flex-1 flex">
               <h1 className="text-2xl font-bold text-gray-900 my-auto">
-                {navigation.find((item) => item.current)?.name || "Dashboard"}
+                {filteredNavigation.find((item) => item.current)?.name ||
+                  "Dashboard"}
               </h1>
             </div>
 

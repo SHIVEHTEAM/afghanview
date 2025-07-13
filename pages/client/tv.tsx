@@ -112,12 +112,37 @@ export default function TvManagementPage() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Get user's business
-      const { data: businessData } = await supabase
+      // Get user's business (owned or staff member)
+      let businessData = null;
+
+      // First check if user owns a business
+      const { data: ownedBusiness } = await supabase
         .from("businesses")
         .select("*")
         .eq("user_id", user.id)
         .single();
+
+      if (ownedBusiness) {
+        businessData = ownedBusiness;
+      } else {
+        // Check if user is staff member of a business
+        const { data: staffMember } = await supabase
+          .from("business_staff")
+          .select(
+            `
+            business:businesses(*)
+          `
+          )
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .single();
+
+        if (staffMember?.business) {
+          businessData = Array.isArray(staffMember.business)
+            ? staffMember.business[0]
+            : staffMember.business;
+        }
+      }
 
       if (!businessData) throw new Error("Business not found");
       setBusiness(businessData);

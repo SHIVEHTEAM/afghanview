@@ -440,3 +440,36 @@ export function useAuth() {
   }
   return context;
 }
+
+export const getUserRole = async (userId: string) => {
+  try {
+    // First check if user owns a business
+    const { data: ownedBusiness } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .single();
+
+    if (ownedBusiness) {
+      return "owner";
+    }
+
+    // Check if user is staff member
+    const { data: staffMember } = await supabase
+      .from("business_staff")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .single();
+
+    if (staffMember) {
+      return staffMember.role;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error getting user role:", error);
+    return null;
+  }
+};

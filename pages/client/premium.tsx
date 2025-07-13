@@ -64,16 +64,58 @@ export default function PremiumPage() {
         setUserProfile(profileData);
       }
 
-      // Get business data
-      const { data: businessData, error: businessError } = await supabase
-        .from("businesses")
-        .select("*")
+      // First, check if user is a staff member and get their business
+      const { data: staffMember, error: staffError } = await supabase
+        .from("business_staff")
+        .select(
+          `
+          business:businesses!inner(
+            id,
+            name,
+            subscription_plan,
+            ai_credits,
+            ai_credits_used,
+            max_slideshows,
+            max_staff_members
+          )
+        `
+        )
         .eq("user_id", user.id)
-        .single();
+        .eq("is_active", true)
+        .maybeSingle();
 
-      if (businessError && businessError.code !== "PGRST116") {
-        console.error("Error fetching business:", businessError);
-      } else if (businessData) {
+      let businessData = null;
+      if (staffMember?.business) {
+        // Handle both array and object
+        businessData = Array.isArray(staffMember.business)
+          ? staffMember.business[0]
+          : staffMember.business;
+        console.log(
+          "🔍 Debug: User is staff member, using business:",
+          businessData.name
+        );
+      }
+
+      // If not found as staff, try as owner
+      if (!businessData) {
+        const { data: userBusiness, error: businessError } = await supabase
+          .from("businesses")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (businessError && businessError.code !== "PGRST116") {
+          console.error("Error fetching business:", businessError);
+        } else if (userBusiness) {
+          businessData = userBusiness;
+          console.log(
+            "🔍 Debug: User is business owner, using own business:",
+            businessData.name
+          );
+        }
+      }
+
+      if (businessData) {
         setBusiness(businessData);
       }
 

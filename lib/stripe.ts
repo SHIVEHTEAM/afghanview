@@ -1,5 +1,12 @@
 import Stripe from "stripe";
 import { supabase } from "./supabase";
+import { createClient } from "@supabase/supabase-js";
+
+// Create admin client for webhook operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Initialize Stripe with proper error handling
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -267,34 +274,60 @@ async function handleCheckoutSessionCompleted(
   const customerEmail = session.customer_details?.email;
   const customerName = session.customer_details?.name;
 
-  // 1. Check if user exists
-  let { data: user, error: userError } = await supabase
-    .from("users")
-    .select("id")
-    .eq("email", customerEmail)
-    .single();
+  if (!customerEmail) {
+    throw new Error("No customer email in checkout session");
+  }
 
-  let userId = user?.id;
+  // 1. Check if user exists in auth.users
+  let { data: user, error: userError } =
+    await supabaseAdmin.auth.admin.listUsers({
+      filter: `email.eq.${customerEmail}`,
+    });
+  let userId = user?.users?.[0]?.id;
 
   if (!userId) {
-    // 2. Create user in 'users' table
-    const { data: newUser, error: newUserError } = await supabase
-      .from("users")
-      .insert({ email: customerEmail, name: customerName })
-      .select()
-      .single();
-    if (newUserError) throw newUserError;
-    userId = newUser.id;
-    // 3. Create profile for user
-    await supabase.from("profiles").insert({
+    // 2. Create user in auth.users
+    const { data: newUser, error: newUserError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email: customerEmail,
+        email_confirm: true,
+        user_metadata: {
+          name: customerName,
+          planSlug: planSlug,
+        },
+      });
+
+    if (newUserError) {
+      console.error("Error creating user:", newUserError);
+      throw newUserError;
+    }
+
+    userId = newUser.user.id;
+    console.log("Created new user:", userId);
+  }
+
+  // 3. Create profile for user (if doesn't exist)
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .single();
+
+  if (!existingProfile) {
+    const { error: profileError } = await supabase.from("profiles").insert({
       id: userId,
       first_name: customerName?.split(" ")[0] || "",
       last_name: customerName?.split(" ").slice(1).join(" ") || "",
       roles: ["restaurant_owner"],
       subscription_plan: planSlug,
       subscription_status: "active",
-      email: customerEmail,
     });
+
+    if (profileError) {
+      console.error("Error creating profile:", profileError);
+      throw profileError;
+    }
+    console.log("Created profile for user:", userId);
   }
 
   // 4. Check if business exists for user
@@ -304,6 +337,7 @@ async function handleCheckoutSessionCompleted(
     .eq("user_id", userId)
     .single();
   let businessId = business?.id;
+
   if (!businessId) {
     // 5. Create business for user
     const { data: newBusiness, error: newBusinessError } = await supabase
@@ -318,8 +352,13 @@ async function handleCheckoutSessionCompleted(
       })
       .select()
       .single();
-    if (newBusinessError) throw newBusinessError;
+
+    if (newBusinessError) {
+      console.error("Error creating business:", newBusinessError);
+      throw newBusinessError;
+    }
     businessId = newBusiness.id;
+    console.log("Created business:", businessId);
   }
 
   // Create or update subscription in database
@@ -372,6 +411,8 @@ async function handleCheckoutSessionCompleted(
     stripe_payment_intent_id: session.payment_intent as string,
     paid_at: new Date().toISOString(),
   });
+
+  console.log("Successfully processed checkout session for user:", userId);
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {

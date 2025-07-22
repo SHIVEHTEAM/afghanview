@@ -258,6 +258,8 @@ export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"month" | "year">("month");
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [promotionCode, setPromotionCode] = useState("");
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
 
   const getYearlyDiscount = (monthlyPrice: number) => {
     return Math.round(monthlyPrice * 12 * 0.2); // 20% discount
@@ -290,6 +292,32 @@ export default function PricingPage() {
 
   const handleManageSubscription = () => {
     window.location.href = "/client/premium";
+  };
+
+  const handlePlanClick = (planId: string) => {
+    setPendingPlan(planId);
+    setShowCouponModal(true);
+  };
+
+  const handleCheckout = async () => {
+    if (!pendingPlan) return;
+    const res = await fetch("/api/subscription/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        planSlug: pendingPlan,
+        interval: billingPeriod,
+        promotionCode: promotionCode.trim() || undefined,
+        successUrl: window.location.origin + "/onboarding",
+        cancelUrl: window.location.href,
+      }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data.error || "Failed to start checkout session");
+    }
   };
 
   return (
@@ -453,23 +481,37 @@ export default function PricingPage() {
             </motion.div>
           </div>
 
-          {/* Add input for promotion code above the plan cards or in the checkout modal */}
-          <div className="mb-6 flex flex-col items-center">
-            <label
-              htmlFor="promotionCode"
-              className="text-sm font-medium text-gray-700 mb-1"
-            >
-              Promotion Code (optional)
-            </label>
-            <input
-              id="promotionCode"
-              type="text"
-              value={promotionCode}
-              onChange={(e) => setPromotionCode(e.target.value)}
-              className="border rounded px-3 py-2 text-sm w-64"
-              placeholder="Enter code if you have one"
-            />
-          </div>
+          {showCouponModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">
+                  Enter Promotion Code (optional)
+                </h3>
+                <input
+                  id="promotionCode"
+                  type="text"
+                  value={promotionCode}
+                  onChange={(e) => setPromotionCode(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm w-full mb-4"
+                  placeholder="Enter code if you have one"
+                />
+                <div className="flex gap-4">
+                  <button
+                    className="flex-1 py-2 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-all"
+                    onClick={handleCheckout}
+                  >
+                    Continue to Checkout
+                  </button>
+                  <button
+                    className="flex-1 py-2 rounded-lg font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all"
+                    onClick={() => setShowCouponModal(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Plans Grid */}
           <div className="flex flex-col md:flex-row gap-8 justify-center items-stretch mb-12">
@@ -487,7 +529,9 @@ export default function PricingPage() {
                     Most Popular
                   </span>
                 )}
-                <h2 className="text-2xl font-bold mb-2">{plan.name}</h2>
+                <h2 className="text-2xl font-bold mb-2 text-gray-900">
+                  {plan.name}
+                </h2>
                 <p className="text-gray-500 mb-4">{plan.description}</p>
                 <div className="mb-4 flex items-baseline gap-2">
                   <span className="text-4xl font-bold text-gray-900">
@@ -515,7 +559,7 @@ export default function PricingPage() {
                       ? "bg-purple-600 hover:bg-purple-700"
                       : "bg-gray-800 hover:bg-gray-900"
                   }`}
-                  onClick={() => handlePlanSelect(plan.id)}
+                  onClick={() => handlePlanClick(plan.id)}
                 >
                   {plan.popular ? "Get Started" : "Choose Plan"}
                 </button>

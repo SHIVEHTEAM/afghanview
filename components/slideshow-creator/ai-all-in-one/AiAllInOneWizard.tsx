@@ -404,7 +404,9 @@ export default function AiAllInOneWizard({
           >
             <SettingsPanel
               settings={settings}
-              onSettingsChange={setSettings}
+              onSettingsChange={(updates) =>
+                setSettings((prev) => ({ ...prev, ...updates }))
+              }
               slideshowName={slideshowName}
               onSlideshowNameChange={setSlideshowName}
             />

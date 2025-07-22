@@ -113,7 +113,8 @@ export default async function handler(
         content: {
           ...slideshow.content,
           slides: processedImages,
-          images: processedImages,
+          // Don't set images field to avoid duplication
+          // images: processedImages, // Removed this line
         },
       };
 
@@ -124,21 +125,31 @@ export default async function handler(
     }
   } else if (req.method === "PATCH") {
     try {
-      const { isActive, is_active } = req.body;
+      const { isActive, is_active, settings } = req.body;
 
       // Handle both field names for compatibility
       const shouldActivate = isActive !== undefined ? isActive : is_active;
 
-      if (typeof shouldActivate !== "boolean") {
-        return res
-          .status(400)
-          .json({ error: "isActive/is_active must be a boolean" });
+      // Prepare update data
+      const updateData: any = {};
+
+      if (typeof shouldActivate === "boolean") {
+        updateData.is_active = shouldActivate;
+      }
+
+      // Handle music settings
+      if (settings) {
+        const currentSettings = updateData.settings || {};
+        updateData.settings = {
+          ...currentSettings,
+          ...settings,
+        };
       }
 
       // First try to update in slideshows table
       let { data: updatedSlideshow, error } = await supabase
         .from("slideshows")
-        .update({ is_active: shouldActivate })
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -147,7 +158,7 @@ export default async function handler(
       if (error || !updatedSlideshow) {
         const { data: updatedSlide, error: slideError } = await supabase
           .from("slides")
-          .update({ is_active: shouldActivate })
+          .update(updateData)
           .eq("id", id)
           .select()
           .single();
@@ -162,9 +173,8 @@ export default async function handler(
       res.status(200).json({
         success: true,
         isActive: updatedSlideshow.is_active,
-        message: `Slideshow ${
-          shouldActivate ? "activated" : "deactivated"
-        } successfully`,
+        settings: updatedSlideshow.settings,
+        message: `Slideshow updated successfully`,
       });
     } catch (error) {
       console.error("Error updating slideshow:", error);

@@ -229,7 +229,9 @@ export default function MenuSlideshowWizard({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <SettingsPanel
               settings={settings}
-              onSettingsChange={setSettings}
+              onSettingsChange={(updates) =>
+                setSettings((prev) => ({ ...prev, ...updates }))
+              }
               slideshowName={slideshowName}
               onSlideshowNameChange={setSlideshowName}
             />

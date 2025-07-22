@@ -1,61 +1,67 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Settings,
-  Music,
   Volume2,
-  Clock,
-  Palette,
+  VolumeX,
+  Music,
   Play,
   Pause,
+  Upload,
+  X,
+  Clock,
+  Palette,
+  Monitor,
+  RotateCcw,
+  Shuffle,
+  Eye,
+  EyeOff,
+  Square,
+  Circle,
+  Triangle,
 } from "lucide-react";
 import { SlideshowSettings } from "./types";
-import { TRANSITIONS, ASPECT_RATIOS, QUALITY_OPTIONS } from "./constants";
-import { supabase } from "../../../lib/supabase";
+import { SlideshowMusicSettings } from "../../../types/music";
+import MultiTrackMusicSelector from "./MultiTrackMusicSelector";
 
 interface SettingsPanelProps {
   settings: SlideshowSettings;
-  onSettingsChange: (settings: SlideshowSettings) => void;
+  onSettingsChange: (updates: Partial<SlideshowSettings>) => void;
   slideshowName: string;
   onSlideshowNameChange: (name: string) => void;
 }
 
-// Free open-source background music options
-const BACKGROUND_MUSIC_OPTIONS = [
-  {
-    id: "none",
-    name: "No Music",
-    artist: "",
-    url: "",
-    duration: "0:00",
-  },
-  {
-    id: "ambient-1",
-    name: "Peaceful Ambience",
-    artist: "Free Music Archive",
-    url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-    duration: "3:45",
-  },
-  {
-    id: "upbeat-1",
-    name: "Upbeat Energy",
-    artist: "Free Music Archive",
-    url: "https://www.soundjay.com/misc/sounds/fail-buzzer-02.wav",
-    duration: "2:30",
-  },
-  {
-    id: "cultural-1",
-    name: "Cultural Melody",
-    artist: "Free Music Archive",
-    url: "https://www.soundjay.com/misc/sounds/bell-ringing-04.wav",
-    duration: "4:15",
-  },
-  {
-    id: "custom",
-    name: "Upload Custom Music",
-    artist: "Your File",
-    url: "",
-    duration: "Custom",
-  },
+// Duration options in milliseconds
+const DURATION_OPTIONS = [
+  { label: "2 seconds", value: 2000 },
+  { label: "3 seconds", value: 3000 },
+  { label: "5 seconds", value: 5000 },
+  { label: "7 seconds", value: 7000 },
+  { label: "10 seconds", value: 10000 },
+  { label: "15 seconds", value: 15000 },
+];
+
+// Transition options
+const TRANSITION_OPTIONS = [
+  { label: "Fade", value: "fade", icon: Circle },
+  { label: "Slide", value: "slide", icon: Square },
+  { label: "Zoom", value: "zoom", icon: Triangle },
+  { label: "Flip", value: "flip", icon: RotateCcw },
+  { label: "Bounce", value: "bounce", icon: RotateCcw },
+];
+
+// Aspect ratio options
+const ASPECT_RATIO_OPTIONS = [
+  { label: "16:9 (Widescreen)", value: "16:9" },
+  { label: "4:3 (Standard)", value: "4:3" },
+  { label: "1:1 (Square)", value: "1:1" },
+];
+
+// Quality options
+const QUALITY_OPTIONS = [
+  { label: "Low (Fast)", value: "low" },
+  { label: "Medium (Balanced)", value: "medium" },
+  { label: "High (Best)", value: "high" },
 ];
 
 export default function SettingsPanel({
@@ -64,336 +70,72 @@ export default function SettingsPanel({
   slideshowName,
   onSlideshowNameChange,
 }: SettingsPanelProps) {
-  const [selectedMusic, setSelectedMusic] = useState(
-    settings.backgroundMusic || "none"
-  );
-  const [customMusicFile, setCustomMusicFile] = useState<File | null>(null);
-  const [isPlayingPreview, setIsPlayingPreview] = useState<string | null>(null);
-  const [isUploadingMusic, setIsUploadingMusic] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<string>("");
+  const [showMusicSelector, setShowMusicSelector] = useState(false);
+  const [currentMusicSettings, setCurrentMusicSettings] = useState<
+    SlideshowMusicSettings | undefined
+  >(settings.music);
 
-  const handleMusicChange = async (musicId: string) => {
-    setSelectedMusic(musicId);
-    if (musicId === "custom") {
-      // Handle custom music upload
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "audio/*,.mp3,.mp4,.wav,.ogg,.aac,.webm,.m4a";
-      input.onchange = async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-          console.log("Selected file:", {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            lastModified: file.lastModified,
-          });
-
-          setIsUploadingMusic(true);
-          setUploadProgress(0);
-          setUploadStatus("Validating file...");
-          setCustomMusicFile(file);
-
-          try {
-            // More flexible file type validation
-            const isAudioFile =
-              file.type.startsWith("audio/") ||
-              file.name
-                .toLowerCase()
-                .match(/\.(mp3|mp4|wav|ogg|aac|webm|m4a)$/);
-
-            if (!isAudioFile) {
-              setUploadStatus("Error: Invalid file type");
-              setTimeout(() => setUploadStatus(""), 3000);
-              alert(
-                "Please select a valid audio file (MP3, MP4, WAV, OGG, AAC, WebM, M4A)"
-              );
-              return;
-            }
-
-            // Validate file size (max 20MB)
-            if (file.size > 20 * 1024 * 1024) {
-              setUploadStatus("Error: File too large");
-              setTimeout(() => setUploadStatus(""), 3000);
-              alert("Audio file size must be less than 20MB");
-              return;
-            }
-
-            // Check for problematic MIME types and provide guidance
-            const problematicTypes = [
-              "audio/mpeg", // MP3
-              "audio/mp3",
-              "audio/x-mpeg",
-              "audio/x-mpeg-3",
-            ];
-
-            if (problematicTypes.includes(file.type)) {
-              setUploadStatus("Error: MP3 not supported");
-              setTimeout(() => setUploadStatus(""), 3000);
-              alert(
-                "MP3 files are not supported. Please convert your audio to WAV, OGG, or AAC format for better compatibility."
-              );
-              return;
-            }
-
-            setUploadProgress(25);
-            setUploadStatus("Preparing upload...");
-
-            // Test Supabase connection first
-            try {
-              const { data: testData, error: testError } =
-                await supabase.storage
-                  .from("slideshow-media")
-                  .list("audio", { limit: 1 });
-
-              if (testError) {
-                console.error("Supabase connection test failed:", testError);
-                setUploadStatus("Error: Cannot connect to storage");
-                setTimeout(() => setUploadStatus(""), 3000);
-                alert(
-                  "Cannot connect to storage server. Please check your internet connection and try again."
-                );
-                return;
-              }
-
-              console.log("Supabase connection test successful");
-            } catch (testError) {
-              console.error("Supabase connection test error:", testError);
-              setUploadStatus("Error: Storage connection failed");
-              setTimeout(() => setUploadStatus(""), 3000);
-              alert("Storage connection failed. Please try again.");
-              return;
-            }
-
-            console.log("Uploading file to Supabase:", {
-              fileName: file.name,
-              fileType: file.type,
-              fileSize: file.size,
-            });
-
-            // Upload to Supabase Storage with explicit content type
-            const fileName = `audio/${Date.now()}-${file.name}`;
-
-            // Use a more compatible content type if needed
-            let contentType = file.type;
-            if (file.type === "audio/mpeg" || file.type === "audio/mp3") {
-              contentType = "audio/mpeg"; // Try with explicit type
-            }
-
-            setUploadProgress(50);
-            setUploadStatus("Uploading to server...");
-
-            console.log("Starting upload with params:", {
-              fileName,
-              contentType,
-              fileSize: file.size,
-            });
-
-            // Add timeout protection for upload
-            const uploadPromise = supabase.storage
-              .from("slideshow-media")
-              .upload(fileName, file, {
-                cacheControl: "3600",
-                upsert: false,
-                contentType: contentType,
-              });
-
-            // Add timeout of 30 seconds
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(
-                () => reject(new Error("Upload timeout - took too long")),
-                30000
-              );
-            });
-
-            const { data, error: uploadError } = (await Promise.race([
-              uploadPromise,
-              timeoutPromise,
-            ])) as any;
-
-            if (uploadError) {
-              console.error("Upload error details:", uploadError);
-
-              // Try fallback upload without content type if first attempt failed
-              if (!uploadError.message.includes("timeout")) {
-                console.log("Trying fallback upload without content type...");
-                setUploadStatus("Retrying upload...");
-
-                try {
-                  const fallbackPromise = supabase.storage
-                    .from("slideshow-media")
-                    .upload(fileName, file, {
-                      cacheControl: "3600",
-                      upsert: false,
-                    });
-
-                  const fallbackTimeoutPromise = new Promise((_, reject) => {
-                    setTimeout(
-                      () => reject(new Error("Fallback upload timeout")),
-                      30000
-                    );
-                  });
-
-                  const { data: fallbackData, error: fallbackError } =
-                    (await Promise.race([
-                      fallbackPromise,
-                      fallbackTimeoutPromise,
-                    ])) as any;
-
-                  if (fallbackError) {
-                    console.error(
-                      "Fallback upload also failed:",
-                      fallbackError
-                    );
-                    setUploadProgress(0);
-
-                    if (
-                      fallbackError.message.includes("mime type") ||
-                      fallbackError.message.includes("not supported")
-                    ) {
-                      setUploadStatus("Error: Format not supported");
-                      setTimeout(() => setUploadStatus(""), 3000);
-                      alert(
-                        "This audio format is not supported. Please try converting your audio to WAV, OGG, or AAC format. You can use online converters or audio editing software."
-                      );
-                    } else {
-                      setUploadStatus(`Error: ${fallbackError.message}`);
-                      setTimeout(() => setUploadStatus(""), 3000);
-                      alert(`Failed to upload audio: ${fallbackError.message}`);
-                    }
-                    return;
-                  }
-
-                  // Fallback upload succeeded
-                  console.log("Fallback upload successful:", fallbackData);
-                  setUploadProgress(75);
-                  setUploadStatus("Getting public URL...");
-
-                  // Get public URL
-                  const { data: urlData } = supabase.storage
-                    .from("slideshow-media")
-                    .getPublicUrl(fileName);
-
-                  let audioUrl = urlData?.publicUrl || "";
-
-                  console.log(
-                    "Fallback upload successful, audio URL:",
-                    audioUrl
-                  );
-
-                  setUploadProgress(100);
-                  setUploadStatus("Upload successful! ✓");
-
-                  // Call the parent handler with the public URL
-                  onSettingsChange({
-                    ...settings,
-                    backgroundMusic: audioUrl,
-                  });
-
-                  // Clear success message after 3 seconds
-                  setTimeout(() => {
-                    setUploadStatus("");
-                    setUploadProgress(0);
-                  }, 3000);
-
-                  return;
-                } catch (fallbackCatchError) {
-                  console.error(
-                    "Fallback upload catch error:",
-                    fallbackCatchError
-                  );
-                }
-              }
-
-              setUploadProgress(0);
-
-              // Provide specific guidance for MIME type errors
-              if (
-                uploadError.message.includes("mime type") ||
-                uploadError.message.includes("not supported")
-              ) {
-                setUploadStatus("Error: Format not supported");
-                setTimeout(() => setUploadStatus(""), 3000);
-                alert(
-                  "This audio format is not supported. Please try converting your audio to WAV, OGG, or AAC format. You can use online converters or audio editing software."
-                );
-              } else if (uploadError.message.includes("timeout")) {
-                setUploadStatus("Error: Upload timeout");
-                setTimeout(() => setUploadStatus(""), 3000);
-                alert(
-                  "Upload took too long. Please try again with a smaller file or check your internet connection."
-                );
-              } else {
-                setUploadStatus(`Error: ${uploadError.message}`);
-                setTimeout(() => setUploadStatus(""), 3000);
-                alert(`Failed to upload audio: ${uploadError.message}`);
-              }
-              return;
-            }
-
-            console.log("Upload completed successfully:", data);
-            setUploadProgress(75);
-            setUploadStatus("Getting public URL...");
-
-            // Get public URL
-            const { data: urlData } = supabase.storage
-              .from("slideshow-media")
-              .getPublicUrl(fileName);
-
-            let audioUrl = urlData?.publicUrl || "";
-
-            console.log("Upload successful, audio URL:", audioUrl);
-
-            setUploadProgress(100);
-            setUploadStatus("Upload successful! ✓");
-
-            // Call the parent handler with the public URL
-            onSettingsChange({
-              ...settings,
-              backgroundMusic: audioUrl,
-            });
-
-            // Clear success message after 3 seconds
-            setTimeout(() => {
-              setUploadStatus("");
-              setUploadProgress(0);
-            }, 3000);
-          } catch (error) {
-            console.error("Music upload error:", error);
-            setUploadProgress(0);
-            setUploadStatus(
-              `Error: ${
-                error instanceof Error ? error.message : "Upload failed"
-              }`
-            );
-            setTimeout(() => setUploadStatus(""), 3000);
-            alert("Failed to upload music file. Please try again.");
-          } finally {
-            setIsUploadingMusic(false);
-          }
-        }
+  // Get current music info for display
+  const getCurrentMusicInfo = () => {
+    if (!currentMusicSettings) {
+      return {
+        type: "none",
+        name: "No Music",
+        description: "Slideshow will play silently",
+        icon: VolumeX,
+        color: "from-gray-500 to-gray-600",
       };
-      input.click();
-    } else {
-      const musicOption = BACKGROUND_MUSIC_OPTIONS.find(
-        (m) => m.id === musicId
-      );
-      onSettingsChange({
-        ...settings,
-        backgroundMusic: musicOption?.url || "",
-      });
     }
+
+    if (currentMusicSettings.music_playlist_id) {
+      return {
+        type: "playlist",
+        name: "Custom Playlist",
+        description: `${
+          currentMusicSettings.music_play_mode || "sequential"
+        } playback`,
+        icon: Music,
+        color: "from-purple-500 to-pink-600",
+      };
+    } else if (
+      currentMusicSettings.background_music ||
+      currentMusicSettings.backgroundMusic
+    ) {
+      return {
+        type: "single",
+        name: "Single Track",
+        description: "Background music track",
+        icon: Music,
+        color: "from-blue-500 to-purple-600",
+      };
+    }
+
+    return {
+      type: "none",
+      name: "No Music",
+      description: "Slideshow will play silently",
+      icon: VolumeX,
+      color: "from-gray-500 to-gray-600",
+    };
   };
 
-  const playMusicPreview = (musicId: string) => {
-    const musicOption = BACKGROUND_MUSIC_OPTIONS.find((m) => m.id === musicId);
-    if (musicOption?.url) {
-      setIsPlayingPreview(musicId);
-      const audio = new Audio(musicOption.url);
-      audio.play();
-      audio.onended = () => setIsPlayingPreview(null);
-    }
+  const currentMusicInfo = getCurrentMusicInfo();
+
+  const handleMusicSelected = (musicSettings: SlideshowMusicSettings) => {
+    setCurrentMusicSettings(musicSettings);
+    onSettingsChange({
+      ...settings,
+      music: musicSettings,
+      // Also update legacy fields for backward compatibility
+      backgroundMusic: musicSettings.backgroundMusic,
+      background_music: musicSettings.background_music,
+      musicVolume: musicSettings.music_volume,
+      music_volume: musicSettings.music_volume,
+      musicLoop: musicSettings.music_loop,
+      music_loop: musicSettings.music_loop,
+      music_play_mode: musicSettings.music_play_mode,
+      music_playlist_id: musicSettings.music_playlist_id,
+    });
   };
 
   return (
@@ -464,9 +206,9 @@ export default function SettingsPanel({
           }
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
-          {TRANSITIONS.map((transition) => (
-            <option key={transition.id} value={transition.id}>
-              {transition.name}
+          {TRANSITION_OPTIONS.map((transition) => (
+            <option key={transition.value} value={transition.value}>
+              {transition.label}
             </option>
           ))}
         </select>
@@ -478,112 +220,56 @@ export default function SettingsPanel({
           <Music className="w-4 h-4" />
           Background Music
         </label>
-        <div className="space-y-2">
-          {BACKGROUND_MUSIC_OPTIONS.map((music) => (
-            <div
-              key={music.id}
-              className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
-                selectedMusic === music.id
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-              onClick={() => handleMusicChange(music.id)}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Music className="w-5 h-5 text-gray-600" />
-                </div>
-                <div>
-                  <div className="font-medium text-gray-800">{music.name}</div>
-                  {music.artist && (
-                    <div className="text-sm text-gray-500">{music.artist}</div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {music.duration !== "Custom" && music.duration !== "0:00" && (
-                  <span className="text-sm text-gray-500">
-                    {music.duration}
-                  </span>
-                )}
-                {music.url && music.id !== "none" && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      playMusicPreview(music.id);
-                    }}
-                    className="p-1 text-gray-400 hover:text-gray-600"
-                    title="Preview"
-                  >
-                    {isPlayingPreview === music.id ? (
-                      <Pause className="w-4 h-4" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
 
-        {/* Upload Progress Indicator */}
-        {isUploadingMusic && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-blue-800">
-                {uploadStatus || "Uploading..."}
-              </span>
-              <span className="text-sm text-blue-600">{uploadProgress}%</span>
-            </div>
-            <div className="w-full bg-blue-200 rounded-full h-2">
+        {/* Current Music Display */}
+        <div className="mb-4">
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <div className="flex items-center gap-3">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
+                className={`w-12 h-12 bg-gradient-to-r ${currentMusicInfo.color} rounded-xl flex items-center justify-center`}
+              >
+                <currentMusicInfo.icon className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900">
+                  {currentMusicInfo.name}
+                </h4>
+                <p className="text-sm text-gray-600">
+                  {currentMusicInfo.description}
+                </p>
+                {currentMusicSettings && (
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                    <span>Volume: {currentMusicSettings.music_volume}%</span>
+                    <span>
+                      Loop: {currentMusicSettings.music_loop ? "On" : "Off"}
+                    </span>
+                    {currentMusicSettings.music_play_mode && (
+                      <span>Mode: {currentMusicSettings.music_play_mode}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setShowMusicSelector(true)}
+                className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Change
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Audio Format Note */}
-        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800">
-            <strong>Supported audio formats:</strong> WAV, OGG, AAC, WebM, MP4.
-            MP3 files are not supported due to storage limitations. You can
-            convert MP3 files using online converters or audio editing software.
-          </p>
         </div>
+
+        {/* Music Selector Button */}
+        <button
+          onClick={() => setShowMusicSelector(true)}
+          className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-600 hover:text-blue-600"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Music className="w-5 h-5" />
+            <span className="font-medium">Select Music</span>
+          </div>
+        </button>
       </div>
-
-      {/* Music Volume */}
-      {selectedMusic !== "none" && (
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <Volume2 className="w-4 h-4" />
-            Music Volume
-          </label>
-          <div className="space-y-2">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={settings.musicVolume}
-              onChange={(e) =>
-                onSettingsChange({
-                  ...settings,
-                  musicVolume: Number(e.target.value),
-                })
-              }
-              className="w-full"
-            />
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>0%</span>
-              <span className="font-medium">{settings.musicVolume}%</span>
-              <span>100%</span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Aspect Ratio */}
       <div className="mb-6">
@@ -600,9 +286,9 @@ export default function SettingsPanel({
           }
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
-          {ASPECT_RATIOS.map((ratio) => (
-            <option key={ratio.id} value={ratio.id}>
-              {ratio.name}
+          {ASPECT_RATIO_OPTIONS.map((ratio) => (
+            <option key={ratio.value} value={ratio.value}>
+              {ratio.label}
             </option>
           ))}
         </select>
@@ -624,8 +310,8 @@ export default function SettingsPanel({
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           {QUALITY_OPTIONS.map((quality) => (
-            <option key={quality.id} value={quality.id}>
-              {quality.name}
+            <option key={quality.value} value={quality.value}>
+              {quality.label}
             </option>
           ))}
         </select>
@@ -695,7 +381,7 @@ export default function SettingsPanel({
           <span className="text-sm text-gray-700">Shuffle Slides</span>
         </label>
 
-        {selectedMusic !== "none" && (
+        {currentMusicInfo.type !== "none" && (
           <label className="flex items-center">
             <input
               type="checkbox"
@@ -709,6 +395,16 @@ export default function SettingsPanel({
           </label>
         )}
       </div>
+
+      {/* Music Selector Modal */}
+      <MultiTrackMusicSelector
+        isOpen={showMusicSelector}
+        onClose={() => setShowMusicSelector(false)}
+        onMusicSelected={handleMusicSelected}
+        currentSettings={currentMusicSettings}
+        title="Choose Background Music"
+        description="Select music to play during your slideshow"
+      />
     </div>
   );
 }

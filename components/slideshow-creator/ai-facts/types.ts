@@ -1,3 +1,5 @@
+import { SlideshowMusicSettings } from "../../../types/music";
+
 export interface Fact {
   id: string;
   text: string;
@@ -11,9 +13,17 @@ export interface Fact {
 }
 
 export interface SlideshowSettings {
+  // Music settings using the new structure
+  music?: SlideshowMusicSettings;
+  // Legacy music fields for backward compatibility
   backgroundMusic?: string;
-  musicVolume: number;
-  musicLoop: boolean;
+  background_music?: string;
+  musicVolume?: number;
+  music_volume?: number;
+  musicLoop?: boolean;
+  music_loop?: boolean;
+  music_play_mode?: "sequential" | "shuffle" | "random";
+  music_playlist_id?: string;
   slideDuration: number;
   transition: string;
   autoPlay: boolean;

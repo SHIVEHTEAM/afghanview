@@ -38,6 +38,7 @@ import { BusinessType, canDeleteSlideshows } from "../../../../types/business";
 import SuccessMessage from "../../../ui/SuccessMessage";
 import ErrorMessage from "../../../ui/ErrorMessage";
 import { MenuSVGGenerator } from "../../../slideshow-creator/menu/svg-generator";
+import MultiTrackMusicSelector from "../../../slideshow-creator/shared/MultiTrackMusicSelector";
 
 interface Slideshow {
   id: string;
@@ -128,6 +129,11 @@ export function SlideshowsTab({
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showErrorMessage, setShowErrorMessage] = useState(false);
+
+  // Music settings modal state
+  const [showMusicModal, setShowMusicModal] = useState(false);
+  const [selectedSlideshowForMusic, setSelectedSlideshowForMusic] =
+    useState<Slideshow | null>(null);
 
   // Update local state when props change
   useEffect(() => {
@@ -566,6 +572,18 @@ export function SlideshowsTab({
                   >
                     <Monitor className="w-5 h-5" />
                   </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => {
+                      setSelectedSlideshowForMusic(slideshow);
+                      setShowMusicModal(true);
+                    }}
+                    className="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-colors shadow-lg"
+                    title="Music Settings"
+                  >
+                    <Music className="w-5 h-5" />
+                  </motion.button>
                 </motion.div>
 
                 {/* Status/Stats Badges */}
@@ -701,7 +719,9 @@ export function SlideshowsTab({
                       {slideshow.settings.transition}
                     </span>
                   )}
-                  {slideshow.settings?.backgroundMusic && (
+                  {(slideshow.settings?.backgroundMusic ||
+                    slideshow.settings?.background_music ||
+                    slideshow.settings?.music_playlist_id) && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       <Music className="w-3 h-3 mr-1" />
                       Music
@@ -927,6 +947,49 @@ export function SlideshowsTab({
             type="error"
           />
         </div>
+      )}
+
+      {/* Music Settings Modal */}
+      {showMusicModal && selectedSlideshowForMusic && (
+        <MultiTrackMusicSelector
+          isOpen={showMusicModal}
+          onClose={() => {
+            setShowMusicModal(false);
+            setSelectedSlideshowForMusic(null);
+          }}
+          onMusicSelected={(settings) => {
+            // Update the slideshow with new music settings
+            const updateSlideshowMusic = async () => {
+              try {
+                const { error } = await supabase
+                  .from("slideshows")
+                  .update({
+                    settings: {
+                      ...selectedSlideshowForMusic.settings,
+                      ...settings,
+                    },
+                  })
+                  .eq("id", selectedSlideshowForMusic.id);
+
+                if (error) throw error;
+
+                setShowMusicModal(false);
+                setSelectedSlideshowForMusic(null);
+                // Refresh the slideshows list
+                if (onRefresh) {
+                  onRefresh();
+                }
+              } catch (error) {
+                console.error("Error updating slideshow music:", error);
+              }
+            };
+
+            updateSlideshowMusic();
+          }}
+          currentSettings={selectedSlideshowForMusic.settings}
+          title="Choose Music for Slideshow"
+          description="Select multiple tracks to play in sequence during your slideshow"
+        />
       )}
     </div>
   );

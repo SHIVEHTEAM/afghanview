@@ -37,7 +37,9 @@ export default function SettingsStep({
       <div className="flex-1 flex">
         <SettingsPanel
           settings={settings}
-          onSettingsChange={setSettings}
+          onSettingsChange={(updates) =>
+            setSettings((prev) => ({ ...prev, ...updates }))
+          }
           slideshowName={slideshowName}
           onSlideshowNameChange={setSlideshowName}
         />

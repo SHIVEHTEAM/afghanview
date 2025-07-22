@@ -12,6 +12,7 @@ import MenuSlideshowWizard from "../../../slideshow-creator/menu/MenuSlideshowWi
 import DealsSlideshowWizard from "../../../slideshow-creator/deals/DealsSlideshowWizard";
 import TextSlideshowWizard from "../../../slideshow-creator/text/TextSlideshowWizard";
 import AiAllInOneWizard from "../../../slideshow-creator/ai-all-in-one/AiAllInOneWizard";
+import { QuickMusicSetup } from "../../../slideshow-creator/shared";
 import SuccessMessage from "../../../ui/SuccessMessage";
 import { useToast } from "../../../ui/Toast";
 
@@ -54,6 +55,10 @@ export function DashboardModals({
   // Local state for success message
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Local state for post-creation music setup
+  const [showMusicSetup, setShowMusicSetup] = useState(false);
+  const [newlyCreatedSlideshow, setNewlyCreatedSlideshow] = useState<any>(null);
 
   const { showError, showSuccess } = useToast();
 
@@ -342,6 +347,10 @@ export function DashboardModals({
       setSuccessMessage(`Slideshow "${slideshowName}" created successfully!`);
       setShowSuccessMessage(true);
       setTimeout(() => setShowSuccessMessage(false), 3000);
+
+      // Show music setup modal
+      setNewlyCreatedSlideshow(newSlideshow);
+      setShowMusicSetup(true);
 
       // Trigger refresh of slideshows list
       if (onSlideshowCreated) {
@@ -737,13 +746,22 @@ export function DashboardModals({
                   autoPlay: currentSlideshow.settings?.autoPlay || true,
                   showControls: true,
                   tvMode: false,
-                  backgroundMusic:
-                    typeof currentSlideshow.settings?.backgroundMusic ===
-                    "string"
-                      ? currentSlideshow.settings.backgroundMusic
-                      : undefined,
-                  musicVolume: currentSlideshow.settings?.musicVolume || 50,
-                  musicLoop: currentSlideshow.settings?.musicLoop || true,
+                  // Add music settings from the new multi-track system
+                  backgroundMusic: currentSlideshow.settings?.music_playlist_id
+                    ? `playlist:${currentSlideshow.settings.music_playlist_id}`
+                    : currentSlideshow.settings?.background_music ||
+                      (typeof currentSlideshow.settings?.backgroundMusic ===
+                      "string"
+                        ? currentSlideshow.settings.backgroundMusic
+                        : undefined),
+                  musicVolume:
+                    currentSlideshow.settings?.music_volume ||
+                    currentSlideshow.settings?.musicVolume ||
+                    50,
+                  musicLoop:
+                    currentSlideshow.settings?.music_loop ??
+                    currentSlideshow.settings?.musicLoop ??
+                    true,
                 }}
                 onClose={() => {
                   setShowViewer(false);
@@ -771,6 +789,27 @@ export function DashboardModals({
         onClose={() => setShowSuccessMessage(false)}
         duration={5000}
       />
+
+      {/* Post-Creation Music Setup */}
+      {showMusicSetup && newlyCreatedSlideshow && (
+        <QuickMusicSetup
+          slideshowId={newlyCreatedSlideshow.id}
+          slideshowName={
+            newlyCreatedSlideshow.name || newlyCreatedSlideshow.title
+          }
+          onClose={() => {
+            setShowMusicSetup(false);
+            setNewlyCreatedSlideshow(null);
+          }}
+          onMusicAdded={() => {
+            showSuccess("Music added to slideshow successfully!");
+            // Refresh slideshows list to show updated music settings
+            if (onSlideshowCreated) {
+              onSlideshowCreated();
+            }
+          }}
+        />
+      )}
 
       {/* Add TV Modal - Keep placeholder for now */}
       {/* This modal was removed from the original file's state management, so it's removed here. */}

@@ -148,9 +148,19 @@ export const TRANSITIONS: Transition[] = [
 export const DEFAULT_SETTINGS = {
   slideDuration: 5000,
   transition: "fade",
-  backgroundMusic: "",
+  // Music settings using the new structure
+  music: {
+    music_play_mode: "sequential" as const,
+    music_volume: 50,
+    music_loop: true,
+  },
+  // Legacy music fields for backward compatibility
+  backgroundMusic: undefined,
+  background_music: undefined,
   musicVolume: 50,
+  music_volume: 50,
   musicLoop: true,
+  music_loop: true,
   autoPlay: true,
   showControls: true,
   theme: "modern",

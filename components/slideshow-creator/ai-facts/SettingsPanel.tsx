@@ -1,7 +1,9 @@
-import React from "react";
-import { Music, Volume2, Eye, Check } from "lucide-react";
+import React, { useState } from "react";
+import { Music, Volume2, Eye, Check, VolumeX } from "lucide-react";
 import { SlideshowSettings, Theme, Transition } from "./types";
+import { SlideshowMusicSettings } from "../../../types/music";
 import { THEMES, TRANSITIONS } from "./constants";
+import MultiTrackMusicSelector from "../shared/MultiTrackMusicSelector";
 
 interface SettingsPanelProps {
   settings: SlideshowSettings;
@@ -16,8 +18,76 @@ export default function SettingsPanel({
   slideshowName,
   onSlideshowNameChange,
 }: SettingsPanelProps) {
+  const [showMusicSelector, setShowMusicSelector] = useState(false);
+  const [currentMusicSettings, setCurrentMusicSettings] = useState<
+    SlideshowMusicSettings | undefined
+  >(settings.music);
+
   const updateSetting = (key: keyof SlideshowSettings, value: any) => {
     onSettingsChange({ ...settings, [key]: value });
+  };
+
+  // Get current music info for display
+  const getCurrentMusicInfo = () => {
+    if (!currentMusicSettings) {
+      return {
+        type: "none",
+        name: "No Music",
+        description: "Slideshow will play silently",
+        icon: VolumeX,
+        color: "from-gray-500 to-gray-600",
+      };
+    }
+
+    if (currentMusicSettings.music_playlist_id) {
+      return {
+        type: "playlist",
+        name: "Custom Playlist",
+        description: `${
+          currentMusicSettings.music_play_mode || "sequential"
+        } playback`,
+        icon: Music,
+        color: "from-purple-500 to-pink-600",
+      };
+    } else if (
+      currentMusicSettings.background_music ||
+      currentMusicSettings.backgroundMusic
+    ) {
+      return {
+        type: "single",
+        name: "Single Track",
+        description: "Background music track",
+        icon: Music,
+        color: "from-blue-500 to-purple-600",
+      };
+    }
+
+    return {
+      type: "none",
+      name: "No Music",
+      description: "Slideshow will play silently",
+      icon: VolumeX,
+      color: "from-gray-500 to-gray-600",
+    };
+  };
+
+  const currentMusicInfo = getCurrentMusicInfo();
+
+  const handleMusicSelected = (musicSettings: SlideshowMusicSettings) => {
+    setCurrentMusicSettings(musicSettings);
+    onSettingsChange({
+      ...settings,
+      music: musicSettings,
+      // Also update legacy fields for backward compatibility
+      backgroundMusic: musicSettings.backgroundMusic,
+      background_music: musicSettings.background_music,
+      musicVolume: musicSettings.music_volume,
+      music_volume: musicSettings.music_volume,
+      musicLoop: musicSettings.music_loop,
+      music_loop: musicSettings.music_loop,
+      music_play_mode: musicSettings.music_play_mode,
+      music_playlist_id: musicSettings.music_playlist_id,
+    });
   };
 
   return (
@@ -74,6 +144,63 @@ export default function SettingsPanel({
           <span>3s</span>
           <span>10s</span>
         </div>
+      </div>
+
+      {/* Background Music */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <Music className="w-4 h-4" />
+          Background Music
+        </label>
+
+        {/* Current Music Display */}
+        <div className="mb-4">
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-12 h-12 bg-gradient-to-r ${currentMusicInfo.color} rounded-xl flex items-center justify-center`}
+              >
+                <currentMusicInfo.icon className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900">
+                  {currentMusicInfo.name}
+                </h4>
+                <p className="text-sm text-gray-600">
+                  {currentMusicInfo.description}
+                </p>
+                {currentMusicSettings && (
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                    <span>Volume: {currentMusicSettings.music_volume}%</span>
+                    <span>
+                      Loop: {currentMusicSettings.music_loop ? "On" : "Off"}
+                    </span>
+                    {currentMusicSettings.music_play_mode && (
+                      <span>Mode: {currentMusicSettings.music_play_mode}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setShowMusicSelector(true)}
+                className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Music Selector Button */}
+        <button
+          onClick={() => setShowMusicSelector(true)}
+          className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors text-gray-600 hover:text-blue-600"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Music className="w-5 h-5" />
+            <span className="font-medium">Select Music</span>
+          </div>
+        </button>
       </div>
 
       {/* Loop Slideshow */}
@@ -164,6 +291,42 @@ export default function SettingsPanel({
           </span>
         </label>
       </div>
+
+      {/* Music Settings */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Music Settings
+        </label>
+        <div className="flex items-center gap-3 cursor-pointer">
+          <div
+            className={`p-3 rounded-full ${currentMusicInfo.color} flex items-center justify-center`}
+          >
+            <currentMusicInfo.icon className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">{currentMusicInfo.name}</p>
+            <p className="text-xs text-gray-500">
+              {currentMusicInfo.description}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowMusicSelector(true)}
+            className="ml-auto text-blue-600 hover:underline text-sm"
+          >
+            Change Music
+          </button>
+        </div>
+      </div>
+
+      {/* Music Selector Modal */}
+      <MultiTrackMusicSelector
+        isOpen={showMusicSelector}
+        onClose={() => setShowMusicSelector(false)}
+        onMusicSelected={handleMusicSelected}
+        currentSettings={currentMusicSettings}
+        title="Choose Background Music"
+        description="Select music to play during your AI facts slideshow"
+      />
     </div>
   );
 }

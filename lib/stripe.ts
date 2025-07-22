@@ -280,10 +280,8 @@ async function handleCheckoutSessionCompleted(
 
   // 1. Check if user exists in auth.users
   let { data: user, error: userError } =
-    await supabaseAdmin.auth.admin.listUsers({
-      filter: `email.eq.${customerEmail}`,
-    });
-  let userId = user?.users?.[0]?.id;
+    await supabaseAdmin.auth.admin.listUsers();
+  let userId = user?.users?.find((u) => u.email === customerEmail)?.id;
 
   if (!userId) {
     // 2. Create user in auth.users

@@ -21,53 +21,10 @@ import {
   Twitter,
   Instagram,
 } from "lucide-react";
+import Header from "@/components/common/Header";
+import Footer from "@/components/common/Footer";
 
 export default function About() {
-  const team = [
-    {
-      name: "Ahmad Seyar Hasir",
-      role: "Founder & CEO",
-      image: "/seyarhasir.png",
-      bio: "Visionary founder, passionate about Afghan culture and technology.",
-    },
-    {
-      name: "Maryam Parsa",
-      role: "Product Designer",
-      image: "/maryamParsa.jpg",
-      bio: "Designs beautiful, user-friendly experiences for Shivehview.",
-    },
-    {
-      name: "Waris Hasir",
-      role: "Business Development",
-      image: "/WarisHasir.jpg",
-      bio: "Connects Shivehview with partners and clients worldwide.",
-    },
-    {
-      name: "Shafi Yaftali",
-      role: "Marketing Lead",
-      image: "/ShafiYaftali.webp",
-      bio: "Spreads the word about Shivehview and Afghan culture.",
-    },
-    {
-      name: "Shayan Yaftali",
-      role: "Community Manager",
-      image: "/Shayan Yaftali.webp",
-      bio: "Engages with our amazing user community.",
-    },
-    {
-      name: "Amin Afshar",
-      role: "Web Developer",
-      image: "/Amin Afshar, Web Developer.webp",
-      bio: "Builds and maintains the Shivehview platform.",
-    },
-    {
-      name: "Yohmeh Bilingwe",
-      role: "Cultural Advisor",
-      image: "/Yohmeh Bilingwe.webp",
-      bio: "Ensures authenticity and cultural richness in all we do.",
-    },
-  ];
-
   const values = [
     {
       icon: <Heart className="w-8 h-8" />,
@@ -101,25 +58,25 @@ export default function About() {
 
   const milestones = [
     {
-      year: "2024",
+      year: "2025",
       title: "Platform Launch",
       description:
         "ShivehView officially launched with AI-powered cultural content generation.",
     },
     {
-      year: "2024",
+      year: "2025",
       title: "500+ Restaurants",
       description:
         "Reached 500+ Afghan restaurants using our platform across the globe.",
     },
     {
-      year: "2024",
+      year: "2025",
       title: "AI Integration",
       description:
         "Introduced advanced AI features for automatic content generation and cultural facts.",
     },
     {
-      year: "2024",
+      year: "2025",
       title: "Global Expansion",
       description:
         "Expanded to serve Afghan restaurants in over 20 countries worldwide.",
@@ -138,45 +95,9 @@ export default function About() {
         <link rel="icon" href="/Shivehview Transparent Logo.png" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Link href="/" className="flex items-center">
-                <img
-                  src="/Shivehview Transparent Logo.png"
-                  alt="Shivehview Logo"
-                  style={{ height: 40 }}
-                />
-              </Link>
-              <nav className="flex space-x-6">
-                <Link
-                  href="/"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  Home
-                </Link>
-                <Link href="/about" className="text-purple-600 font-medium">
-                  About
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  Pricing
-                </Link>
-                <Link
-                  href="/blog"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  Blog
-                </Link>
-              </nav>
-            </div>
-          </div>
-        </nav>
+      <Header />
 
+      <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
         <section className="pt-20 pb-16 bg-gradient-to-br from-afghan-green via-pink-600 to-yellow-400 relative overflow-hidden">
           <div className="absolute inset-0 bg-black/20"></div>
@@ -340,59 +261,6 @@ export default function About() {
           </div>
         </section>
 
-        {/* Team Section */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <motion.h2
-                className="text-4xl font-bold text-gray-900 mb-4"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-              >
-                Meet Our Team
-              </motion.h2>
-              <motion.p
-                className="text-xl text-gray-600 max-w-2xl mx-auto"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
-                Passionate individuals dedicated to preserving Afghan culture
-                through technology
-              </motion.p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {team.map((member, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-gray-50 p-8 rounded-2xl text-center"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: index * 0.2 }}
-                  viewport={{ once: true }}
-                >
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
-                  />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {member.name}
-                  </h3>
-                  <p className="text-afghan-green font-medium mb-3">
-                    {member.role}
-                  </p>
-                  <p className="text-gray-600">{member.bio}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Milestones Section */}
         <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -550,136 +418,9 @@ export default function About() {
             </motion.div>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div>
-                <h3 className="text-2xl font-bold mb-4">Shivehview</h3>
-                <p className="text-gray-400">
-                  AI-powered platform transforming businesses into cultural
-                  experiences through beautiful digital displays.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Product</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <Link
-                      href="/"
-                      className="hover:text-white transition-colors"
-                    >
-                      Home
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/pricing"
-                      className="hover:text-white transition-colors"
-                    >
-                      Pricing
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/demo"
-                      className="hover:text-white transition-colors"
-                    >
-                      Live Demo
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Company</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <Link
-                      href="/about"
-                      className="hover:text-white transition-colors"
-                    >
-                      About Us
-                    </Link>
-                  </li>
-                  <li>
-                    <a
-                      href="mailto:contact@shivehview.com"
-                      className="hover:text-white transition-colors"
-                    >
-                      Contact
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="mailto:support@shivehview.com"
-                      className="hover:text-white transition-colors"
-                    >
-                      Support
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Legal</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Privacy Policy
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Terms of Service
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Cookie Policy
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-gray-800 mt-8 pt-8">
-              <div className="flex flex-col md:flex-row justify-between items-center text-gray-400">
-                <p>
-                  &copy; 2024 Shivehview. All rights reserved. Built &
-                  Maintained by{" "}
-                  <a
-                    href="https://shivehagency.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-400 hover:text-pink-400 font-semibold"
-                  >
-                    SHIVEH
-                  </a>
-                </p>
-                <div className="flex space-x-6 mt-4 md:mt-0">
-                  <Link
-                    href="/privacy-policy"
-                    className="hover:text-white text-sm"
-                  >
-                    Privacy Policy
-                  </Link>
-                  <Link
-                    href="/terms-of-service"
-                    className="hover:text-white text-sm"
-                  >
-                    Terms of Service
-                  </Link>
-                  <Link
-                    href="/cookie-policy"
-                    className="hover:text-white text-sm"
-                  >
-                    Cookie Policy
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
+
+      <Footer />
     </>
   );
 }

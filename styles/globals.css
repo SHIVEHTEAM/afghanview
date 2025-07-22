@@ -497,3 +497,17 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-slideDown {
+  animation: slideDown 0.25s ease;
+}

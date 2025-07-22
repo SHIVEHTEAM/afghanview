@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
+    <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-blue-800 to-indigo-900 text-white">
       {/* Background Pattern */}
       <div
         className="absolute inset-0 opacity-20"
@@ -23,19 +23,19 @@ export default function HeroSection() {
             transition={{ duration: 0.8 }}
             className="space-y-8"
           >
-            <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium">
+            <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white/90">
               <Sparkles className="w-4 h-4 mr-2" />
               AI-Powered Restaurant Displays
             </div>
 
-            <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
+            <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight text-white">
               Transform Your Restaurant with
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 font-extrabold drop-shadow-lg">
                 Smart Digital Displays
               </span>
             </h1>
 
-            <p className="text-xl text-gray-300 leading-relaxed">
+            <p className="text-xl text-white/80 leading-relaxed font-medium">
               Create stunning slideshows, showcase your menu, and engage
               customers with beautiful digital displays powered by AI. Perfect
               for Afghan restaurants and beyond.
@@ -52,7 +52,7 @@ export default function HeroSection() {
 
               <Link
                 href="/demo"
-                className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
+                className="inline-flex items-center justify-center px-8 py-4 border-2 border-purple-300 text-white font-semibold rounded-lg hover:bg-purple-800 transition-all duration-300 backdrop-blur-sm"
               >
                 <Play className="w-5 h-5 mr-2" />
                 Watch Demo
@@ -67,22 +67,24 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative"
           >
-            <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-              <div className="aspect-video bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <div className="text-center text-white">
+            <div className="relative bg-white/80 backdrop-blur-md rounded-2xl p-8 border border-purple-100">
+              <div className="aspect-video bg-gradient-to-br from-yellow-200 via-pink-200 to-purple-200 rounded-lg flex items-center justify-center">
+                <div className="text-center">
                   <div className="text-6xl mb-4">🍽️</div>
-                  <div className="text-2xl font-bold mb-2">Taimorian</div>
-                  <div className="text-lg opacity-90">
+                  <div className="text-2xl font-extrabold mb-2 text-white drop-shadow-lg">
+                    Taimorian
+                  </div>
+                  <div className="text-lg font-semibold text-white/90 drop-shadow">
                     Authentic Afghan Cuisine
                   </div>
                 </div>
               </div>
 
               {/* Floating elements */}
-              <div className="absolute -top-4 -right-4 bg-yellow-400 text-black px-3 py-1 rounded-full text-sm font-semibold">
+              <div className="absolute -top-4 -right-4 bg-yellow-400 text-black font-bold px-3 py-1 rounded-full text-sm shadow-lg">
                 Live
               </div>
-              <div className="absolute -bottom-4 -left-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm">
+              <div className="absolute -bottom-4 -left-4 bg-white text-purple-700 font-bold px-3 py-1 rounded-full text-sm shadow-lg">
                 📺 TV Display
               </div>
             </div>

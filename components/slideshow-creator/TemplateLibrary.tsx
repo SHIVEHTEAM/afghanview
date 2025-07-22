@@ -92,8 +92,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: true,
     tags: ["menu", "elegant", "typography"],
     author: "AfghanView Team",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-20",
+    createdAt: "2025-01-15",
+    updatedAt: "2025-01-20",
   },
   {
     id: "retail-promo-1",
@@ -109,8 +109,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: false,
     tags: ["promotion", "retail", "sales"],
     author: "AfghanView Team",
-    createdAt: "2024-01-18",
-    updatedAt: "2024-01-18",
+    createdAt: "2025-01-18",
+    updatedAt: "2025-01-18",
   },
   {
     id: "service-showcase-1",
@@ -126,8 +126,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: false,
     tags: ["services", "professional", "showcase"],
     author: "AfghanView Team",
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-15",
+    createdAt: "2025-01-10",
+    updatedAt: "2025-01-15",
   },
   {
     id: "auto-dealership-1",
@@ -143,8 +143,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: false,
     tags: ["automotive", "dealership", "vehicles"],
     author: "AfghanView Team",
-    createdAt: "2024-01-12",
-    updatedAt: "2024-01-16",
+    createdAt: "2025-01-12",
+    updatedAt: "2025-01-16",
   },
   {
     id: "real-estate-1",
@@ -160,8 +160,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: true,
     tags: ["real-estate", "property", "showcase"],
     author: "AfghanView Team",
-    createdAt: "2024-01-08",
-    updatedAt: "2024-01-14",
+    createdAt: "2025-01-08",
+    updatedAt: "2025-01-14",
   },
   {
     id: "education-1",
@@ -177,8 +177,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: false,
     tags: ["education", "presentation", "clean"],
     author: "AfghanView Team",
-    createdAt: "2024-01-05",
-    updatedAt: "2024-01-12",
+    createdAt: "2025-01-05",
+    updatedAt: "2025-01-12",
   },
   {
     id: "healthcare-1",
@@ -194,8 +194,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: false,
     tags: ["healthcare", "medical", "trustworthy"],
     author: "AfghanView Team",
-    createdAt: "2024-01-03",
-    updatedAt: "2024-01-10",
+    createdAt: "2025-01-03",
+    updatedAt: "2025-01-10",
   },
   {
     id: "entertainment-1",
@@ -211,8 +211,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: false,
     tags: ["entertainment", "venue", "dynamic"],
     author: "AfghanView Team",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-08",
+    createdAt: "2025-01-01",
+    updatedAt: "2025-01-08",
   },
   {
     id: "tech-startup-1",
@@ -228,8 +228,8 @@ const MOCK_TEMPLATES: Template[] = [
     isPopular: true,
     tags: ["technology", "startup", "modern"],
     author: "AfghanView Team",
-    createdAt: "2024-01-06",
-    updatedAt: "2024-01-13",
+    createdAt: "2025-01-06",
+    updatedAt: "2025-01-13",
   },
 ];
 

@@ -3,6 +3,8 @@ import Head from "next/head";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Volume2, VolumeX, Maximize, ArrowLeft, Eye } from "lucide-react";
+import Header from "@/components/common/Header";
+import Footer from "@/components/common/Footer";
 
 export default function Demo() {
   const [isMuted, setIsMuted] = useState(false);
@@ -52,30 +54,8 @@ export default function Demo() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      <Header />
       <div className="min-h-screen bg-gray-900">
-        {/* Navigation */}
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Link
-                href="/"
-                className="flex items-center text-white hover:text-purple-400 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Back to Home
-              </Link>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-purple-400" />
-                  <span className="text-xl font-bold text-white tracking-tight">
-                    Shivehview
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
-
         {/* Main Demo Area */}
         <div className="pt-16 min-h-screen flex items-center justify-center p-4">
           <div className="w-full max-w-6xl">
@@ -151,6 +131,7 @@ export default function Demo() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

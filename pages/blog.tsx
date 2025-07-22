@@ -11,6 +11,8 @@ import {
   Tag,
   Eye,
 } from "lucide-react";
+import Header from "@/components/common/Header";
+import Footer from "@/components/common/Footer";
 
 interface BlogPost {
   id: string;
@@ -36,7 +38,7 @@ const blogPosts: BlogPost[] = [
     content:
       "The restaurant industry in Afghanistan is experiencing a digital transformation, and AI-powered digital signage is at the forefront of this revolution. Shivehview's intelligent platform is helping restaurants create engaging, culturally relevant content that resonates with their customers...",
     author: "Shivehview Team",
-    date: "2024-01-15",
+    date: "2025-01-15",
     readTime: "5 min read",
     category: "Technology",
     tags: ["AI", "Digital Signage", "Restaurant Technology", "Afghanistan"],
@@ -52,7 +54,7 @@ const blogPosts: BlogPost[] = [
     content:
       "In today's competitive restaurant landscape, having a static printed menu is no longer enough. Modern customers expect interactive, visually appealing digital menus that provide more than just prices and descriptions...",
     author: "Ahmad Seyar Hasir",
-    date: "2024-01-10",
+    date: "2025-01-10",
     readTime: "4 min read",
     category: "Features",
     tags: ["Digital Menu", "Customer Experience", "Restaurant Features"],
@@ -66,7 +68,7 @@ const blogPosts: BlogPost[] = [
     content:
       "TV displays in restaurants serve multiple purposes: they can showcase your menu, display promotional content, entertain customers, and even provide real-time information. However, setting up an effective TV display system requires careful planning...",
     author: "Shivehview Team",
-    date: "2024-01-08",
+    date: "2025-01-08",
     readTime: "6 min read",
     category: "Setup Guide",
     tags: ["TV Displays", "Setup Guide", "Hardware", "Content Creation"],
@@ -80,7 +82,7 @@ const blogPosts: BlogPost[] = [
     content:
       "Afghanistan has a rich cultural heritage that spans thousands of years. When creating digital content for Afghan restaurants, it's crucial to understand and respect these cultural nuances...",
     author: "Cultural Expert",
-    date: "2024-01-05",
+    date: "2025-01-05",
     readTime: "7 min read",
     category: "Culture",
     tags: [
@@ -99,7 +101,7 @@ const blogPosts: BlogPost[] = [
     content:
       "Digital signage isn't just about looking modern—it's a powerful tool for increasing revenue. Restaurants that implement digital signage solutions typically see a 15-30% increase in average order value...",
     author: "Business Analyst",
-    date: "2024-01-03",
+    date: "2025-01-03",
     readTime: "5 min read",
     category: "Business",
     tags: ["ROI", "Revenue", "Digital Signage", "Case Studies"],
@@ -113,7 +115,7 @@ const blogPosts: BlogPost[] = [
     content:
       "The restaurant industry is evolving rapidly, driven by technological advancements and changing customer expectations. As we move through 2024, several key trends are shaping the future of dining...",
     author: "Tech Expert",
-    date: "2024-01-01",
+    date: "2025-01-01",
     readTime: "8 min read",
     category: "Trends",
     tags: ["Future Trends", "Restaurant Technology", "Innovation", "2024"],
@@ -190,51 +192,9 @@ export default function BlogPage() {
         <link rel="icon" href="/Shivehview Transparent Logo.png" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
-              <Link
-                href="/"
-                className="flex items-center space-x-2 text-gray-900 hover:text-purple-600 transition-colors"
-              >
-                <img
-                  src="/Shivehview Transparent Logo.png"
-                  alt="Shivehview Logo"
-                  className="h-8 w-auto"
-                />
-                <span className="text-xl font-bold tracking-tight">
-                  Shivehview
-                </span>
-              </Link>
-              <nav className="flex space-x-6">
-                <Link
-                  href="/"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/about"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  About
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  Pricing
-                </Link>
-                <Link href="/blog" className="text-purple-600 font-medium">
-                  Blog
-                </Link>
-              </nav>
-            </div>
-          </div>
-        </div>
+      <Header />
 
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <motion.div
@@ -418,110 +378,9 @@ export default function BlogPage() {
             )}
           </motion.div>
         </div>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12 mt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <img
-                    src="/Shivehview Transparent Logo.png"
-                    alt="Shivehview Logo"
-                    className="h-8 w-auto"
-                  />
-                  <span className="text-xl font-bold tracking-tight">
-                    Shivehview
-                  </span>
-                </div>
-                <p className="text-gray-400">
-                  AI-powered business display platform for creating engaging
-                  cultural experiences and digital content.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-4">Product</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <Link href="/" className="hover:text-white">
-                      Features
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/pricing" className="hover:text-white">
-                      Pricing
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/blog" className="hover:text-white">
-                      Blog
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-4">Company</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <Link href="/about" className="hover:text-white">
-                      About
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/blog" className="hover:text-white">
-                      Blog
-                    </Link>
-                  </li>
-                  <li>
-                    <a
-                      href="mailto:contact@shivehview.com"
-                      className="hover:text-white"
-                    >
-                      Contact
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-4">Legal</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>
-                    <Link href="/privacy-policy" className="hover:text-white">
-                      Privacy Policy
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/terms-of-service" className="hover:text-white">
-                      Terms of Service
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/cookie-policy" className="hover:text-white">
-                      Cookie Policy
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-gray-800 mt-8 pt-8">
-              <div className="flex flex-col md:flex-row justify-between items-center text-gray-400">
-                <p>
-                  &copy; 2024 Shivehview. All rights reserved. Built &
-                  Maintained by{" "}
-                  <a
-                    href="https://shivehagency.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-400 hover:text-pink-400 font-semibold"
-                  >
-                    SHIVEH
-                  </a>
-                </p>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
+
+      <Footer />
     </>
   );
 }

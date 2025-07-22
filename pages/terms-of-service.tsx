@@ -10,6 +10,8 @@ import {
   CheckCircle,
   Users,
 } from "lucide-react";
+import Header from "@/components/common/Header";
+import Footer from "@/components/common/Footer";
 
 export default function TermsOfService() {
   return (
@@ -23,46 +25,7 @@ export default function TermsOfService() {
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
-              <Link
-                href="/"
-                className="flex items-center space-x-2 text-gray-900 hover:text-purple-600 transition-colors"
-              >
-                <Eye className="h-8 w-8 text-purple-600" />
-                <span className="text-xl font-bold">Shivehview</span>
-              </Link>
-              <nav className="flex space-x-6">
-                <Link
-                  href="/"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/about"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  About
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  Pricing
-                </Link>
-                <Link
-                  href="/blog"
-                  className="text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  Blog
-                </Link>
-              </nav>
-            </div>
-          </div>
-        </div>
+        <Header />
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -403,10 +366,20 @@ export default function TermsOfService() {
                       </a>
                     </p>
                     <p className="text-gray-700">
-                      <strong>Phone:</strong> +93 70 123 4567
+                      <strong>Phone:</strong> +1 (703) 991-9655
                     </p>
                     <p className="text-gray-700">
-                      <strong>Address:</strong> Kabul, Afghanistan
+                      <strong>Address:</strong> 440 Monticello Ave Ste 1802
+                      #619992 Norfolk VA 23510
+                    </p>
+                    <p className="text-gray-700">
+                      <strong>Email:</strong>{" "}
+                      <a
+                        href="mailto:contact@shivehagency.com"
+                        className="text-purple-600 hover:text-purple-700"
+                      >
+                        contact@shivehagency.com
+                      </a>
                     </p>
                   </div>
                 </div>
@@ -414,6 +387,7 @@ export default function TermsOfService() {
             </div>
           </motion.div>
         </div>
+        <Footer />
       </div>
     </>
   );

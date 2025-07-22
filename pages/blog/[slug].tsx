@@ -59,7 +59,7 @@ const blogPosts: BlogPost[] = [
       <p>As technology continues to evolve, we can expect even more sophisticated AI features. From voice-activated ordering to personalized recommendations, the possibilities are endless for restaurants willing to embrace innovation.</p>
     `,
     author: "Shivehview Team",
-    date: "2024-01-15",
+    date: "2025-01-15",
     readTime: "5 min read",
     category: "Technology",
     tags: ["AI", "Digital Signage", "Restaurant Technology", "Afghanistan"],
@@ -92,7 +92,7 @@ const blogPosts: BlogPost[] = [
       <p>Seamless integration with your point-of-sale system ensures accurate pricing and inventory management. This prevents ordering issues and improves operational efficiency.</p>
     `,
     author: "Ahmad Seyar Hasir",
-    date: "2024-01-10",
+    date: "2025-01-10",
     readTime: "4 min read",
     category: "Features",
     tags: ["Digital Menu", "Customer Experience", "Restaurant Features"],
@@ -123,7 +123,7 @@ const blogPosts: BlogPost[] = [
       <p>Regularly review your content performance and make adjustments based on customer feedback and analytics data.</p>
     `,
     author: "Shivehview Team",
-    date: "2024-01-08",
+    date: "2025-01-08",
     readTime: "6 min read",
     category: "Setup Guide",
     tags: ["TV Displays", "Setup Guide", "Hardware", "Content Creation"],
@@ -153,7 +153,7 @@ const blogPosts: BlogPost[] = [
       <p>While it's important to respect cultural traditions, don't be afraid to innovate. Modern technology can enhance traditional experiences without diminishing their cultural significance.</p>
     `,
     author: "Cultural Expert",
-    date: "2024-01-05",
+    date: "2025-01-05",
     readTime: "7 min read",
     category: "Culture",
     tags: [
@@ -188,7 +188,7 @@ const blogPosts: BlogPost[] = [
       <p>While there's an initial investment in digital signage, the long-term benefits far outweigh the costs. Most restaurants see a return on investment within 6-12 months.</p>
     `,
     author: "Business Analyst",
-    date: "2024-01-03",
+    date: "2025-01-03",
     readTime: "5 min read",
     category: "Business",
     tags: ["ROI", "Revenue", "Digital Signage", "Case Studies"],
@@ -216,7 +216,7 @@ const blogPosts: BlogPost[] = [
       <p>Technology is helping restaurants become more sustainable through smart inventory management, waste reduction, and energy-efficient systems.</p>
     `,
     author: "Tech Expert",
-    date: "2024-01-01",
+    date: "2025-01-01",
     readTime: "8 min read",
     category: "Trends",
     tags: ["Future Trends", "Restaurant Technology", "Innovation", "2024"],
@@ -558,7 +558,7 @@ export default function BlogPostPage() {
             <div className="border-t border-gray-800 mt-8 pt-8">
               <div className="flex flex-col md:flex-row justify-between items-center text-gray-400">
                 <p>
-                  &copy; 2024 Shivehview. All rights reserved. Built &
+                  &copy; 2025 Shivehview. All rights reserved. Built &
                   Maintained by{" "}
                   <a
                     href="https://shivehagency.com"

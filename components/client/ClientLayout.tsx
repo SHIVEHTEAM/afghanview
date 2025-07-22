@@ -198,14 +198,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   const getPlanFeatures = (plan: string, business: any) => {
     const features = {
-      Free: [
-        `${business?.max_slideshows || 1} slideshow${
-          business?.max_slideshows !== 1 ? "s" : ""
-        }`,
-        "Basic templates",
-        "Email support",
-        "1 TV display",
-      ],
       Starter: [
         "5 slideshows",
         "Premium templates",
@@ -234,7 +226,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         "White-label solution",
       ],
     };
-    return features[plan as keyof typeof features] || features.Free;
+    return features[plan as keyof typeof features] || features.Starter;
   };
 
   const upgradePlans = [

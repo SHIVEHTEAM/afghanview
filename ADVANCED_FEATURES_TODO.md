@@ -29,7 +29,7 @@
 
 - [x] **Stripe integration** - Full payment processing
 - [x] **Invoice generation** - Automatic invoice creation and sending
-- [x] **New pricing model** - Add "Free Forever" plan with 1 slideshow limit
+- [x] **New pricing model** - Add new paid plans with 1 slideshow limit for entry tier
 - [x] **Subscription management** - Upgrade/downgrade/cancel subscriptions
 - [x] **Payment history** - Track all payments and invoices
 - [x] **Usage tracking** - Monitor plan usage and limits
@@ -174,7 +174,7 @@
 
 1. **Advanced Admin Dashboard** - Complete business management system
 2. **Staff Management System** - Role-based permissions and team collaboration
-3. **Subscription & Billing** - Full Stripe integration with "Free Forever" plan
+3. **Subscription & Billing** - Full Stripe integration with paid plans only
 4. **Modern Onboarding** - Multi-step wizard with business setup
 5. **AI Credits System** - Usage tracking and management
 6. **Advanced Analytics** - Real-time metrics and insights

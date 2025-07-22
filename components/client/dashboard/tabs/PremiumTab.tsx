@@ -135,25 +135,6 @@ export function PremiumTab() {
 
   const plans = [
     {
-      name: "Free",
-      price: { monthly: 0, yearly: 0 },
-      features: [
-        "3 slideshows",
-        "Basic themes",
-        "Standard support",
-        "720p export",
-        "5 AI generations/month",
-      ],
-      limitations: [
-        "No team collaboration",
-        "No advanced analytics",
-        "No background music",
-        "No scheduled playback",
-        "No priority support",
-      ],
-      popular: false,
-    },
-    {
       name: "Pro",
       price: { monthly: 29, yearly: 290 },
       features: [

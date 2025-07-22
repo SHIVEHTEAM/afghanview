@@ -1,5 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../lib/auth";
+// If you see a linter error here, restart your dev server or reinstall node_modules. This is the correct import for NextAuth v4+.
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -9,6 +12,15 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Use NextAuth v4 session for authentication
+  const session = (await getServerSession(req, res, authOptions)) as any;
+  console.log("COOKIES IN API", req.headers.cookie);
+  console.log("SESSION IN API", session);
+  if (!session || !session.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  const userId = session.user.id;
+
   const { id } = req.query;
 
   if (!id || typeof id !== "string") {
@@ -219,10 +231,10 @@ export default async function handler(
     // --- Role check start ---
     // Get user from headers/session (example: from a custom header or cookie)
     // You should replace this with your actual auth/session logic
-    const userId = req.headers["x-user-id"] || req.cookies["user_id"];
-    if (!userId) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
+    // const userId = req.headers["x-user-id"] || req.cookies["user_id"];
+    // if (!userId) {
+    //   return res.status(401).json({ error: "Not authenticated" });
+    // }
     // Find the slideshow to get business_id
     const { data: slideshow, error: fetchError } = await supabase
       .from("slideshows")

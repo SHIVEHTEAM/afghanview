@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createCheckoutSession, STRIPE_PLANS } from "../../../lib/stripe";
-import { supabase } from "../../../lib/supabase";
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,72 +10,37 @@ export default async function handler(
   }
 
   try {
-    // Get authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res
-        .status(401)
-        .json({ error: "Missing or invalid authorization header" });
-    }
-
-    const token = authHeader.substring(7);
-
-    // Verify token with Supabase
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const { planSlug, businessId, restaurantId, successUrl, cancelUrl } =
-      req.body;
-
-    // Support both old and new parameter names
-    const actualBusinessId = businessId || restaurantId;
-
-    // Validate required fields
-    if (!planSlug || !actualBusinessId || !successUrl || !cancelUrl) {
-      return res.status(400).json({
-        error:
-          "Missing required fields: planSlug, businessId, successUrl, cancelUrl",
-      });
-    }
-
-    // Validate plan
-    if (!STRIPE_PLANS[planSlug as keyof typeof STRIPE_PLANS]) {
-      return res.status(400).json({ error: "Invalid plan" });
-    }
-
-    // Verify user has access to business
-    const { data: staffRecord, error: staffError } = await supabase
-      .from("business_staff")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("business_id", actualBusinessId)
-      .eq("is_active", true)
-      .single();
-
-    if (staffError || !staffRecord) {
-      return res.status(403).json({ error: "Access denied to business" });
-    }
-
-    // Create checkout session
-    const checkoutSession = await createCheckoutSession({
-      userId: user.id,
-      businessId: actualBusinessId,
-      planSlug: planSlug as keyof typeof STRIPE_PLANS,
+    let {
+      planSlug,
+      interval = "month",
+      promotionCode,
       successUrl,
       cancelUrl,
+    } = req.body;
+    // Ensure interval is type-safe
+    if (interval !== "month" && interval !== "year") interval = "month";
+    const plan = STRIPE_PLANS[planSlug as keyof typeof STRIPE_PLANS];
+    if (!plan) {
+      return res.status(400).json({ error: "Invalid plan" });
+    }
+    if (!plan.priceId[interval as "month" | "year"]) {
+      return res.status(400).json({ error: "Invalid billing interval" });
+    }
+    // Build discounts array if promotionCode is provided
+    const discounts = promotionCode
+      ? [{ promotion_code: promotionCode }]
+      : undefined;
+    // Create checkout session
+    const session = await createCheckoutSession({
+      planSlug,
+      interval,
+      successUrl,
+      cancelUrl,
+      discounts,
     });
-
-    res.status(200).json({
-      sessionId: checkoutSession.id,
-      url: checkoutSession.url,
-    });
+    return res.status(200).json({ url: session.url });
   } catch (error) {
-    console.error("Checkout session creation error:", error);
-    res.status(500).json({ error: "Failed to create checkout session" });
+    console.error("Error creating checkout session:", error);
+    return res.status(500).json({ error: "Failed to create checkout session" });
   }
 }

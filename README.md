@@ -175,12 +175,11 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 ## 💰 Monetization Plan
 
-| Tier         | Price       | Features                                       |
-| ------------ | ----------- | ---------------------------------------------- |
-| Free Trial   | $0 (7 days) | Access to demo loop only                       |
-| Basic Plan   | $9.99/mo    | Default cultural content + 2 custom slides     |
-| Premium Plan | $19.99/mo   | Unlimited slides, scheduling, optional QR code |
-| Enterprise   | Custom      | For franchises with 5+ TVs                     |
+| Tier         | Price     | Features                                       |
+| ------------ | --------- | ---------------------------------------------- |
+| Basic Plan   | $9.99/mo  | Default cultural content + 2 custom slides     |
+| Premium Plan | $19.99/mo | Unlimited slides, scheduling, optional QR code |
+| Enterprise   | Custom    | For franchises with 5+ TVs                     |
 
 ---
 
@@ -209,7 +208,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 - **Image resolution:** 1920x1080 preferred
 - **Accepted formats:** JPEG, PNG (MP4 coming soon)
-- **Content limit (free):** Max 10 slides, 2 custom
+- **Content limit (entry):** Max 10 slides, 2 custom
 - **Review policy:** Admin-approved for default feed
 
 ---

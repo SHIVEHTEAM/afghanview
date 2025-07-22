@@ -111,34 +111,10 @@ import Link from "next/link";
 
 const plans = [
   {
-    id: "free",
-    name: "Free Forever",
-    price: 0,
-    period: "forever",
-    description: "Perfect for getting started",
-    features: [
-      "1 slideshow",
-      "Basic templates",
-      "10 AI credits",
-      "Email support",
-      "Standard quality",
-      "Community forum",
-    ],
-    limitations: [
-      "No staff members",
-      "No advanced features",
-      "No priority support",
-      "No custom branding",
-    ],
-    popular: false,
-    recommended: false,
-    color: "from-gray-500 to-gray-700",
-    icon: Gift,
-  },
-  {
     id: "starter",
     name: "Starter",
     price: 39,
+    yearlyPrice: 390,
     period: "month",
     description: "Great for small businesses",
     features: [
@@ -165,6 +141,7 @@ const plans = [
     id: "professional",
     name: "Professional",
     price: 99,
+    yearlyPrice: 990,
     period: "month",
     description: "For growing businesses",
     features: [
@@ -189,6 +166,7 @@ const plans = [
     id: "unlimited",
     name: "Unlimited",
     price: 249,
+    yearlyPrice: 2490,
     period: "month",
     description: "For enterprise businesses",
     features: [
@@ -219,7 +197,6 @@ const features = [
     description: "Generate slideshows with AI assistance",
     icon: ArrowRight,
     plans: {
-      free: "10 credits",
       starter: "100 credits",
       professional: "500 credits",
       unlimited: "Unlimited",
@@ -230,7 +207,6 @@ const features = [
     description: "Add team members with role-based permissions",
     icon: Users,
     plans: {
-      free: "Not included",
       starter: "2 members",
       professional: "5 members",
       unlimited: "Unlimited",
@@ -241,7 +217,6 @@ const features = [
     description: "Professional templates for every industry",
     icon: Image,
     plans: {
-      free: "Basic",
       starter: "Premium",
       professional: "All",
       unlimited: "All + Custom",
@@ -252,7 +227,6 @@ const features = [
     description: "Track performance and engagement",
     icon: BarChart3,
     plans: {
-      free: "Basic",
       starter: "Standard",
       professional: "Advanced",
       unlimited: "Enterprise",
@@ -263,7 +237,6 @@ const features = [
     description: "Get help when you need it",
     icon: Headphones,
     plans: {
-      free: "Email",
       starter: "Email & Chat",
       professional: "Priority",
       unlimited: "24/7 Phone",
@@ -274,7 +247,6 @@ const features = [
     description: "Add your logo and colors",
     icon: Settings,
     plans: {
-      free: "Not included",
       starter: "Basic",
       professional: "Advanced",
       unlimited: "Full Control",
@@ -285,6 +257,7 @@ const features = [
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"month" | "year">("month");
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [promotionCode, setPromotionCode] = useState("");
 
   const getYearlyDiscount = (monthlyPrice: number) => {
     return Math.round(monthlyPrice * 12 * 0.2); // 20% discount
@@ -294,13 +267,24 @@ export default function PricingPage() {
     return Math.round(monthlyPrice * 12 * 0.8); // 20% discount
   };
 
-  const handlePlanSelect = (planId: string) => {
-    setSelectedPlan(planId);
-    // Redirect to checkout or signup
-    if (planId === "free") {
-      window.location.href = "/auth/signup?plan=free";
+  const handlePlanSelect = async (planId: string) => {
+    // Call backend to create Stripe Checkout session for selected plan and interval
+    const res = await fetch("/api/subscription/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        planSlug: planId,
+        interval: billingPeriod,
+        promotionCode: promotionCode.trim() || undefined,
+        successUrl: window.location.origin + "/onboarding",
+        cancelUrl: window.location.href,
+      }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
     } else {
-      window.location.href = `/onboarding/payment?plan=${planId}&period=${billingPeriod}`;
+      alert(data.error || "Failed to start checkout session");
     }
   };
 
@@ -469,132 +453,74 @@ export default function PricingPage() {
             </motion.div>
           </div>
 
+          {/* Add input for promotion code above the plan cards or in the checkout modal */}
+          <div className="mb-6 flex flex-col items-center">
+            <label
+              htmlFor="promotionCode"
+              className="text-sm font-medium text-gray-700 mb-1"
+            >
+              Promotion Code (optional)
+            </label>
+            <input
+              id="promotionCode"
+              type="text"
+              value={promotionCode}
+              onChange={(e) => setPromotionCode(e.target.value)}
+              className="border rounded px-3 py-2 text-sm w-64"
+              placeholder="Enter code if you have one"
+            />
+          </div>
+
           {/* Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {plans.map((plan, index) => {
-              const Icon = plan.icon;
-              const price =
-                plan.price === 0
-                  ? 0
-                  : billingPeriod === "year"
-                  ? getYearlyPrice(plan.price)
-                  : plan.price;
-              const originalPrice =
-                plan.price === 0
-                  ? 0
-                  : billingPeriod === "year"
-                  ? plan.price * 12
-                  : plan.price;
-
-              return (
-                <motion.div
-                  key={plan.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
-                    plan.popular ? "border-purple-500" : "border-gray-200"
-                  } ${plan.recommended ? "ring-2 ring-blue-500" : ""}`}
+          <div className="flex flex-col md:flex-row gap-8 justify-center items-stretch mb-12">
+            {plans.map((plan, idx) => (
+              <div
+                key={plan.id}
+                className={`flex-1 bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center border-2 transition-all duration-200 ${
+                  plan.popular
+                    ? "border-purple-600 scale-105 z-10"
+                    : "border-gray-200"
+                } ${plan.id === "professional" ? "relative" : ""}`}
+              >
+                {plan.popular && (
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-xs font-semibold px-4 py-1 rounded-full shadow">
+                    Most Popular
+                  </span>
+                )}
+                <h2 className="text-2xl font-bold mb-2">{plan.name}</h2>
+                <p className="text-gray-500 mb-4">{plan.description}</p>
+                <div className="mb-4 flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-gray-900">
+                    {billingPeriod === "month"
+                      ? `$${plan.price}/mo`
+                      : `$${plan.yearlyPrice}/yr`}
+                  </span>
+                  {billingPeriod === "year" && (
+                    <span className="text-green-600 text-sm font-semibold ml-2">
+                      7 days free
+                    </span>
+                  )}
+                </div>
+                <ul className="mb-6 space-y-2 text-gray-700 text-sm w-full">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <span className="inline-block w-2 h-2 bg-purple-500 rounded-full"></span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  className={`w-full py-3 rounded-lg font-semibold text-white transition-all duration-200 ${
+                    plan.popular
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : "bg-gray-800 hover:bg-gray-900"
+                  }`}
+                  onClick={() => handlePlanSelect(plan.id)}
                 >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                        Most Popular
-                      </span>
-                    </div>
-                  )}
-                  {plan.recommended && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                        Recommended
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="p-8">
-                    <div className="text-center mb-6">
-                      <div
-                        className={`w-16 h-16 ${plan.color} rounded-xl flex items-center justify-center mx-auto mb-4`}
-                      >
-                        <Icon className="w-8 h-8 text-white" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                        {plan.name}
-                      </h3>
-                      <p className="text-gray-600 mb-4">{plan.description}</p>
-
-                      <div className="mb-6">
-                        <div className="flex items-baseline justify-center">
-                          <span className="text-4xl font-bold text-gray-900">
-                            ${price}
-                          </span>
-                          {plan.price > 0 && (
-                            <span className="text-gray-500 ml-1">
-                              /{billingPeriod === "year" ? "year" : "month"}
-                            </span>
-                          )}
-                        </div>
-                        {billingPeriod === "year" && plan.price > 0 && (
-                          <div className="flex items-center justify-center mt-2">
-                            <span className="text-sm text-gray-500 line-through">
-                              ${originalPrice}
-                            </span>
-                            <span className="text-sm text-green-600 ml-2">
-                              Save ${getYearlyDiscount(plan.price)}
-                            </span>
-                          </div>
-                        )}
-                        {plan.price === 0 && (
-                          <span className="text-sm text-gray-500">
-                            No credit card required
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-4 mb-8">
-                      <h4 className="font-semibold text-gray-900 mb-3">
-                        What's included:
-                      </h4>
-                      {plan.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-center">
-                          <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                          <span className="text-sm text-gray-700">
-                            {feature}
-                          </span>
-                        </div>
-                      ))}
-                      {plan.limitations.map((limitation, limitationIndex) => (
-                        <div
-                          key={limitationIndex}
-                          className="flex items-center"
-                        >
-                          <X className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
-                          <span className="text-sm text-gray-500">
-                            {limitation}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => handlePlanSelect(plan.id)}
-                      className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-                        plan.popular
-                          ? "bg-purple-600 text-white hover:bg-purple-700"
-                          : plan.recommended
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "bg-gray-100 text-gray-900 hover:bg-gray-200"
-                      }`}
-                    >
-                      {plan.price === 0
-                        ? "Get Started Free"
-                        : `Start ${plan.name}`}
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
+                  {plan.popular ? "Get Started" : "Choose Plan"}
+                </button>
+              </div>
+            ))}
           </div>
 
           {/* Features Comparison */}
@@ -608,9 +534,6 @@ export default function PricingPage() {
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-4 px-6 font-semibold text-gray-900">
                       Feature
-                    </th>
-                    <th className="text-center py-4 px-6 font-semibold text-gray-900">
-                      Free
                     </th>
                     <th className="text-center py-4 px-6 font-semibold text-gray-900">
                       Starter
@@ -640,11 +563,6 @@ export default function PricingPage() {
                               </div>
                             </div>
                           </div>
-                        </td>
-                        <td className="text-center py-4 px-6">
-                          <span className="text-sm text-gray-700">
-                            {feature.plans.free}
-                          </span>
                         </td>
                         <td className="text-center py-4 px-6">
                           <span className="text-sm text-gray-700">
@@ -689,8 +607,7 @@ export default function PricingPage() {
                   Is there a free trial?
                 </h3>
                 <p className="text-gray-600">
-                  Yes, all paid plans come with a 14-day free trial. No credit
-                  card required to start.
+                  No, all plans are paid. You can cancel anytime.
                 </p>
               </div>
               <div className="text-left">

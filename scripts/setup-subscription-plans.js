@@ -41,7 +41,7 @@ const subscriptionPlans = [
       monthly: 39,
       yearly: 390,
       currency: "USD",
-      trialDays: 14,
+      trialDays: 7,
     },
     limits: {
       slides: 5,
@@ -80,7 +80,7 @@ const subscriptionPlans = [
       monthly: 99,
       yearly: 990,
       currency: "USD",
-      trialDays: 14,
+      trialDays: 7,
     },
     limits: {
       slides: -1, // Unlimited
@@ -119,7 +119,7 @@ const subscriptionPlans = [
       monthly: 249,
       yearly: 2490,
       currency: "USD",
-      trialDays: 14,
+      trialDays: 7,
     },
     limits: {
       slides: -1, // Unlimited

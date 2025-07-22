@@ -247,7 +247,7 @@ npm start
 - Basic templates
 - Email support
 - Mobile display
-- 14-day free trial
+- 7-day paid trial
 
 ### Professional Plan ($29/month)
 
@@ -258,6 +258,7 @@ npm start
 - Analytics dashboard
 - Staff management
 - Custom branding
+- 7-day paid trial
 
 ### Unlimited Plan ($99/month)
 
@@ -269,6 +270,7 @@ npm start
 - Custom integrations
 - Advanced analytics
 - 1000 AI credits
+- 7-day paid trial
 
 ## 🔄 User Flow
 
@@ -277,7 +279,7 @@ npm start
 1. User visits signup page
 2. Enters basic information
 3. Selects business category
-4. Account created with free trial
+4. Account created with entry paid plan
 
 ### 2. Onboarding Flow
 

@@ -189,15 +189,6 @@ export default function PremiumPage() {
 
   const getPlanFeatures = (plan: string) => {
     const features = {
-      Free: [
-        `${business?.max_slideshows || 1} slideshow${
-          business?.max_slideshows !== 1 ? "s" : ""
-        }`,
-        "Basic templates",
-        "Email support",
-        "1 TV display",
-        `${business?.ai_credits || userProfile?.ai_credits || 10} AI credits`,
-      ],
       Starter: [
         "5 slideshows",
         "Premium templates",
@@ -229,7 +220,7 @@ export default function PremiumPage() {
         "White-label solution",
       ],
     };
-    return features[plan as keyof typeof features] || features.Free;
+    return features[plan as keyof typeof features] || features.Starter;
   };
 
   const getPlanColor = (plan: string) => {

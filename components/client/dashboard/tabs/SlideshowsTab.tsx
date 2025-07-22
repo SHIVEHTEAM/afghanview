@@ -609,7 +609,7 @@ export function SlideshowsTab({
               {/* Card Content */}
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-800 truncate flex-1 mr-3">
+                  <h3 className="text-xl font-bold text-gray-800 break-words flex-1 mr-3 leading-snug max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg">
                     {slideshow.title}
                   </h3>
                   <motion.button
@@ -821,8 +821,29 @@ export function SlideshowsTab({
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      handleDeleteSlideshow(slideshow.id);
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(
+                          `/api/slideshows/${slideshow.id}`,
+                          {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include", // Ensure cookies/session are sent
+                          }
+                        );
+                        if (!response.ok) {
+                          const error = await response.json().catch(() => ({}));
+                          setErrorMessage(
+                            error.error || "Failed to delete slideshow"
+                          );
+                          setShowErrorMessage(true);
+                          return;
+                        }
+                        onRefresh?.();
+                      } catch (err) {
+                        setErrorMessage("Failed to delete slideshow");
+                        setShowErrorMessage(true);
+                      }
                     }}
                     disabled={!canDelete}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${

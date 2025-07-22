@@ -12,26 +12,23 @@ export const STRIPE_CONFIG = {
   publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
   webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
   currency: "usd",
-  trialDays: 14,
+  trialDays: 7,
 };
 
 // Subscription plan mapping
 export const STRIPE_PLANS = {
-  free: {
-    priceId: null, // No Stripe price ID for free plan
-    name: "Free Forever",
-    price: 0,
-    features: {
-      slideshows: 1,
-      staff: 0,
-      aiCredits: 10,
-      support: "Email",
-    },
-  },
   starter: {
-    priceId: process.env.STRIPE_STARTER_PRICE_ID!,
+    priceId: {
+      // Live:
+      // month: "price_1Rni3pCYIfRqIz7gS7MMsN6a",
+      // year: "price_1Rni3pCYIfRqIz7gc8LA8EqC",
+      // Test:
+      month: "price_1Rnky8CYIfRqIz7gMCKotvyf",
+      year: "price_1Rnky8CYIfRqIz7gOG4US1Li",
+    },
     name: "Starter",
     price: 39,
+    yearlyPrice: 390,
     features: {
       slideshows: 5,
       staff: 2,
@@ -40,9 +37,13 @@ export const STRIPE_PLANS = {
     },
   },
   professional: {
-    priceId: process.env.STRIPE_PROFESSIONAL_PRICE_ID!,
+    priceId: {
+      month: "price_1Rni5iCYIfRqIz7gOdBIcSY2",
+      year: "price_1Rni6ECYIfRqIz7ghiejSm36",
+    },
     name: "Professional",
     price: 99,
+    yearlyPrice: 990,
     features: {
       slideshows: 20,
       staff: 5,
@@ -51,9 +52,13 @@ export const STRIPE_PLANS = {
     },
   },
   unlimited: {
-    priceId: process.env.STRIPE_UNLIMITED_PRICE_ID!,
+    priceId: {
+      month: "price_1Rni7lCYIfRqIz7gcclFjD72",
+      year: "price_1Rni86CYIfRqIz7gwpJRuwZa",
+    },
     name: "Unlimited",
     price: 249,
+    yearlyPrice: 2490,
     features: {
       slideshows: -1, // Unlimited
       staff: -1, // Unlimited
@@ -64,14 +69,14 @@ export const STRIPE_PLANS = {
 };
 
 // Types for Stripe operations
-export interface CreateCheckoutSessionParams {
-  userId: string;
-  businessId: string;
+type CreateCheckoutSessionParams = {
   planSlug: keyof typeof STRIPE_PLANS;
+  interval: "month" | "year";
   successUrl: string;
   cancelUrl: string;
   trialDays?: number;
-}
+  discounts?: Array<{ promotion_code: string }>;
+};
 
 export interface CreateCustomerPortalParams {
   customerId: string;
@@ -123,60 +128,31 @@ export async function createStripeCustomer(
 
 // Create checkout session for subscription
 export async function createCheckoutSession({
-  userId,
-  businessId,
   planSlug,
+  interval = "month",
   successUrl,
   cancelUrl,
   trialDays = STRIPE_CONFIG.trialDays,
+  discounts,
 }: CreateCheckoutSessionParams) {
   try {
-    // Get user and restaurant data
-    const { data: user } = await supabase
-      .from("users")
-      .select("email, first_name, last_name, stripe_customer_id")
-      .eq("id", userId)
-      .single();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
     // Get plan details
     const plan = STRIPE_PLANS[planSlug];
     if (!plan) {
       throw new Error("Invalid plan");
     }
-
-    // Create or get Stripe customer
-    let customerId = user.stripe_customer_id;
-    if (!customerId) {
-      const customer = await createStripeCustomer(
-        userId,
-        user.email,
-        `${user.first_name} ${user.last_name}`
-      );
-      customerId = customer.id;
+    // Use correct priceId for interval
+    const priceId = plan.priceId[interval];
+    if (!priceId) {
+      throw new Error("Invalid billing interval");
     }
 
-    // Handle free plan differently
-    if (planSlug === "free") {
-      // For free plan, create a mock session that will be handled differently
-      return {
-        id: `free_${Date.now()}`,
-        url: `${successUrl}?session_id=free_${Date.now()}&plan=free`,
-        mode: "subscription",
-        status: "complete",
-      } as any;
-    }
-
-    // Create checkout session for paid plans
+    // Create checkout session for paid plans (no customer, let Stripe create one)
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
       payment_method_types: ["card"],
       line_items: [
         {
-          price: plan.priceId!,
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -186,22 +162,17 @@ export async function createCheckoutSession({
       subscription_data: {
         trial_period_days: trialDays,
         metadata: {
-          userId,
-          businessId,
           planSlug,
+          interval,
         },
       },
       metadata: {
-        userId,
-        businessId,
         planSlug,
+        interval,
       },
       allow_promotion_codes: true,
       billing_address_collection: "required",
-      customer_update: {
-        address: "auto",
-        name: "auto",
-      },
+      ...(discounts ? { discounts } : {}),
     });
 
     return session;
@@ -280,9 +251,9 @@ export async function handleWebhookEvent(event: Stripe.Event) {
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session
 ) {
-  const { userId, restaurantId, planSlug } = session.metadata || {};
+  const { planSlug } = session.metadata || {};
 
-  if (!userId || !restaurantId || !planSlug) {
+  if (!planSlug) {
     throw new Error("Missing metadata in checkout session");
   }
 
@@ -292,16 +263,75 @@ async function handleCheckoutSessionCompleted(
     throw new Error("Invalid plan");
   }
 
+  // --- USER/BUSINESS PROVISIONING LOGIC ---
+  const customerEmail = session.customer_details?.email;
+  const customerName = session.customer_details?.name;
+
+  // 1. Check if user exists
+  let { data: user, error: userError } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", customerEmail)
+    .single();
+
+  let userId = user?.id;
+
+  if (!userId) {
+    // 2. Create user in 'users' table
+    const { data: newUser, error: newUserError } = await supabase
+      .from("users")
+      .insert({ email: customerEmail, name: customerName })
+      .select()
+      .single();
+    if (newUserError) throw newUserError;
+    userId = newUser.id;
+    // 3. Create profile for user
+    await supabase.from("profiles").insert({
+      id: userId,
+      first_name: customerName?.split(" ")[0] || "",
+      last_name: customerName?.split(" ").slice(1).join(" ") || "",
+      roles: ["restaurant_owner"],
+      subscription_plan: planSlug,
+      subscription_status: "active",
+      email: customerEmail,
+    });
+  }
+
+  // 4. Check if business exists for user
+  let { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+  let businessId = business?.id;
+  if (!businessId) {
+    // 5. Create business for user
+    const { data: newBusiness, error: newBusinessError } = await supabase
+      .from("businesses")
+      .insert({
+        user_id: userId,
+        name: customerName ? `${customerName}'s Business` : customerEmail,
+        type: "restaurant",
+        subscription_plan: planSlug,
+        created_by: userId,
+        is_active: true,
+      })
+      .select()
+      .single();
+    if (newBusinessError) throw newBusinessError;
+    businessId = newBusiness.id;
+  }
+
   // Create or update subscription in database
   const { data: existingSubscription } = await supabase
     .from("restaurant_subscriptions")
     .select("id")
-    .eq("restaurant_id", restaurantId)
+    .eq("stripe_subscription_id", session.subscription as string)
     .eq("status", "active")
     .single();
 
   const subscriptionData = {
-    restaurant_id: restaurantId,
+    restaurant_id: businessId,
     plan_id: (
       await supabase
         .from("subscription_plans")
@@ -333,7 +363,7 @@ async function handleCheckoutSessionCompleted(
 
   // Create billing history record
   await supabase.from("billing_history").insert({
-    restaurant_id: restaurantId,
+    restaurant_id: businessId,
     subscription_id: existingSubscription?.id,
     amount: plan.price * 100, // Convert to cents
     currency: STRIPE_CONFIG.currency,
@@ -345,9 +375,9 @@ async function handleCheckoutSessionCompleted(
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
-  const { userId, restaurantId, planSlug } = subscription.metadata || {};
+  const { planSlug } = subscription.metadata || {};
 
-  if (!userId || !restaurantId || !planSlug) {
+  if (!planSlug) {
     return; // Skip if no metadata
   }
 

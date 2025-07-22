@@ -1,30 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Star } from "lucide-react";
 import Link from "next/link";
 
 const plans = [
   {
-    name: "Free Forever",
-    price: "$0",
-    period: "forever",
-    description: "Perfect for getting started",
-    features: [
-      "1 slideshow",
-      "Basic templates",
-      "10 AI credits",
-      "Email support",
-      "Standard quality",
-      "Community forum",
-    ],
-    popular: false,
-    cta: "Get Started Free",
-    href: "/auth/signup?plan=free",
-  },
-  {
     name: "Starter",
-    price: "$39",
-    period: "per month",
+    price: 39,
+    yearlyPrice: 390,
     description: "Great for small businesses",
     features: [
       "5 slideshows",
@@ -38,12 +21,12 @@ const plans = [
     ],
     popular: false,
     cta: "Start with Starter",
-    href: "/auth/signup?plan=starter",
+    href: "/pricing?plan=starter",
   },
   {
     name: "Professional",
-    price: "$99",
-    period: "per month",
+    price: 99,
+    yearlyPrice: 990,
     description: "For growing businesses",
     features: [
       "20 slideshows",
@@ -59,12 +42,12 @@ const plans = [
     ],
     popular: true,
     cta: "Start with Professional",
-    href: "/auth/signup?plan=professional",
+    href: "/pricing?plan=professional",
   },
   {
     name: "Unlimited",
-    price: "$249",
-    period: "per month",
+    price: 249,
+    yearlyPrice: 2490,
     description: "For enterprise businesses",
     features: [
       "Unlimited slideshows",
@@ -81,12 +64,19 @@ const plans = [
       "Dedicated account manager",
     ],
     popular: false,
-    cta: "Contact Sales",
-    href: "/contact",
+    cta: "Start with Unlimited",
+    href: "/pricing?plan=unlimited",
   },
 ];
 
 export default function PricingSection() {
+  const [billingPeriod, setBillingPeriod] = useState<"month" | "year">("month");
+
+  // Handle plan selection: navigate to the plan's href
+  const handlePlanSelect = (href: string) => {
+    window.location.href = href;
+  };
+
   return (
     <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -106,63 +96,102 @@ export default function PricingSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-8">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className={`relative bg-white rounded-2xl p-8 shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
-                plan.popular
-                  ? "border-purple-500 shadow-purple-100 scale-105"
-                  : "border-gray-200"
+        {/* Billing period toggle */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex rounded-lg bg-gray-100 p-1">
+            <button
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                billingPeriod === "month"
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-700"
               }`}
+              onClick={() => setBillingPeriod("month")}
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-full">
-                    <Star className="w-4 h-4 mr-1" />
-                    Most Popular
-                  </div>
-                </div>
-              )}
+              Monthly
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                billingPeriod === "year"
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-700"
+              }`}
+              onClick={() => setBillingPeriod("year")}
+            >
+              Yearly
+            </button>
+          </div>
+        </div>
 
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  {plan.name}
-                </h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">
-                    {plan.price}
-                  </span>
-                  <span className="text-gray-600 ml-1">/{plan.period}</span>
-                </div>
-                <p className="text-gray-600">{plan.description}</p>
-              </div>
-
-              <ul className="space-y-4 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start">
-                    <Check className="w-5 h-5 text-purple-500 mr-3 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href={plan.href}
-                className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-all duration-300 ${
+        {/* Add a modern, visually appealing pricing section */}
+        <div className="py-20 bg-gradient-to-b from-white to-gray-50">
+          <h2 className="text-4xl font-bold text-center mb-4">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-center text-lg text-gray-600 mb-10">
+            Choose the plan that fits your business. No hidden fees. Cancel
+            anytime.
+          </p>
+          <div className="flex flex-col md:flex-row gap-8 justify-center items-stretch mb-12">
+            {plans.map((plan, idx) => (
+              <div
+                key={plan.name}
+                className={`flex-1 bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center border-2 transition-all duration-200 ${
                   plan.popular
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700"
-                    : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                    ? "border-purple-600 scale-105 z-10"
+                    : "border-gray-200"
                 }`}
               >
-                {plan.cta}
-              </Link>
-            </motion.div>
-          ))}
+                {plan.popular && (
+                  <span className="px-3 py-1 mb-2 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold uppercase tracking-wider">
+                    Most Popular
+                  </span>
+                )}
+                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <div className="flex items-end mb-2">
+                  <span className="text-4xl font-extrabold">
+                    {billingPeriod === "year" ? plan.yearlyPrice : plan.price}
+                  </span>
+                  <span className="text-lg text-gray-500 ml-1">
+                    / {billingPeriod === "year" ? "year" : "month"}
+                  </span>
+                </div>
+                {billingPeriod === "year" && (
+                  <span className="text-green-600 text-sm mb-2">
+                    2 months free
+                  </span>
+                )}
+                <p className="text-gray-600 mb-4 text-center">
+                  {plan.description}
+                </p>
+                <ul className="mb-6 space-y-2 text-gray-700 text-sm w-full">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <span className="inline-block w-2 h-2 bg-purple-500 rounded-full"></span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  className={`w-full py-3 rounded-lg font-semibold text-white transition-all duration-200 ${
+                    plan.popular
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : "bg-gray-800 hover:bg-gray-900"
+                  }`}
+                  onClick={() => handlePlanSelect(plan.href)}
+                >
+                  Get Started
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center">
+            <a
+              href="/pricing"
+              className="text-purple-600 underline font-medium text-lg"
+            >
+              See detailed plan comparison
+            </a>
+          </div>
         </div>
 
         <motion.div
@@ -182,7 +211,7 @@ export default function PricingSection() {
               experience.
             </p>
             <Link
-              href="/auth/signup"
+              href="/pricing"
               className="inline-flex items-center px-8 py-4 bg-white text-purple-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-300"
             >
               Start Your Free Trial

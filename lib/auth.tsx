@@ -7,8 +7,8 @@ import React, {
 } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "./supabase";
-import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import type { AuthOptions } from "next-auth";
 
 interface User {
   id: string;
@@ -59,7 +59,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const authOptions: NextAuthConfig = {
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",

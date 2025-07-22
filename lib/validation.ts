@@ -29,8 +29,8 @@ export const slideshowSchema = z.object({
   description: z.string().optional(),
   business_id: z.string().uuid("Invalid business ID"),
   business_type: z.string().min(1, "Business type is required"),
-  settings: z.record(z.any()).optional(),
-  content: z.record(z.any()).optional(),
+  settings: z.record(z.string(), z.any()).optional(),
+  content: z.record(z.string(), z.any()).optional(),
 });
 
 export const slideshowUpdateSchema = z.object({
@@ -39,8 +39,8 @@ export const slideshowUpdateSchema = z.object({
     .min(1, "Slideshow title is required")
     .max(100, "Slideshow title must be less than 100 characters"),
   description: z.string().optional(),
-  settings: z.record(z.any()).optional(),
-  content: z.record(z.any()).optional(),
+  settings: z.record(z.string(), z.any()).optional(),
+  content: z.record(z.string(), z.any()).optional(),
 });
 
 // Media validation schemas
@@ -55,7 +55,7 @@ export const mediaUploadSchema = z.object({
 export const staffInviteSchema = z.object({
   email: z.string().email("Invalid email address"),
   role: z.enum(["owner", "manager", "staff"]),
-  permissions: z.record(z.boolean()).optional(),
+  permissions: z.record(z.string(), z.boolean()).optional(),
 });
 
 // TV device validation schemas
@@ -106,7 +106,10 @@ export const validateForm = <T>(
     return { success: true, data: validatedData };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, errors: error.errors.map((e) => e.message) };
+      return {
+        success: false,
+        errors: error.issues.map((e: any) => e.message),
+      };
     }
     return { success: false, errors: ["Validation failed"] };
   }
@@ -122,8 +125,8 @@ export const validateField = <T>(
     return { valid: true };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { valid: false, error: error.errors[0]?.message };
+      return { valid: false, error: error.issues[0]?.message };
     }
-    return { valid: false, error: "Invalid value" };
+    return { valid: false, error: "Validation failed" };
   }
 };

@@ -4,6 +4,8 @@ import { SlideshowSettings } from "../shared/types";
 import { DEFAULT_SETTINGS } from "../shared/constants";
 import SettingsPanel from "../shared/SettingsPanel";
 import WizardStepper from "../shared/WizardStepper";
+import MusicStep from "../shared/MusicStep";
+import { SlideshowMusicSettings } from "../../../types/music";
 
 interface TextSlideshowWizardProps {
   step?: number;
@@ -21,9 +23,14 @@ const steps = [
     description: "Add your announcements",
   },
   {
+    id: "music",
+    label: "Music",
+    description: "Choose background music",
+  },
+  {
     id: "settings",
     label: "Settings",
-    description: "Configure slideshow and music",
+    description: "Configure slideshow settings",
   },
   {
     id: "preview",
@@ -186,6 +193,18 @@ export default function TextSlideshowWizard({
     }
   };
 
+  const handleMusicSelected = (musicSettings: SlideshowMusicSettings) => {
+    setSettings((prev) => ({
+      ...prev,
+      ...musicSettings,
+    }));
+  };
+
+  const handleSkipMusic = () => {
+    // Continue to next step without music
+    handleNext();
+  };
+
   // Render current step content
   const renderStepContent = () => {
     switch (currentStep) {
@@ -301,10 +320,22 @@ export default function TextSlideshowWizard({
         );
       case 1:
         return (
+          <MusicStep
+            currentSettings={settings.music}
+            onMusicSelected={handleMusicSelected}
+            onSkip={handleSkipMusic}
+            title="Add Background Music"
+            description="Enhance your text slideshow with beautiful music"
+          />
+        );
+      case 2:
+        return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <SettingsPanel
               settings={settings}
-              onSettingsChange={setSettings}
+              onSettingsChange={(updates) =>
+                setSettings((prev) => ({ ...prev, ...updates }))
+              }
               slideshowName={slideshowName}
               onSlideshowNameChange={setSlideshowName}
             />
@@ -341,7 +372,7 @@ export default function TextSlideshowWizard({
             </div>
           </div>
         );
-      case 2:
+      case 3:
         return (
           <div>
             <h3 className="text-lg font-semibold mb-4">Preview</h3>

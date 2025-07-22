@@ -19,12 +19,12 @@ export const STRIPE_CONFIG = {
 export const STRIPE_PLANS = {
   starter: {
     priceId: {
-      // Live:
-      // month: "price_1Rni3pCYIfRqIz7gS7MMsN6a",
-      // year: "price_1Rni3pCYIfRqIz7gc8LA8EqC",
       // Test:
-      month: "price_1Rnky8CYIfRqIz7gMCKotvyf",
-      year: "price_1Rnky8CYIfRqIz7gOG4US1Li",
+      // month: "price_1Rnky8CYIfRqIz7gMCKotvyf",
+      // year: "price_1Rnky8CYIfRqIz7gOG4US1Li",
+      // Live:
+      month: "price_1Rni3pCYIfRqIz7gS7MMsN6a",
+      year: "price_1Rni3pCYIfRqIz7gc8LA8EqC",
     },
     name: "Starter",
     price: 39,

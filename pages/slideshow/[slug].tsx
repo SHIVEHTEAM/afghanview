@@ -26,8 +26,13 @@ interface SlideshowSettings {
   duration: number;
   transition: "fade" | "slide" | "zoom" | "flip" | "bounce";
   backgroundMusic?: File | string;
+  background_music?: string;
   musicVolume: number;
+  music_volume?: number;
   musicLoop: boolean;
+  music_loop?: boolean;
+  music_playlist_id?: string;
+  music_play_mode?: "sequential" | "shuffle" | "random";
   autoPlay: boolean;
   showControls: boolean;
 }
@@ -186,6 +191,21 @@ export default function PublicSlideshow() {
           transition: slideshow.settings.transition as any,
           autoPlay: slideshow.settings.autoPlay || true,
           showControls: slideshow.settings.showControls || true,
+          // Add music settings from the new multi-track system
+          backgroundMusic: slideshow.settings?.music_playlist_id
+            ? `playlist:${slideshow.settings.music_playlist_id}`
+            : slideshow.settings?.background_music ||
+              (typeof slideshow.settings?.backgroundMusic === "string"
+                ? slideshow.settings.backgroundMusic
+                : undefined),
+          musicVolume:
+            slideshow.settings?.music_volume ||
+            slideshow.settings?.musicVolume ||
+            50,
+          musicLoop:
+            slideshow.settings?.music_loop ??
+            slideshow.settings?.musicLoop ??
+            true,
         }}
         onClose={() => router.push("/")}
       />

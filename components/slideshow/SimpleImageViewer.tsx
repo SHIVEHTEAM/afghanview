@@ -12,6 +12,8 @@ import {
   Monitor,
   Music,
 } from "lucide-react";
+import { MusicService } from "../../lib/music-service";
+import { MusicTrack, MusicPlaylist } from "../../types/music";
 
 interface ImageData {
   id: string;
@@ -45,6 +47,11 @@ export default function SimpleImageViewer({
 }: SimpleImageViewerProps) {
   console.log("[SimpleImageViewer] Received images:", images);
   console.log("[SimpleImageViewer] Received settings:", settings);
+  console.log("[SimpleImageViewer] Music settings:", {
+    backgroundMusic: settings.backgroundMusic,
+    musicVolume: settings.musicVolume,
+    musicLoop: settings.musicLoop,
+  });
 
   // Debug: Log the images array
   console.log("[SimpleImageViewer] images prop:", images);
@@ -66,6 +73,17 @@ export default function SimpleImageViewer({
   const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+
+  // Enhanced music state for playlists
+  const [currentPlaylist, setCurrentPlaylist] = useState<MusicPlaylist | null>(
+    null
+  );
+  const [playlistTracks, setPlaylistTracks] = useState<MusicTrack[]>([]);
+  const [currentPlaylistIndex, setCurrentPlaylistIndex] = useState(0);
+  const [playMode, setPlayMode] = useState<"sequential" | "shuffle" | "random">(
+    "sequential"
+  );
+  const [shuffledPlaylist, setShuffledPlaylist] = useState<number[]>([]);
 
   // Track fullscreen state
   useEffect(() => {
@@ -467,28 +485,159 @@ export default function SimpleImageViewer({
     return image.url || "";
   };
 
+  // Play current music (for playlists)
+  const playCurrentMusic = async () => {
+    if (!audioRef) return;
+
+    let musicUrl = "";
+
+    if (currentPlaylist && playlistTracks.length > 0) {
+      let trackIndex = currentPlaylistIndex;
+
+      if (playMode === "shuffle" && shuffledPlaylist.length > 0) {
+        trackIndex =
+          shuffledPlaylist[currentPlaylistIndex % shuffledPlaylist.length];
+      } else if (playMode === "random") {
+        trackIndex = Math.floor(Math.random() * playlistTracks.length);
+      }
+
+      const track = playlistTracks[trackIndex];
+      if (track) {
+        musicUrl = track.file_url;
+        console.log(
+          "[SimpleImageViewer] Playing track:",
+          track.name,
+          "from URL:",
+          musicUrl
+        );
+      }
+    }
+
+    if (musicUrl) {
+      audioRef.src = musicUrl;
+      audioRef.loop = settings.musicLoop ?? true;
+      audioRef.volume = (settings.musicVolume ?? 50) / 100;
+
+      try {
+        await audioRef.play();
+        setIsMusicPlaying(true);
+        console.log("[SimpleImageViewer] Music started playing successfully");
+      } catch (error) {
+        console.error("Failed to play music:", error);
+        setIsMusicPlaying(false);
+      }
+    } else {
+      console.log("[SimpleImageViewer] No music URL available to play");
+    }
+  };
+
+  // Handle music end (for playlists)
+  const handleMusicEnd = () => {
+    if (currentPlaylist && playlistTracks.length > 0) {
+      // Move to next track in playlist
+      const nextIndex = (currentPlaylistIndex + 1) % playlistTracks.length;
+      setCurrentPlaylistIndex(nextIndex);
+
+      if (nextIndex === 0 && !settings.musicLoop) {
+        // End of playlist and not looping
+        setIsMusicPlaying(false);
+      }
+    } else if (!settings.musicLoop) {
+      // Single track ended and not looping
+      setIsMusicPlaying(false);
+    }
+  };
+
+  // Load music data (playlist or single track)
+  useEffect(() => {
+    const loadMusicData = async () => {
+      try {
+        console.log(
+          "[SimpleImageViewer] Loading music data for:",
+          settings.backgroundMusic
+        );
+        if (settings.backgroundMusic?.startsWith("playlist:")) {
+          // Handle playlist
+          const playlistId = settings.backgroundMusic.replace("playlist:", "");
+          console.log(
+            "[SimpleImageViewer] Loading playlist with ID:",
+            playlistId
+          );
+          const playlist = await MusicService.getPlaylist(playlistId);
+          console.log("[SimpleImageViewer] Playlist loaded:", playlist);
+          if (playlist) {
+            setCurrentPlaylist(playlist);
+            setPlaylistTracks(playlist.tracks || []);
+            setPlayMode(playlist.play_mode);
+
+            // Initialize shuffled playlist if needed
+            if (playlist.play_mode === "shuffle") {
+              const shuffled = Array.from(
+                { length: playlist.tracks?.length || 0 },
+                (_, i) => i
+              );
+              for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+              }
+              setShuffledPlaylist(shuffled);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading music data:", error);
+      }
+    };
+
+    loadMusicData();
+  }, [settings.backgroundMusic]);
+
   // Background music functionality
   useEffect(() => {
     if (settings.backgroundMusic && settings.backgroundMusic !== "none") {
-      if (!audioRef) {
-        const audio = new Audio(settings.backgroundMusic);
-        audio.loop = settings.musicLoop ?? true;
-        audio.volume = (settings.musicVolume ?? 50) / 100;
-        setAudioRef(audio);
-      }
+      if (currentPlaylist && playlistTracks.length > 0) {
+        // Handle playlist music
+        console.log(
+          "[SimpleImageViewer] Playing playlist music with",
+          playlistTracks.length,
+          "tracks"
+        );
+        playCurrentMusic();
+      } else if (!settings.backgroundMusic.startsWith("playlist:")) {
+        // Handle single track
+        console.log(
+          "[SimpleImageViewer] Playing single track music:",
+          settings.backgroundMusic
+        );
+        if (!audioRef) {
+          const audio = new Audio(settings.backgroundMusic);
+          audio.loop = settings.musicLoop ?? true;
+          audio.volume = (settings.musicVolume ?? 50) / 100;
+          setAudioRef(audio);
+        }
 
-      if (isPlaying && !isMuted) {
-        audioRef
-          ?.play()
-          .then(() => {
-            setIsMusicPlaying(true);
-          })
-          .catch((error) => {
-            console.error("Failed to play background music:", error);
-          });
-      } else {
-        audioRef?.pause();
-        setIsMusicPlaying(false);
+        if (isPlaying && !isMuted) {
+          audioRef
+            ?.play()
+            .then(() => {
+              setIsMusicPlaying(true);
+              console.log(
+                "[SimpleImageViewer] Single track music started playing"
+              );
+            })
+            .catch((error) => {
+              console.error("Failed to play background music:", error);
+            });
+        } else {
+          audioRef?.pause();
+          setIsMusicPlaying(false);
+        }
+      } else if (
+        settings.backgroundMusic.startsWith("playlist:") &&
+        !currentPlaylist
+      ) {
+        // Playlist is being loaded, wait for it
+        console.log("[SimpleImageViewer] Waiting for playlist to load...");
       }
     }
 
@@ -505,6 +654,9 @@ export default function SimpleImageViewer({
     settings.musicVolume,
     settings.musicLoop,
     audioRef,
+    currentPlaylist,
+    playlistTracks,
+    currentPlaylistIndex,
   ]);
 
   // Update music volume when settings change
@@ -520,6 +672,26 @@ export default function SimpleImageViewer({
       audioRef.loop = settings.musicLoop;
     }
   }, [settings.musicLoop, audioRef]);
+
+  // Set up audio element for playlist functionality
+  useEffect(() => {
+    if (currentPlaylist && playlistTracks.length > 0) {
+      if (!audioRef) {
+        const audio = new Audio();
+        audio.addEventListener("ended", handleMusicEnd);
+        setAudioRef(audio);
+      }
+    }
+  }, [currentPlaylist, playlistTracks]);
+
+  // Cleanup audio event listeners
+  useEffect(() => {
+    return () => {
+      if (audioRef) {
+        audioRef.removeEventListener("ended", handleMusicEnd);
+      }
+    };
+  }, [audioRef]);
 
   if (isLoading) {
     return (

@@ -79,53 +79,73 @@ export default function SlideshowPreview() {
   }
 
   // Convert slideshow content to SimpleImageViewer format
-  const allMedia = [
-    // Handle slides array (new format)
-    ...(slideshow.content?.slides || []).map((slide: any, index: number) => {
-      // Handle menu items by generating SVG on-demand
-      if (slide.type === "menu" && slide.menuData) {
-        const svgDataUrl = MenuSVGGenerator.generateMenuSlide(
-          slide.menuData.item,
-          slide.menuData.theme,
-          slide.menuData.layout
-        );
+  const allMedia = (() => {
+    // Priority 1: Use slides array (new format) if available
+    if (slideshow.content?.slides && slideshow.content.slides.length > 0) {
+      return slideshow.content.slides.map((slide: any, index: number) => {
+        // Handle menu items by generating SVG on-demand
+        if (slide.type === "menu" && slide.menuData) {
+          const svgDataUrl = MenuSVGGenerator.generateMenuSlide(
+            slide.menuData.item,
+            slide.menuData.theme,
+            slide.menuData.layout
+          );
+          return {
+            id: slide.id || `slide-${index}`,
+            name: slide.name || slide.alt || `Slide ${index + 1}`,
+            url: svgDataUrl,
+            file_path: svgDataUrl,
+            type: "image" as const,
+          };
+        }
+
+        // Handle regular slides
         return {
           id: slide.id || `slide-${index}`,
           name: slide.name || slide.alt || `Slide ${index + 1}`,
-          url: svgDataUrl,
-          file_path: svgDataUrl,
-          type: "image" as const,
+          url: slide.url || slide.file_path,
+          file_path: slide.file_path || slide.url,
+          type: slide.type || ("image" as const),
         };
-      }
+      });
+    }
 
-      // Handle regular slides
-      return {
-        id: slide.id || `slide-${index}`,
-        name: slide.name || slide.alt || `Slide ${index + 1}`,
-        url: slide.url || slide.file_path,
-        file_path: slide.file_path || slide.url,
-        type: slide.type || ("image" as const),
-      };
-    }),
-    // Handle images array (legacy format)
-    ...(slideshow.content?.images || slideshow.images || []).map(
-      (img: any, index: number) => ({
+    // Priority 2: Use images array (legacy format) if slides is empty
+    if (slideshow.content?.images && slideshow.content.images.length > 0) {
+      return slideshow.content.images.map((img: any, index: number) => ({
         id: img.id || `img-${index}`,
         name: img.name || img.alt || `Image ${index + 1}`,
         url: img.url || img.file_path,
         file_path: img.file_path || img.url,
         type: "image" as const,
-      })
-    ),
-    // Handle videos array (legacy format)
-    ...(slideshow.content?.videos || []).map((vid: any, index: number) => ({
-      id: vid.id || `vid-${index}`,
-      name: vid.name || vid.alt || `Video ${index + 1}`,
-      url: vid.url || vid.file_path,
-      file_path: vid.file_path || vid.url,
-      type: "video" as const,
-    })),
-  ];
+      }));
+    }
+
+    // Priority 3: Use top-level images array if content.images is empty
+    if (slideshow.images && slideshow.images.length > 0) {
+      return slideshow.images.map((img: any, index: number) => ({
+        id: img.id || `img-${index}`,
+        name: img.name || img.alt || `Image ${index + 1}`,
+        url: img.url || img.file_path,
+        file_path: img.file_path || img.url,
+        type: "image" as const,
+      }));
+    }
+
+    // Priority 4: Use videos array if no images found
+    if (slideshow.content?.videos && slideshow.content.videos.length > 0) {
+      return slideshow.content.videos.map((vid: any, index: number) => ({
+        id: vid.id || `vid-${index}`,
+        name: vid.name || vid.alt || `Video ${index + 1}`,
+        url: vid.url || vid.file_path,
+        file_path: vid.file_path || vid.url,
+        type: "video" as const,
+      }));
+    }
+
+    // Fallback: empty array
+    return [];
+  })();
 
   const settings = {
     duration: slideshow.settings?.duration || 5000,

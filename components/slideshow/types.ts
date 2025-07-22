@@ -1,3 +1,5 @@
+import { SlideshowMusicSettings } from "../../types/music";
+
 export interface SlideMedia {
   id: string;
   file: File;
@@ -35,9 +37,17 @@ export interface SlideshowSettings {
     | "page"
     | "wipe";
   transitionDuration: number;
+  // Music settings using the new structure
+  music?: SlideshowMusicSettings;
+  // Legacy music fields for backward compatibility
   backgroundMusic?: File | string;
-  musicVolume: number;
-  musicLoop: boolean;
+  background_music?: string;
+  musicVolume?: number;
+  music_volume?: number;
+  musicLoop?: boolean;
+  music_loop?: boolean;
+  music_play_mode?: "sequential" | "shuffle" | "random";
+  music_playlist_id?: string;
   autoPlay: boolean;
   showControls: boolean;
   showProgress: boolean;

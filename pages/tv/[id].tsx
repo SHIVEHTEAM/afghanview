@@ -29,8 +29,13 @@ interface SlideshowSettings {
   defaultDuration: number;
   transition: string;
   backgroundMusic?: string;
+  background_music?: string;
   musicVolume?: number;
+  music_volume?: number;
   musicLoop?: boolean;
+  music_loop?: boolean;
+  music_play_mode?: "sequential" | "shuffle" | "random";
+  music_playlist_id?: string;
 }
 
 interface Slideshow {
@@ -115,14 +120,22 @@ export default function TvDisplay() {
 
   // Background music functionality
   useEffect(() => {
-    if (
-      slideshow?.settings?.backgroundMusic &&
-      slideshow.settings.backgroundMusic !== "none"
-    ) {
+    const musicUrl = slideshow?.settings?.music_playlist_id
+      ? `playlist:${slideshow.settings.music_playlist_id}`
+      : slideshow?.settings?.background_music ||
+        slideshow?.settings?.backgroundMusic;
+
+    if (musicUrl && musicUrl !== "none") {
       if (!audioRef.current) {
-        const audio = new Audio(slideshow.settings.backgroundMusic);
-        audio.loop = slideshow.settings.musicLoop ?? true;
-        audio.volume = (slideshow.settings.musicVolume ?? 50) / 100;
+        const audio = new Audio(musicUrl);
+        audio.loop =
+          slideshow?.settings?.music_loop ??
+          slideshow?.settings?.musicLoop ??
+          true;
+        audio.volume =
+          (slideshow?.settings?.music_volume ??
+            slideshow?.settings?.musicVolume ??
+            50) / 100;
         audio.preload = "auto";
 
         // Add event listeners for error handling
@@ -656,52 +669,53 @@ export default function TvDisplay() {
                 </button>
 
                 {/* Music Control Button */}
-                {slideshow?.settings?.backgroundMusic &&
-                  slideshow.settings.backgroundMusic !== "none" && (
-                    <button
-                      onClick={handleToggleMute}
-                      className="text-white hover:text-gray-300 transition-colors p-2"
-                      title={isMusicPlaying ? "Stop Music" : "Start Music"}
-                    >
-                      {isMusicPlaying ? (
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
+                {(slideshow?.settings?.backgroundMusic ||
+                  slideshow.settings?.background_music ||
+                  slideshow.settings?.music_playlist_id) && (
+                  <button
+                    onClick={handleToggleMute}
+                    className="text-white hover:text-gray-300 transition-colors p-2"
+                    title={isMusicPlaying ? "Stop Music" : "Start Music"}
+                  >
+                    {isMusicPlaying ? (
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                        />
+                        <line
+                          x1="1"
+                          y1="1"
+                          x2="23"
+                          y2="23"
                           stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                          />
-                          <line
-                            x1="1"
-                            y1="1"
-                            x2="23"
-                            y2="23"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          />
-                        </svg>
-                      )}
-                    </button>
-                  )}
+                          strokeWidth={2}
+                        />
+                      </svg>
+                    )}
+                  </button>
+                )}
               </div>
             </motion.div>
           )}
@@ -717,30 +731,31 @@ export default function TvDisplay() {
               className="absolute top-4 right-4 flex items-center gap-2"
             >
               {/* Music Controls */}
-              {slideshow.settings?.backgroundMusic &&
-                slideshow.settings.backgroundMusic !== "none" && (
-                  <div className="bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        isMusicPlaying
-                          ? "bg-green-400 animate-pulse"
-                          : "bg-yellow-400"
-                      }`}
-                    ></span>
-                    {isMusicPlaying ? "Music Playing" : "Music Loading"}
-                    <button
-                      onClick={handleToggleMute}
-                      className="text-white hover:text-gray-300 transition-colors"
-                      title={isMuted ? "Unmute" : "Mute"}
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-4 h-4" />
-                      ) : (
-                        <Volume2 className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                )}
+              {(slideshow.settings?.backgroundMusic ||
+                slideshow.settings?.background_music ||
+                slideshow.settings?.music_playlist_id) && (
+                <div className="bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isMusicPlaying
+                        ? "bg-green-400 animate-pulse"
+                        : "bg-yellow-400"
+                    }`}
+                  ></span>
+                  {isMusicPlaying ? "Music Playing" : "Music Loading"}
+                  <button
+                    onClick={handleToggleMute}
+                    className="text-white hover:text-gray-300 transition-colors"
+                    title={isMuted ? "Unmute" : "Mute"}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-4 h-4" />
+                    ) : (
+                      <Volume2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              )}
 
               {/* Fullscreen Button */}
               <button

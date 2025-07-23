@@ -118,11 +118,24 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Check if user has an active subscription
+      // Check if user has an active subscription by looking for their business
+      const { data: business } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!business) {
+        console.log("No business found for user, redirecting to pricing");
+        router.push("/pricing");
+        return;
+      }
+
+      // Check if business has an active subscription
       const { data: subscription } = await supabase
-        .from("restaurant_subscriptions")
+        .from("business_subscriptions")
         .select("status")
-        .eq("restaurant_id", user.id)
+        .eq("business_id", business.id)
         .in("status", ["active", "trial"])
         .single();
 
@@ -130,6 +143,7 @@ export default function OnboardingPage() {
         setHasValidSubscription(true);
       } else {
         // No valid subscription, redirect to pricing
+        console.log("No valid subscription found, redirecting to pricing");
         router.push("/pricing");
         return;
       }

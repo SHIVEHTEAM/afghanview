@@ -207,6 +207,337 @@ export async function createCustomerPortalSession({
   }
 }
 
+// Webhook handlers (move these above handleWebhookEvent)
+async function handleCheckoutSessionCompleted(
+  session: Stripe.Checkout.Session
+) {
+  console.log("🔔 Starting checkout session completion handler");
+  console.log("📋 Session data:", {
+    id: session.id,
+    customer_email: session.customer_details?.email,
+    customer_name: session.customer_details?.name,
+    metadata: session.metadata,
+  });
+
+  const { planSlug } = session.metadata || {};
+
+  if (!planSlug) {
+    console.error("❌ Missing planSlug in session metadata");
+    throw new Error("Missing metadata in checkout session");
+  }
+
+  console.log("✅ Plan slug found:", planSlug);
+
+  // Get plan details
+  const plan = STRIPE_PLANS[planSlug as keyof typeof STRIPE_PLANS];
+  if (!plan) {
+    console.error("❌ Invalid plan:", planSlug);
+    throw new Error("Invalid plan");
+  }
+
+  console.log("✅ Plan details:", plan);
+
+  // --- USER/BUSINESS PROVISIONING LOGIC ---
+  const customerEmail = session.customer_details?.email;
+  const customerName = session.customer_details?.name;
+
+  if (!customerEmail) {
+    console.error("❌ No customer email in checkout session");
+    throw new Error("No customer email in checkout session");
+  }
+
+  console.log("✅ Customer email:", customerEmail);
+  console.log("✅ Customer name:", customerName);
+
+  try {
+    // 1. Check if user exists in auth.users
+    console.log("🔍 Checking if user exists in auth.users...");
+    let { data: user, error: userError } =
+      await supabaseAdmin.auth.admin.listUsers();
+
+    if (userError) {
+      console.error("❌ Error listing users:", userError);
+      throw userError;
+    }
+
+    let userId = user?.users?.find((u) => u.email === customerEmail)?.id;
+    console.log(
+      "🔍 User lookup result:",
+      userId ? `Found user: ${userId}` : "User not found"
+    );
+
+    if (!userId) {
+      console.log("👤 Creating new user in auth.users...");
+      // 2. Create user in auth.users
+      const { data: newUser, error: newUserError } =
+        await supabaseAdmin.auth.admin.createUser({
+          email: customerEmail,
+          email_confirm: true,
+          user_metadata: {
+            name: customerName,
+            planSlug: planSlug,
+          },
+        });
+
+      if (newUserError) {
+        console.error("❌ Error creating user:", newUserError);
+        throw newUserError;
+      }
+
+      userId = newUser.user.id;
+      console.log("✅ Created new user:", userId);
+
+      // Send magic link invite
+      try {
+        console.log("✉️ Sending magic link invite to:", customerEmail);
+        const { data: inviteData, error: inviteError } =
+          await supabaseAdmin.auth.admin.inviteUserByEmail(customerEmail, {
+            redirectTo: `${
+              process.env.NEXT_PUBLIC_SITE_URL || "https://shivehview.com"
+            }/onboarding`,
+          });
+        if (inviteError) {
+          console.error("❌ Error sending magic link invite:", inviteError);
+        } else {
+          console.log("✅ Magic link invite sent:", inviteData);
+        }
+      } catch (inviteErr) {
+        console.error("❌ Exception sending magic link invite:", inviteErr);
+      }
+    }
+
+    // 3. Create profile for user (if doesn't exist)
+    console.log("👤 Checking if profile exists...");
+    const { data: existingProfile, error: profileCheckError } =
+      await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+
+    if (profileCheckError && profileCheckError.code !== "PGRST116") {
+      console.error("❌ Error checking profile:", profileCheckError);
+      throw profileCheckError;
+    }
+
+    if (!existingProfile) {
+      console.log("👤 Creating profile for user...");
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .insert({
+          id: userId,
+          first_name: customerName?.split(" ")[0] || "",
+          last_name: customerName?.split(" ").slice(1).join(" ") || "",
+          roles: ["restaurant_owner"],
+          subscription_plan: planSlug,
+          subscription_status: "active",
+        });
+
+      if (profileError) {
+        console.error("❌ Error creating profile:", profileError);
+        throw profileError;
+      }
+      console.log("✅ Created profile for user:", userId);
+    } else {
+      console.log("✅ Profile already exists for user:", userId);
+    }
+
+    // 4. Check if business exists for user
+    console.log("🏢 Checking if business exists...");
+    let { data: business, error: businessError } = await supabaseAdmin
+      .from("businesses")
+      .select("id")
+      .eq("user_id", userId)
+      .single();
+
+    if (businessError && businessError.code !== "PGRST116") {
+      console.error("❌ Error checking business:", businessError);
+      throw businessError;
+    }
+
+    let businessId = business?.id;
+    console.log(
+      "🏢 Business lookup result:",
+      businessId ? `Found business: ${businessId}` : "Business not found"
+    );
+
+    if (!businessId) {
+      console.log("🏢 Creating business for user...");
+      // 5. Create business for user
+      const { data: newBusiness, error: newBusinessError } = await supabaseAdmin
+        .from("businesses")
+        .insert({
+          user_id: userId,
+          name: customerName ? `${customerName}'s Business` : customerEmail,
+          type: "restaurant",
+          subscription_plan: planSlug,
+          created_by: userId,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (newBusinessError) {
+        console.error("❌ Error creating business:", newBusinessError);
+        throw newBusinessError;
+      }
+      businessId = newBusiness.id;
+      console.log("✅ Created business:", businessId);
+    }
+
+    // Create or update subscription in database
+    console.log("💳 Creating subscription record...");
+    const { data: existingSubscription } = await supabaseAdmin
+      .from("business_subscriptions")
+      .select("id")
+      .eq("stripe_subscription_id", session.subscription as string)
+      .eq("status", "active")
+      .single();
+
+    const subscriptionData = {
+      business_id: businessId,
+      plan_id: (
+        await supabaseAdmin
+          .from("subscription_plans")
+          .select("id")
+          .eq("slug", planSlug)
+          .single()
+      ).data?.id,
+      status: "trial",
+      current_period_start: new Date().toISOString(),
+      current_period_end: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000
+      ).toISOString(),
+      trial_start: new Date().toISOString(),
+      trial_end: new Date(
+        Date.now() + STRIPE_CONFIG.trialDays * 24 * 60 * 60 * 1000
+      ).toISOString(),
+      stripe_subscription_id: session.subscription as string,
+      stripe_customer_id: session.customer as string,
+    };
+
+    if (existingSubscription) {
+      console.log("💳 Updating existing subscription...");
+      await supabaseAdmin
+        .from("business_subscriptions")
+        .update(subscriptionData)
+        .eq("id", existingSubscription.id);
+    } else {
+      console.log("💳 Creating new subscription...");
+      await supabaseAdmin
+        .from("business_subscriptions")
+        .insert(subscriptionData);
+    }
+
+    // Create billing history record
+    console.log("💰 Creating billing history...");
+    await supabaseAdmin.from("billing_history").insert({
+      business_id: businessId,
+      subscription_id: existingSubscription?.id,
+      amount: plan.price * 100, // Convert to cents
+      currency: STRIPE_CONFIG.currency,
+      status: "paid",
+      payment_method: "card",
+      stripe_payment_intent_id: session.payment_intent as string,
+      paid_at: new Date().toISOString(),
+    });
+
+    console.log("🎉 Successfully processed checkout session for user:", userId);
+    console.log("📊 Summary:", {
+      userId,
+      businessId,
+      planSlug,
+      customerEmail,
+    });
+  } catch (error) {
+    console.error("❌ Error in handleCheckoutSessionCompleted:", error);
+    throw error;
+  }
+}
+
+async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+  const { planSlug } = subscription.metadata || {};
+
+  if (!planSlug) {
+    return; // Skip if no metadata
+  }
+
+  // Update subscription status
+  await supabaseAdmin
+    .from("business_subscriptions")
+    .update({
+      status: subscription.status,
+      // Removed current_period_start and current_period_end
+      trial_start: subscription.trial_start
+        ? new Date(subscription.trial_start * 1000).toISOString()
+        : null,
+      trial_end: subscription.trial_end
+        ? new Date(subscription.trial_end * 1000).toISOString()
+        : null,
+      cancel_at_period_end: subscription.cancel_at_period_end,
+    })
+    .eq("stripe_subscription_id", subscription.id);
+}
+
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  // Update subscription status
+  await supabaseAdmin
+    .from("business_subscriptions")
+    .update({
+      status: subscription.status,
+      // Removed current_period_start and current_period_end
+      cancel_at_period_end: subscription.cancel_at_period_end,
+    })
+    .eq("stripe_subscription_id", subscription.id);
+}
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  // Mark subscription as cancelled
+  await supabaseAdmin
+    .from("business_subscriptions")
+    .update({
+      status: "cancelled",
+      cancelled_at: new Date().toISOString(),
+    })
+    .eq("stripe_subscription_id", subscription.id);
+}
+
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+  if (!(invoice as any).subscription) return;
+
+  // Create billing history record
+  const { data: subscription } = await supabaseAdmin
+    .from("business_subscriptions")
+    .select("business_id, id")
+    .eq("stripe_subscription_id", (invoice as any).subscription)
+    .single();
+
+  if (subscription) {
+    await supabaseAdmin.from("billing_history").insert({
+      business_id: subscription.business_id,
+      subscription_id: subscription.id,
+      amount: invoice.amount_paid,
+      currency: invoice.currency,
+      status: "paid",
+      payment_method: "card",
+      stripe_invoice_id: invoice.id,
+      paid_at: new Date().toISOString(),
+    });
+  }
+}
+
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  if (!(invoice as any).subscription) return;
+
+  // Update subscription status
+  await supabaseAdmin
+    .from("business_subscriptions")
+    .update({
+      status: "past_due",
+    })
+    .eq("stripe_subscription_id", (invoice as any).subscription);
+}
+
 // Handle webhook events
 export async function handleWebhookEvent(event: Stripe.Event) {
   try {
@@ -254,270 +585,11 @@ export async function handleWebhookEvent(event: Stripe.Event) {
   }
 }
 
-// Webhook handlers
-async function handleCheckoutSessionCompleted(
-  session: Stripe.Checkout.Session
-) {
-  const { planSlug } = session.metadata || {};
-
-  if (!planSlug) {
-    throw new Error("Missing metadata in checkout session");
-  }
-
-  // Get plan details
-  const plan = STRIPE_PLANS[planSlug as keyof typeof STRIPE_PLANS];
-  if (!plan) {
-    throw new Error("Invalid plan");
-  }
-
-  // --- USER/BUSINESS PROVISIONING LOGIC ---
-  const customerEmail = session.customer_details?.email;
-  const customerName = session.customer_details?.name;
-
-  if (!customerEmail) {
-    throw new Error("No customer email in checkout session");
-  }
-
-  // 1. Check if user exists in auth.users
-  let { data: user, error: userError } =
-    await supabaseAdmin.auth.admin.listUsers();
-  let userId = user?.users?.find((u) => u.email === customerEmail)?.id;
-
-  if (!userId) {
-    // 2. Create user in auth.users
-    const { data: newUser, error: newUserError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email: customerEmail,
-        email_confirm: true,
-        user_metadata: {
-          name: customerName,
-          planSlug: planSlug,
-        },
-      });
-
-    if (newUserError) {
-      console.error("Error creating user:", newUserError);
-      throw newUserError;
-    }
-
-    userId = newUser.user.id;
-    console.log("Created new user:", userId);
-  }
-
-  // 3. Create profile for user (if doesn't exist)
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", userId)
-    .single();
-
-  if (!existingProfile) {
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: userId,
-      first_name: customerName?.split(" ")[0] || "",
-      last_name: customerName?.split(" ").slice(1).join(" ") || "",
-      roles: ["restaurant_owner"],
-      subscription_plan: planSlug,
-      subscription_status: "active",
-    });
-
-    if (profileError) {
-      console.error("Error creating profile:", profileError);
-      throw profileError;
-    }
-    console.log("Created profile for user:", userId);
-  }
-
-  // 4. Check if business exists for user
-  let { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
-  let businessId = business?.id;
-
-  if (!businessId) {
-    // 5. Create business for user
-    const { data: newBusiness, error: newBusinessError } = await supabase
-      .from("businesses")
-      .insert({
-        user_id: userId,
-        name: customerName ? `${customerName}'s Business` : customerEmail,
-        type: "restaurant",
-        subscription_plan: planSlug,
-        created_by: userId,
-        is_active: true,
-      })
-      .select()
-      .single();
-
-    if (newBusinessError) {
-      console.error("Error creating business:", newBusinessError);
-      throw newBusinessError;
-    }
-    businessId = newBusiness.id;
-    console.log("Created business:", businessId);
-  }
-
-  // Create or update subscription in database
-  const { data: existingSubscription } = await supabase
-    .from("restaurant_subscriptions")
-    .select("id")
-    .eq("stripe_subscription_id", session.subscription as string)
-    .eq("status", "active")
-    .single();
-
-  const subscriptionData = {
-    restaurant_id: businessId,
-    plan_id: (
-      await supabase
-        .from("subscription_plans")
-        .select("id")
-        .eq("slug", planSlug)
-        .single()
-    ).data?.id,
-    status: "trial",
-    current_period_start: new Date().toISOString(),
-    current_period_end: new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000
-    ).toISOString(),
-    trial_start: new Date().toISOString(),
-    trial_end: new Date(
-      Date.now() + STRIPE_CONFIG.trialDays * 24 * 60 * 60 * 1000
-    ).toISOString(),
-    stripe_subscription_id: session.subscription as string,
-    stripe_customer_id: session.customer as string,
-  };
-
-  if (existingSubscription) {
-    await supabase
-      .from("restaurant_subscriptions")
-      .update(subscriptionData)
-      .eq("id", existingSubscription.id);
-  } else {
-    await supabase.from("restaurant_subscriptions").insert(subscriptionData);
-  }
-
-  // Create billing history record
-  await supabase.from("billing_history").insert({
-    restaurant_id: businessId,
-    subscription_id: existingSubscription?.id,
-    amount: plan.price * 100, // Convert to cents
-    currency: STRIPE_CONFIG.currency,
-    status: "paid",
-    payment_method: "card",
-    stripe_payment_intent_id: session.payment_intent as string,
-    paid_at: new Date().toISOString(),
-  });
-
-  console.log("Successfully processed checkout session for user:", userId);
-}
-
-async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
-  const { planSlug } = subscription.metadata || {};
-
-  if (!planSlug) {
-    return; // Skip if no metadata
-  }
-
-  // Update subscription status
-  await supabase
-    .from("restaurant_subscriptions")
-    .update({
-      status: subscription.status,
-      // Removed current_period_start and current_period_end
-      trial_start: subscription.trial_start
-        ? new Date(subscription.trial_start * 1000).toISOString()
-        : null,
-      trial_end: subscription.trial_end
-        ? new Date(subscription.trial_end * 1000).toISOString()
-        : null,
-      cancel_at_period_end: subscription.cancel_at_period_end,
-    })
-    .eq("stripe_subscription_id", subscription.id);
-}
-
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  // Update subscription status
-  await supabase
-    .from("restaurant_subscriptions")
-    .update({
-      status: subscription.status,
-      // Removed current_period_start and current_period_end
-      cancel_at_period_end: subscription.cancel_at_period_end,
-    })
-    .eq("stripe_subscription_id", subscription.id);
-}
-
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  // Mark subscription as cancelled
-  await supabase
-    .from("restaurant_subscriptions")
-    .update({
-      status: "cancelled",
-      cancelled_at: new Date().toISOString(),
-    })
-    .eq("stripe_subscription_id", subscription.id);
-}
-
-async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-  if (!(invoice as any).subscription) return;
-
-  // Create billing history record
-  const { data: subscription } = await supabase
-    .from("restaurant_subscriptions")
-    .select("restaurant_id, id")
-    .eq("stripe_subscription_id", (invoice as any).subscription)
-    .single();
-
-  if (subscription) {
-    await supabase.from("billing_history").insert({
-      restaurant_id: subscription.restaurant_id,
-      subscription_id: subscription.id,
-      amount: invoice.amount_paid,
-      currency: invoice.currency,
-      status: "paid",
-      payment_method: "card",
-      stripe_invoice_id: invoice.id,
-      paid_at: new Date().toISOString(),
-    });
-  }
-}
-
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  if (!(invoice as any).subscription) return;
-
-  // Create billing history record for failed payment
-  const { data: subscription } = await supabase
-    .from("restaurant_subscriptions")
-    .select("restaurant_id, id")
-    .eq("stripe_subscription_id", (invoice as any).subscription)
-    .single();
-
-  if (subscription) {
-    await supabase.from("billing_history").insert({
-      restaurant_id: subscription.restaurant_id,
-      subscription_id: subscription.id,
-      amount: invoice.amount_due,
-      currency: invoice.currency,
-      status: "failed",
-      payment_method: "card",
-      stripe_invoice_id: invoice.id,
-      created_at: new Date().toISOString(),
-    });
-  }
-}
-
-// Utility functions
+// Helper functions
 export async function getSubscriptionByStripeId(stripeSubscriptionId: string) {
-  const { data, error } = await supabase
-    .from("restaurant_subscriptions")
-    .select(
-      `
-      *,
-      plan:subscription_plans(*)
-    `
-    )
+  const { data, error } = await supabaseAdmin
+    .from("business_subscriptions")
+    .select("*")
     .eq("stripe_subscription_id", stripeSubscriptionId)
     .single();
 
@@ -526,25 +598,27 @@ export async function getSubscriptionByStripeId(stripeSubscriptionId: string) {
 }
 
 export async function cancelSubscription(stripeSubscriptionId: string) {
-  try {
-    await stripe.subscriptions.update(stripeSubscriptionId, {
-      cancel_at_period_end: true,
-    });
-  } catch (error) {
-    console.error("Error cancelling subscription:", error);
-    throw new Error("Failed to cancel subscription");
-  }
+  const { error } = await supabaseAdmin
+    .from("business_subscriptions")
+    .update({
+      status: "cancelled",
+      cancelled_at: new Date().toISOString(),
+    })
+    .eq("stripe_subscription_id", stripeSubscriptionId);
+
+  if (error) throw error;
 }
 
 export async function reactivateSubscription(stripeSubscriptionId: string) {
-  try {
-    await stripe.subscriptions.update(stripeSubscriptionId, {
-      cancel_at_period_end: false,
-    });
-  } catch (error) {
-    console.error("Error reactivating subscription:", error);
-    throw new Error("Failed to reactivate subscription");
-  }
+  const { error } = await supabaseAdmin
+    .from("business_subscriptions")
+    .update({
+      status: "active",
+      cancelled_at: null,
+    })
+    .eq("stripe_subscription_id", stripeSubscriptionId);
+
+  if (error) throw error;
 }
 
 export default stripe;

@@ -227,35 +227,22 @@ export const subscriptionPlans: SubscriptionPlan[] = [
 ];
 
 export async function getUserSubscription(userId: string) {
-  try {
-    const { data: subscription, error } = await supabase
-      .from("restaurant_subscriptions")
-      .select(
-        `
-        *,
-        plan:subscription_plans(*)
-      `
-      )
-      .eq(
-        "restaurant_id",
-        (
-          await supabase
-            .from("restaurant_staff")
-            .select("restaurant_id")
-            .eq("user_id", userId)
-            .eq("is_active", true)
-            .single()
-        ).data?.restaurant_id
-      )
-      .eq("status", "active")
-      .single();
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
 
-    if (error) throw error;
-    return subscription;
-  } catch (error) {
-    console.error("Error fetching subscription:", error);
-    return null;
-  }
+  if (!business) return null;
+
+  const { data: subscription } = await supabase
+    .from("business_subscriptions")
+    .select("*")
+    .eq("business_id", business.id)
+    .eq("status", "active")
+    .single();
+
+  return subscription;
 }
 
 export async function getUserFeatures(
@@ -385,4 +372,49 @@ export function getPlanFeatures(slug: string): PremiumFeatures | null {
 export function getPlanLimits(slug: string) {
   const plan = getPlanBySlug(slug);
   return plan?.limits || null;
+}
+
+export async function checkSubscriptionStatus(userId: string) {
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+
+  if (!business) return { hasSubscription: false, subscription: null };
+
+  const { data: subscription } = await supabase
+    .from("business_subscriptions")
+    .select("*")
+    .eq("business_id", business.id)
+    .in("status", ["active", "trial"])
+    .single();
+
+  return {
+    hasSubscription: !!subscription,
+    subscription,
+  };
+}
+
+export async function getSubscriptionDetails(userId: string) {
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+
+  if (!business) return null;
+
+  const { data: subscription } = await supabase
+    .from("business_subscriptions")
+    .select(
+      `
+      *,
+      plan:subscription_plans(*)
+    `
+    )
+    .eq("business_id", business.id)
+    .single();
+
+  return subscription;
 }

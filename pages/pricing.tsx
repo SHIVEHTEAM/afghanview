@@ -277,7 +277,7 @@ export default function PricingPage() {
       body: JSON.stringify({
         planSlug: planId,
         interval: billingPeriod,
-        successUrl: window.location.origin + "/onboarding",
+        successUrl: window.location.origin + "/payment-success",
         cancelUrl: window.location.href,
       }),
     });

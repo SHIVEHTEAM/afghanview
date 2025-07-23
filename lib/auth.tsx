@@ -120,20 +120,26 @@ export const authOptions: AuthOptions = {
         token.role = user.role;
         token.business_id = user.business_id;
       }
+      const secret = process.env.NEXTAUTH_SECRET;
+      if (!secret) {
+        throw new Error(
+          "NEXTAUTH_SECRET is not set in environment variables! Please add it to your .env.local file."
+        );
+      }
       token.accessToken = await encode({
         token,
-        secret: process.env.NEXTAUTH_SECRET,
+        secret,
       });
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        (session.user as any).id = token.id;
-        (session.user as any).email = token.email;
-        (session.user as any).name = token.name;
-        (session.user as any).role = token.role;
-        (session.user as any).business_id = token.business_id;
-        session.accessToken = token.accessToken;
+        (session.user as any).id = (token as any).id;
+        (session.user as any).email = (token as any).email;
+        (session.user as any).name = (token as any).name;
+        (session.user as any).role = (token as any).role;
+        (session.user as any).business_id = (token as any).business_id;
+        session.accessToken = (token as any).accessToken;
       }
       return session;
     },

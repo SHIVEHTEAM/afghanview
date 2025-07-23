@@ -39,6 +39,7 @@ import SuccessMessage from "../../../ui/SuccessMessage";
 import ErrorMessage from "../../../ui/ErrorMessage";
 import { MenuSVGGenerator } from "../../../slideshow-creator/menu/svg-generator";
 import MultiTrackMusicSelector from "../../../slideshow-creator/shared/MultiTrackMusicSelector";
+import DeleteConfirmationModal from "../../../common/DeleteConfirmationModal";
 
 interface Slideshow {
   id: string;
@@ -56,6 +57,8 @@ interface Slideshow {
   settings?: any;
   content?: any;
   images?: any[];
+  background_music?: string;
+  backgroundMusic?: string;
 }
 
 interface UserRole {
@@ -77,7 +80,6 @@ export function SlideshowsTab({
   const { user } = useAuth();
   const {
     setShowSlideshowCreator,
-    handlePlaySlideshow,
     handleEditSlideshow,
     handleDeleteSlideshow,
   } = useSlideshowStore();
@@ -134,6 +136,12 @@ export function SlideshowsTab({
   const [showMusicModal, setShowMusicModal] = useState(false);
   const [selectedSlideshowForMusic, setSelectedSlideshowForMusic] =
     useState<Slideshow | null>(null);
+
+  // Delete confirmation modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [slideshowToDelete, setSlideshowToDelete] = useState<Slideshow | null>(
+    null
+  );
 
   // Update local state when props change
   useEffect(() => {
@@ -323,6 +331,17 @@ export function SlideshowsTab({
   // Check if user can delete slideshows
   const canDelete = userRole ? canDeleteSlideshows(userRole.role) : false;
 
+  // 1. Add helper to get slideshow type
+  const getSlideshowType = (slideshow: Slideshow) => {
+    if (slideshow.content?.slides?.some((s: any) => s.type === "video"))
+      return "video";
+    if (slideshow.content?.slides?.some((s: any) => s.type === "menu"))
+      return "menu";
+    if (slideshow.content?.slides?.some((s: any) => s.type === "text"))
+      return "text";
+    return "image";
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -445,64 +464,158 @@ export function SlideshowsTab({
 
       {/* Enhanced Slideshows Grid */}
       <AnimatePresence>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
           {slideshows.map((slideshow: Slideshow, index: number) => (
             <motion.div
               key={slideshow.id}
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -30, scale: 0.9 }}
+              exit={{ opacity: 0, y: -30, scale: 0.95 }}
               transition={{
                 duration: 0.4,
-                delay: index * 0.1,
+                delay: index * 0.08,
                 type: "spring",
-                stiffness: 100,
+                stiffness: 120,
               }}
-              whileHover={{
-                y: -8,
-                transition: { duration: 0.2 },
-              }}
-              className="bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden group relative flex flex-col"
+              className="bg-white rounded-3xl border-2 border-gray-100 shadow-xl transition-all duration-300 overflow-hidden group relative flex flex-col min-w-[340px] max-w-[420px] w-full"
             >
-              {/* Slideshow Preview Image */}
-              <div className="relative w-full h-48 overflow-hidden rounded-t-3xl">
-                {/* Status Badge */}
-                <div className="absolute top-3 left-3 z-10">
-                  {slideshow.is_active ? (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-sm"
-                    >
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                      Live
-                    </motion.span>
-                  ) : (
-                    <span className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-sm">
-                      <PowerOff className="w-3 h-3" />
-                      Paused
-                    </span>
-                  )}
-                </div>
-
-                {/* Favorite Badge */}
-                {slideshow.is_favorite && (
-                  <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    className="absolute top-3 right-3 z-10"
-                  >
-                    <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm">
-                      <Heart className="w-4 h-4 text-white fill-current" />
+              {/* Slideshow Preview Image/Video */}
+              <div className="relative w-full h-48 overflow-hidden rounded-t-3xl flex items-center justify-center bg-gray-100">
+                {/* Type Badge */}
+                <span
+                  className={`absolute top-3 left-3 z-10 px-4 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-sm bg-gradient-to-r ${
+                    getSlideshowType(slideshow) === "video"
+                      ? "from-blue-400 to-blue-600 text-white"
+                      : getSlideshowType(slideshow) === "menu"
+                      ? "from-green-400 to-green-600 text-white"
+                      : getSlideshowType(slideshow) === "text"
+                      ? "from-yellow-300 to-yellow-500 text-gray-900"
+                      : "from-gray-300 to-gray-500 text-gray-900"
+                  } border border-white/60 drop-shadow-lg`}
+                  style={{ boxShadow: "0 2px 8px 0 rgba(60,60,120,0.10)" }}
+                >
+                  {getSlideshowType(slideshow).toUpperCase()}
+                </span>
+                {/* Feature Badges Row (Music, AI, Menu, etc.) */}
+                {(() => {
+                  const s = slideshow.settings || {};
+                  const hasMusic =
+                    s.music_playlist_id ||
+                    s.backgroundMusic ||
+                    s.background_music ||
+                    (s.music &&
+                      (s.music.music_playlist_id ||
+                        s.music.background_music ||
+                        s.music.backgroundMusic ||
+                        s.music.track_url ||
+                        (Array.isArray(s.music.tracks) &&
+                          s.music.tracks.length > 0) ||
+                        (s.music.tracks &&
+                          typeof s.music.tracks === "object" &&
+                          !Array.isArray(s.music.tracks) &&
+                          Object.keys(s.music.tracks).length > 0)));
+                  return (
+                    <div className="absolute top-14 left-3 z-10 flex gap-2">
+                      {/* Music badge */}
+                      {hasMusic && (
+                        <span
+                          title="Music enabled"
+                          className="bg-pink-100 text-pink-600 rounded-full p-1 flex items-center justify-center shadow-sm"
+                        >
+                          <Music className="w-4 h-4" />
+                        </span>
+                      )}
+                      {/* AI badge */}
+                      {slideshow.content?.slides?.some(
+                        (s: any) =>
+                          s.is_ai_generated ||
+                          s.is_auto_generated ||
+                          s.aiGenerated ||
+                          s.autoGenerated
+                      ) && (
+                        <span
+                          title="AI-generated content"
+                          className="bg-blue-100 text-blue-600 rounded-full p-1 flex items-center justify-center shadow-sm"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                        </span>
+                      )}
+                      {/* Menu badge */}
+                      {slideshow.content?.slides?.some(
+                        (s: any) => s.type === "menu"
+                      ) && (
+                        <span
+                          title="Menu slide"
+                          className="bg-green-100 text-green-600 rounded-full p-1 flex items-center justify-center shadow-sm"
+                        >
+                          <Palette className="w-4 h-4" />
+                        </span>
+                      )}
                     </div>
-                  </motion.div>
-                )}
-
-                {slideshow.content?.slides?.length > 0 ||
-                slideshow.content?.images?.length > 0 ? (
-                  <motion.img
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
+                  );
+                })()}
+                {/* Preview logic */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/10 pointer-events-none rounded-t-3xl" />
+                {getSlideshowType(slideshow) === "video" ? (
+                  (() => {
+                    const firstVideo = slideshow.content?.slides?.find(
+                      (s: any) => s.type === "video"
+                    );
+                    const videoUrl = firstVideo?.url || firstVideo?.file_path;
+                    const thumbnail = firstVideo?.thumbnail;
+                    if (videoUrl) {
+                      return (
+                        <div className="relative w-full h-full">
+                          <video
+                            src={videoUrl}
+                            className="w-full h-full object-cover rounded-t-3xl shadow-inner"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            preload="metadata"
+                            poster={thumbnail}
+                            style={{ background: "#222" }}
+                          />
+                          {/* Play overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-black/40 rounded-full p-3">
+                              <Play className="w-10 h-10 text-white drop-shadow-lg" />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } else if (thumbnail) {
+                      return (
+                        <div className="relative w-full h-full">
+                          <img
+                            src={thumbnail}
+                            alt="Video thumbnail"
+                            className="w-full h-full object-cover rounded-t-3xl shadow-inner"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-black/40 rounded-full p-3">
+                              <Play className="w-10 h-10 text-white drop-shadow-lg" />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="relative w-full h-full flex items-center justify-center bg-gray-200 rounded-t-3xl">
+                          <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400 rounded-t-3xl" />
+                          <div className="relative z-10 flex items-center justify-center w-full h-full">
+                            <div className="bg-black/40 rounded-full p-3">
+                              <Play className="w-10 h-10 text-white drop-shadow-lg" />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })()
+                ) : slideshow.content?.slides?.length > 0 ||
+                  slideshow.content?.images?.length > 0 ? (
+                  <img
                     src={(() => {
                       const firstSlide = slideshow.content?.slides?.[0];
                       if (firstSlide?.type === "menu" && firstSlide.menuData) {
@@ -520,336 +633,140 @@ export function SlideshowsTab({
                       );
                     })()}
                     alt={slideshow.title || "Slideshow preview"}
-                    className="w-full h-full object-cover rounded-t-3xl shadow-md"
+                    className="w-full h-full object-cover rounded-t-3xl shadow-inner"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/no-image.png";
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 rounded-t-3xl">
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <Image className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <p className="text-sm">No preview available</p>
-                    </div>
+                    <Image className="w-8 h-8" />
+                    <p className="text-sm ml-2">No preview</p>
                   </div>
                 )}
-
-                {/* Overlay with action buttons (show on hover) */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                {/* Favorite Heart (top right) */}
+                <motion.button
+                  whileTap={{ scale: 0.8 }}
+                  whileHover={{
+                    scale: 1.15,
+                    boxShadow: slideshow.is_favorite
+                      ? "0 0 12px 2px #ef4444"
+                      : "0 0 8px 0 #f3f4f6",
+                  }}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const response = await fetch(
+                      `/api/slideshows/${slideshow.id}`,
+                      {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          is_favorite: !slideshow.is_favorite,
+                        }),
+                      }
+                    );
+                    if (response.ok) {
+                      setSlideshows((slideshows) =>
+                        slideshows.map((s) =>
+                          s.id === slideshow.id
+                            ? { ...s, is_favorite: !s.is_favorite }
+                            : s
+                        )
+                      );
+                    }
+                  }}
+                  className={`absolute top-3 right-3 z-10 p-2 rounded-full transition-all duration-200 shadow-lg backdrop-blur-sm border-2 border-white/70 ${
+                    slideshow.is_favorite
+                      ? "bg-red-500 text-white animate-pulse shadow-red-300"
+                      : "bg-white text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  }`}
+                  title={
+                    slideshow.is_favorite
+                      ? "Remove from favorites"
+                      : "Add to favorites"
+                  }
+                  style={
+                    slideshow.is_favorite
+                      ? { boxShadow: "0 0 16px 2px #ef4444" }
+                      : {}
+                  }
                 >
+                  <Heart
+                    className={`w-6 h-6 ${
+                      slideshow.is_favorite ? "fill-current" : ""
+                    }`}
+                  />
+                </motion.button>
+              </div>
+              {/* Card Content */}
+              <div className="p-7 flex-1 flex flex-col justify-between">
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="text-2xl font-extrabold text-gray-900 break-words flex-1 mr-3 leading-snug max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg">
+                    {slideshow.title}
+                  </h3>
+                </div>
+                {/* Action Buttons Row */}
+                <div className="flex gap-4 mt-3 flex-wrap">
+                  {/* Play (Preview in modal) */}
                   <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() =>
-                      handlePlaySlideshow(convertToSavedSlideshow(slideshow))
-                    }
-                    className="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-colors shadow-lg"
-                    title="Preview"
-                  >
-                    <Play className="w-5 h-5" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() =>
-                      handleEditSlideshow(convertToSavedSlideshow(slideshow))
-                    }
-                    className="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-colors shadow-lg"
-                    title="Edit"
-                  >
-                    <Edit className="w-5 h-5" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ scale: 1.12 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() =>
                       window.open(`/slideshow/${slideshow.id}`, "_blank")
                     }
-                    className="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-colors shadow-lg"
+                    className="bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 p-3 rounded-full hover:from-blue-200 hover:to-blue-300 transition-all shadow-md border border-blue-200"
+                    title="Play"
+                  >
+                    <Play className="w-5 h-5" />
+                  </motion.button>
+                  {/* TV (Open in new tab) */}
+                  <motion.button
+                    whileHover={{ scale: 1.12 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() =>
+                      window.open(`/slideshow/${slideshow.id}`, "_blank")
+                    }
+                    className="bg-gradient-to-r from-green-100 to-green-200 text-green-700 p-3 rounded-full hover:from-green-200 hover:to-green-300 transition-all shadow-md border border-green-200"
                     title="Open on TV"
                   >
                     <Monitor className="w-5 h-5" />
                   </motion.button>
+                  {/* Edit */}
                   <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => {
-                      setSelectedSlideshowForMusic(slideshow);
-                      setShowMusicModal(true);
-                    }}
-                    className="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-colors shadow-lg"
-                    title="Music Settings"
-                  >
-                    <Music className="w-5 h-5" />
-                  </motion.button>
-                </motion.div>
-
-                {/* Status/Stats Badges */}
-                {slideshow.play_count && slideshow.play_count > 0 && (
-                  <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
-                    <Eye className="w-3 h-3 inline mr-1" />
-                    {slideshow.play_count} plays
-                  </div>
-                )}
-                {((slideshow.content?.slides &&
-                  slideshow.content.slides.length > 1) ||
-                  (slideshow.content?.images &&
-                    slideshow.content.images.length > 1)) && (
-                  <div className="absolute bottom-4 right-4 bg-black bg-opacity-75 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
-                    <Image className="w-3 h-3 inline mr-1" />
-                    {(slideshow.content?.slides?.length ||
-                      slideshow.content?.images?.length ||
-                      0) + " items"}
-                  </div>
-                )}
-              </div>
-
-              {/* Card Content */}
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-800 break-words flex-1 mr-3 leading-snug max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg">
-                    {slideshow.title}
-                  </h3>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => toggleFavorite(slideshow)}
-                    className={`p-2 rounded-xl transition-all duration-200 ${
-                      slideshow.is_favorite
-                        ? "text-red-500 bg-red-50 hover:bg-red-100"
-                        : "text-gray-400 hover:text-red-500 hover:bg-gray-50"
-                    }`}
-                    title={
-                      slideshow.is_favorite
-                        ? "Remove from favorites"
-                        : "Add to favorites"
-                    }
-                  >
-                    <Heart
-                      className={`w-5 h-5 ${
-                        slideshow.is_favorite ? "fill-current" : ""
-                      }`}
-                    />
-                  </motion.button>
-                </div>
-
-                {/* Enhanced Stats */}
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      {slideshow.content?.slides?.[0]?.type === "video" ||
-                      slideshow.content?.slides?.[0]?.url?.includes("video") ||
-                      slideshow.content?.slides?.[0]?.file_path?.includes(
-                        "video"
-                      ) ? (
-                        <Play className="w-4 h-4" />
-                      ) : (
-                        <Image className="w-4 h-4" />
-                      )}
-                      {slideshow.content?.slides?.length ||
-                        slideshow.content?.images?.length ||
-                        0}{" "}
-                      {slideshow.content?.slides?.[0]?.type === "video" ||
-                      slideshow.content?.slides?.[0]?.url?.includes("video") ||
-                      slideshow.content?.slides?.[0]?.file_path?.includes(
-                        "video"
-                      )
-                        ? "videos"
-                        : "items"}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {(() => {
-                        const slides = slideshow.content?.slides || [];
-                        if (
-                          slides[0]?.type === "video" ||
-                          slides[0]?.url?.includes("video") ||
-                          slides[0]?.file_path?.includes("video")
-                        ) {
-                          const totalMs = slides.reduce(
-                            (sum: number, s: any) => sum + (s.duration || 0),
-                            0
-                          );
-                          const totalSec = Math.round(totalMs / 1000);
-                          const min = Math.floor(totalSec / 60);
-                          const sec = totalSec % 60;
-                          return `${min}:${sec.toString().padStart(2, "0")}`;
-                        } else {
-                          const count =
-                            slides.length ||
-                            slideshow.content?.images?.length ||
-                            0;
-                          const duration =
-                            (slideshow.settings?.duration ?? 5000) * count;
-                          const totalSec = Math.round(duration / 1000);
-                          const min = Math.floor(totalSec / 60);
-                          const sec = totalSec % 60;
-                          return `${min}:${sec.toString().padStart(2, "0")}`;
-                        }
-                      })()}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(slideshow.created_at).toLocaleDateString()}
-                    </span>
-                    {slideshow.last_played && (
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        {formatDate(slideshow.last_played)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Enhanced Features */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {slideshow.content?.isTemplate && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      Template
-                    </span>
-                  )}
-                  {slideshow.settings?.transition && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      <Palette className="w-3 h-3 mr-1" />
-                      {slideshow.settings.transition}
-                    </span>
-                  )}
-                  {(slideshow.settings?.backgroundMusic ||
-                    slideshow.settings?.background_music ||
-                    slideshow.settings?.music_playlist_id) && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <Music className="w-3 h-3 mr-1" />
-                      Music
-                    </span>
-                  )}
-                </div>
-
-                {/* Enhanced Action Buttons */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => toggleActive(slideshow)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      slideshow.is_active
-                        ? "bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600"
-                        : "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600"
-                    }`}
-                  >
-                    {slideshow.is_active ? (
-                      <>
-                        <PowerOff className="w-4 h-4 inline mr-1" />
-                        Pause
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4 inline mr-1" />
-                        Activate
-                      </>
-                    )}
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() =>
-                      copyToClipboard(
-                        `${window.location.origin}/slideshow/${slideshow.id}`,
-                        slideshow.id
-                      )
-                    }
-                    className="px-4 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all duration-200"
-                    title="Copy link"
-                  >
-                    {copiedLink === slideshow.id ? (
-                      <>
-                        <Check className="w-4 h-4 inline mr-1" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Share2 className="w-4 h-4 inline mr-1" />
-                        Share
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-
-                <div className="grid grid-cols-4 gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => generateQrCode(slideshow)}
-                    className="px-3 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
-                    title="QR Code"
-                  >
-                    <QrCode className="w-4 h-4 inline mr-1" />
-                    QR
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() =>
-                      window.open(`/slideshow/${slideshow.id}`, "_blank")
-                    }
-                    className="px-3 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
-                    title="Open on TV"
-                  >
-                    <Monitor className="w-4 h-4 inline mr-1" />
-                    TV
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.12 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() =>
                       handleEditSlideshow(convertToSavedSlideshow(slideshow))
                     }
-                    className="px-3 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 transition-all duration-200"
+                    className="bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-700 p-3 rounded-full hover:from-yellow-200 hover:to-yellow-300 transition-all shadow-md border border-yellow-200"
                     title="Edit"
                   >
-                    <Edit className="w-4 h-4 inline mr-1" />
-                    Edit
+                    <Edit className="w-5 h-5" />
                   </motion.button>
-
+                  {/* Music Settings */}
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.12 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(
-                          `/api/slideshows/${slideshow.id}`,
-                          {
-                            method: "DELETE",
-                            headers: { "Content-Type": "application/json" },
-                            credentials: "include", // Ensure cookies/session are sent
-                          }
-                        );
-                        if (!response.ok) {
-                          const error = await response.json().catch(() => ({}));
-                          setErrorMessage(
-                            error.error || "Failed to delete slideshow"
-                          );
-                          setShowErrorMessage(true);
-                          return;
-                        }
-                        onRefresh?.();
-                      } catch (err) {
-                        setErrorMessage("Failed to delete slideshow");
-                        setShowErrorMessage(true);
-                      }
+                    onClick={() => {
+                      setSelectedSlideshowForMusic(slideshow);
+                      setShowMusicModal(true);
+                    }}
+                    className="bg-gradient-to-r from-pink-100 to-pink-200 text-pink-700 p-3 rounded-full hover:from-pink-200 hover:to-pink-300 transition-all shadow-md border border-pink-200"
+                    title="Music Settings"
+                  >
+                    <Music className="w-5 h-5" />
+                  </motion.button>
+                  {/* Delete */}
+                  <motion.button
+                    whileHover={{ scale: 1.12 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setSlideshowToDelete(slideshow);
+                      setShowDeleteModal(true);
                     }}
                     disabled={!canDelete}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      canDelete
-                        ? "bg-gradient-to-r from-red-500 to-rose-500 text-white hover:from-red-600 hover:to-rose-600"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    className={`bg-gradient-to-r from-red-100 to-red-200 text-red-700 p-3 rounded-full hover:from-red-200 hover:to-red-300 transition-all shadow-md border border-red-200 ${
+                      !canDelete ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                     title={
                       canDelete
@@ -857,9 +774,27 @@ export function SlideshowsTab({
                         : "Only owners and managers can delete slideshows"
                     }
                   >
-                    <Trash2 className="w-4 h-4 inline mr-1" />
-                    Del
+                    <Trash2 className="w-5 h-5" />
                   </motion.button>
+                </div>
+                {/* Stats Row */}
+                <div className="flex items-center gap-4 mt-5 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {new Date(slideshow.created_at).toLocaleDateString()}
+                  </span>
+                  {slideshow.last_played && (
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      {formatDate(slideshow.last_played)}
+                    </span>
+                  )}
+                  {slideshow.play_count && (
+                    <span className="flex items-center gap-1">
+                      <Play className="w-4 h-4" />
+                      {slideshow.play_count} plays
+                    </span>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -1010,6 +945,50 @@ export function SlideshowsTab({
           currentSettings={selectedSlideshowForMusic.settings}
           title="Choose Music for Slideshow"
           description="Select multiple tracks to play in sequence during your slideshow"
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && slideshowToDelete && (
+        <DeleteConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={async () => {
+            try {
+              const session = await supabase.auth.getSession();
+              const accessToken = session.data.session?.access_token;
+              const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+              };
+              if (accessToken)
+                headers["Authorization"] = `Bearer ${accessToken}`;
+              const response = await fetch(
+                `/api/slideshows/${slideshowToDelete.id}`,
+                {
+                  method: "DELETE",
+                  headers,
+                }
+              );
+              if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                setErrorMessage(error.error || "Failed to delete slideshow");
+                setShowErrorMessage(true);
+                setShowDeleteModal(false);
+                return;
+              }
+              setShowDeleteModal(false);
+              setSlideshowToDelete(null);
+              onRefresh?.();
+            } catch (err) {
+              setErrorMessage("Failed to delete slideshow");
+              setShowErrorMessage(true);
+              setShowDeleteModal(false);
+            }
+          }}
+          itemName={slideshowToDelete.title}
+          title="Delete Slideshow"
+          message="Are you sure you want to delete this slideshow? This action cannot be undone."
+          type="slideshow"
         />
       )}
     </div>

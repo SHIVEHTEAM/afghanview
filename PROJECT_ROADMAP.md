@@ -14,7 +14,7 @@
 - [x] Supabase integration (Auth, Database, Storage)
 - [x] TailwindCSS + Framer Motion styling
 - [x] Vercel deployment configuration
-- [x] Bun package manager setup
+- [x] pnpm package manager setup
 
 ### **2. Authentication System** ✅
 

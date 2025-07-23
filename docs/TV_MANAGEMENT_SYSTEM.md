@@ -452,7 +452,7 @@ Response:
 2. **Install Dependencies**
 
    ```bash
-   bun install
+   pnpm install
    ```
 
 3. **Environment Setup**
@@ -464,7 +464,7 @@ Response:
 
 4. **Start Development Server**
    ```bash
-   bun run dev
+   pnpm run dev
    ```
 
 ### Code Standards
@@ -478,13 +478,13 @@ Response:
 
 ```bash
 # Run unit tests
-bun test
+pnpm test
 
 # Run integration tests
-bun test:integration
+pnpm test:integration
 
 # Run e2e tests
-bun test:e2e
+pnpm test:e2e
 ```
 
 ## 📞 Support

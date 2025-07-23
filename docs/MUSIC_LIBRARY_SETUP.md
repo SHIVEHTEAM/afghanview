@@ -15,7 +15,7 @@ The AfghanView Music Library is a comprehensive system that provides:
 ### 1. Run the Database Setup
 
 ```bash
-bun run setup-music-library
+pnpm run setup-music-library
 ```
 
 This will:
@@ -31,7 +31,7 @@ This will:
 If you have existing music files in storage, organize them:
 
 ```bash
-bun run organize-music-storage
+pnpm run organize-music-storage
 ```
 
 This will:
@@ -211,10 +211,10 @@ const tracks = await MusicService.getTracks({
 
 ```bash
 # Check database tables
-bun run setup-music-library
+pnpm run setup-music-library
 
 # Organize storage
-bun run organize-music-storage
+pnpm run organize-music-storage
 
 # Check Supabase connection
 curl -H "apikey: YOUR_ANON_KEY" \
@@ -243,8 +243,8 @@ After setup:
 
 If migrating from the old music system:
 
-1. Run `bun run setup-music-library` to create new tables
-2. Run `bun run organize-music-storage` to reorganize files
+1. Run `pnpm run setup-music-library` to create new tables
+2. Run `pnpm run organize-music-storage` to reorganize files
 3. Update any hardcoded music references in your code
 4. Test all music functionality
 

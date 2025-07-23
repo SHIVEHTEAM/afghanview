@@ -132,7 +132,7 @@ CREATE TABLE public.businesses (
   business_type text DEFAULT 'restaurant'::text,
   created_by uuid,
   is_verified boolean DEFAULT false,
-  subscription_plan text DEFAULT 'free'::text,
+  subscription_plan text DEFAULT 'starter'::text,
   ai_credits integer DEFAULT 10 CHECK (ai_credits >= 0),
   ai_credits_used integer DEFAULT 0 CHECK (ai_credits_used >= 0),
   max_slideshows integer DEFAULT 1 CHECK (max_slideshows >= 1),
@@ -217,9 +217,9 @@ CREATE TABLE public.facts (
   is_auto_generated boolean DEFAULT false,
   generation_prompt text,
   CONSTRAINT facts_pkey PRIMARY KEY (id),
-  CONSTRAINT facts_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
+  CONSTRAINT facts_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
   CONSTRAINT facts_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id),
-  CONSTRAINT facts_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+  CONSTRAINT facts_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.media_collection_items (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -242,8 +242,8 @@ CREATE TABLE public.media_collections (
   created_by uuid,
   updated_by uuid,
   CONSTRAINT media_collections_pkey PRIMARY KEY (id),
-  CONSTRAINT media_collections_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
   CONSTRAINT media_collections_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
+  CONSTRAINT media_collections_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
   CONSTRAINT media_collections_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.media_files (
@@ -271,8 +271,55 @@ CREATE TABLE public.media_files (
   processing_status text DEFAULT 'completed'::text,
   processing_error text,
   CONSTRAINT media_files_pkey PRIMARY KEY (id),
-  CONSTRAINT media_files_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
-  CONSTRAINT media_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES auth.users(id)
+  CONSTRAINT media_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES auth.users(id),
+  CONSTRAINT media_files_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+);
+CREATE TABLE public.music_categories (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL UNIQUE,
+  description text,
+  icon character varying,
+  color_gradient character varying,
+  sort_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT music_categories_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.music_playlists (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL,
+  description text,
+  business_id uuid,
+  created_by uuid,
+  is_public boolean DEFAULT false,
+  play_mode character varying DEFAULT 'sequential'::character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT music_playlists_pkey PRIMARY KEY (id),
+  CONSTRAINT music_playlists_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
+  CONSTRAINT music_playlists_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+);
+CREATE TABLE public.music_tracks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL,
+  artist character varying NOT NULL,
+  description text,
+  duration integer NOT NULL,
+  file_url text NOT NULL,
+  file_size integer,
+  file_type character varying,
+  category character varying NOT NULL,
+  tags ARRAY,
+  source character varying DEFAULT 'user_upload'::character varying,
+  uploaded_by uuid,
+  is_public boolean DEFAULT true,
+  is_approved boolean DEFAULT true,
+  play_count integer DEFAULT 0,
+  favorite_count integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT music_tracks_pkey PRIMARY KEY (id),
+  CONSTRAINT music_tracks_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -316,6 +363,16 @@ CREATE TABLE public.organizations (
   updated_by uuid,
   CONSTRAINT organizations_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.playlist_tracks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  playlist_id uuid,
+  track_id uuid,
+  position integer NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT playlist_tracks_pkey PRIMARY KEY (id),
+  CONSTRAINT playlist_tracks_track_id_fkey FOREIGN KEY (track_id) REFERENCES public.music_tracks(id),
+  CONSTRAINT playlist_tracks_playlist_id_fkey FOREIGN KEY (playlist_id) REFERENCES public.music_playlists(id)
+);
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
   first_name text,
@@ -329,7 +386,7 @@ CREATE TABLE public.profiles (
   updated_at timestamp with time zone DEFAULT now(),
   ai_credits integer DEFAULT 10 CHECK (ai_credits >= 0),
   ai_credits_used integer DEFAULT 0 CHECK (ai_credits_used >= 0),
-  subscription_plan text DEFAULT 'free'::text,
+  subscription_plan text DEFAULT 'starter'::text,
   subscription_status text DEFAULT 'active'::text,
   subscription_expires_at timestamp with time zone,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
@@ -401,8 +458,8 @@ CREATE TABLE public.slideshow_slides (
   slide_id uuid,
   order_index integer DEFAULT 0,
   CONSTRAINT slideshow_slides_pkey PRIMARY KEY (id),
-  CONSTRAINT slideshow_slides_slide_id_fkey FOREIGN KEY (slide_id) REFERENCES public.slides(id),
-  CONSTRAINT slideshow_slides_slideshow_id_fkey FOREIGN KEY (slideshow_id) REFERENCES public.slideshows(id)
+  CONSTRAINT slideshow_slides_slideshow_id_fkey FOREIGN KEY (slideshow_id) REFERENCES public.slideshows(id),
+  CONSTRAINT slideshow_slides_slide_id_fkey FOREIGN KEY (slide_id) REFERENCES public.slides(id)
 );
 CREATE TABLE public.slideshows (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -436,8 +493,11 @@ CREATE TABLE public.slideshows (
   transition_duration integer DEFAULT 800,
   auto_random_fact boolean DEFAULT false,
   random_fact_interval integer DEFAULT 6,
+  music_playlist_id uuid,
+  music_play_mode character varying DEFAULT 'sequential'::character varying,
   CONSTRAINT slideshows_pkey PRIMARY KEY (id),
-  CONSTRAINT slideshows_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
+  CONSTRAINT slideshows_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
+  CONSTRAINT slideshows_music_playlist_id_fkey FOREIGN KEY (music_playlist_id) REFERENCES public.music_playlists(id)
 );
 CREATE TABLE public.staff_invitations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -453,8 +513,8 @@ CREATE TABLE public.staff_invitations (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT staff_invitations_pkey PRIMARY KEY (id),
-  CONSTRAINT staff_invitations_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
   CONSTRAINT staff_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES auth.users(id),
+  CONSTRAINT staff_invitations_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
   CONSTRAINT staff_invitations_accepted_by_fkey FOREIGN KEY (accepted_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.staff_members (
@@ -488,7 +548,7 @@ CREATE TABLE public.subscriptions (
   business_id uuid,
   stripe_subscription_id text,
   stripe_customer_id text,
-  plan_type text NOT NULL DEFAULT 'free'::text,
+  plan_type text NOT NULL DEFAULT 'starter'::text,
   status text NOT NULL DEFAULT 'active'::text,
   current_period_start timestamp with time zone,
   current_period_end timestamp with time zone,
@@ -505,6 +565,15 @@ CREATE TABLE public.system_settings (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT system_settings_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.user_favorites (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  track_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_favorites_pkey PRIMARY KEY (id),
+  CONSTRAINT user_favorites_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT user_favorites_track_id_fkey FOREIGN KEY (track_id) REFERENCES public.music_tracks(id)
 );
 CREATE TABLE public.user_roles (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

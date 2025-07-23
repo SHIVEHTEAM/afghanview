@@ -44,7 +44,7 @@ NEXT_PUBLIC_SITE_URL=https://shivehview.com
 Run this command to test your email setup:
 
 ```bash
-bun run test-email
+pnpm run test-email
 ```
 
 ## Step 4: Alternative Ports

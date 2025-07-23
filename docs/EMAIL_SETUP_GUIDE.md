@@ -10,7 +10,7 @@ This guide covers all the email options for ShivehView, from free services to bu
 
 ```bash
 # Install
-bun add resend
+pnpm add resend
 
 # Environment variables
 RESEND_API_KEY=your_api_key_here
@@ -29,7 +29,7 @@ RESEND_API_KEY=your_api_key_here
 
 ```bash
 # Install
-bun add @sendgrid/mail
+pnpm add @sendgrid/mail
 
 # Environment variables
 SENDGRID_API_KEY=your_api_key_here
@@ -41,7 +41,7 @@ SENDGRID_API_KEY=your_api_key_here
 
 ```bash
 # Install
-bun add @getbrevo/brevo
+pnpm add @getbrevo/brevo
 
 # Environment variables
 BREVO_API_KEY=your_api_key_here

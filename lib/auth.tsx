@@ -9,6 +9,7 @@ import { useRouter } from "next/router";
 import { supabase } from "./supabase";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { AuthOptions } from "next-auth";
+import { encode } from "next-auth/jwt";
 
 interface User {
   id: string;
@@ -111,7 +112,7 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -119,15 +120,20 @@ export const authOptions: AuthOptions = {
         token.role = user.role;
         token.business_id = user.business_id;
       }
+      token.accessToken = await encode({
+        token,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
       return token;
     },
-    async session({ session, token }: any) {
+    async session({ session, token }) {
       if (token) {
         (session.user as any).id = token.id;
         (session.user as any).email = token.email;
         (session.user as any).name = token.name;
         (session.user as any).role = token.role;
         (session.user as any).business_id = token.business_id;
+        session.accessToken = token.accessToken;
       }
       return session;
     },

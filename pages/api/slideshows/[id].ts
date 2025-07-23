@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../lib/auth";
+// Remove NextAuth imports
+// import { getToken } from "next-auth/jwt";
+// import { authOptions } from "../../../lib/auth";
 // If you see a linter error here, restart your dev server or reinstall node_modules. This is the correct import for NextAuth v4+.
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -12,15 +13,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Use NextAuth v4 session for authentication
-  const session = (await getServerSession(req, res, authOptions)) as any;
-  console.log("COOKIES IN API", req.headers.cookie);
-  console.log("SESSION IN API", session);
-  if (!session || !session.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-  const userId = session.user.id;
-
   const { id } = req.query;
 
   if (!id || typeof id !== "string") {
@@ -29,12 +21,7 @@ export default async function handler(
 
   if (req.method === "GET") {
     try {
-      const { id } = req.query;
-      if (!id || typeof id !== "string") {
-        return res.status(400).json({ error: "Invalid slideshow ID" });
-      }
-
-      // First try to get from slideshows table
+      // Always fetch the slideshow first
       let { data: slideshow, error: slideshowError } = await supabase
         .from("slideshows")
         .select("*")
@@ -95,26 +82,21 @@ export default async function handler(
       // Process images to ensure they have proper URLs
       const processedImages = images.map((image, index) => {
         let processedImage = { ...image };
-
-        // Handle different image formats
         if (image.base64) {
           processedImage.url = image.base64;
         } else if (image.url) {
           processedImage.url = image.url;
         } else if (image.file_path) {
-          // Check if it's already a full URL
           if (image.file_path.startsWith("http")) {
             processedImage.url = image.file_path;
           } else if (image.file_path.startsWith("data:")) {
             processedImage.url = image.file_path;
           } else {
-            // Construct full URL
             processedImage.url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/slideshow-media/${image.file_path}`;
           }
         } else if (image.image_url) {
           processedImage.url = image.image_url;
         }
-
         return processedImage;
       });
 
@@ -125,17 +107,32 @@ export default async function handler(
         content: {
           ...slideshow.content,
           slides: processedImages,
-          // Don't set images field to avoid duplication
-          // images: processedImages, // Removed this line
         },
       };
 
       return res.status(200).json(responseSlideshow);
-    } catch (error) {
-      console.error("Error fetching slideshow:", error);
-      return res.status(500).json({ error: "Internal server error" });
+    } catch (err) {
+      console.error("Error fetching slideshow:", err);
+      return res.status(500).json({ error: "Failed to load slideshow" });
     }
-  } else if (req.method === "PATCH") {
+  }
+
+  // For non-GET methods, require authentication
+  const authHeader = req.headers.authorization;
+  const accessToken = authHeader?.split(" ")[1];
+  if (!accessToken) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(accessToken);
+  if (error || !user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  const userId = user.id;
+
+  if (req.method === "PATCH") {
     try {
       const { isActive, is_active, settings } = req.body;
 
@@ -253,6 +250,16 @@ export default async function handler(
       .eq("is_active", true)
       .single();
     if (staffError || !staff) {
+      // Check if user is the owner in businesses table
+      const { data: business, error: businessError } = await supabase
+        .from("businesses")
+        .select("user_id")
+        .eq("id", slideshow.business_id)
+        .single();
+      if (business && business.user_id === userId) {
+        // Allow owner to delete
+        return await deleteSlideshow(id, res);
+      }
       return res
         .status(403)
         .json({ error: "No permission to delete slideshow" });

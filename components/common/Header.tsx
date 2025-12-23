@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useState } from "react";
+import { Eye } from "lucide-react";
 
 export default function Header({
   onManageSubscription,
@@ -13,11 +14,9 @@ export default function Header({
         <div className="flex items-center justify-between h-20 py-2">
           <div className="flex items-center gap-4 w-full justify-between md:justify-start">
             <div className="flex items-center gap-3">
-              <img
-                src="/Shivehview Transparent Logo.png"
-                alt="Shivehview Logo"
-                className="h-10 w-auto rounded-xl shadow"
-              />
+              <div className="h-10 w-10 bg-gradient-to-r from-purple-600 to-blue-500 rounded-xl flex items-center justify-center shadow">
+                <Eye className="h-6 w-6 text-white" />
+              </div>
               <span className="text-2xl font-extrabold tracking-tight text-gray-900">
                 Shivehview
               </span>

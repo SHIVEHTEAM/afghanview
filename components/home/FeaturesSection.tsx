@@ -32,7 +32,7 @@ const features = [
     icon: Palette,
     title: "Beautiful Templates",
     description:
-      "Choose from hundreds of professionally designed templates for restaurants.",
+      "Choose from hundreds of professionally designed templates for all business types.",
     color: "from-pink-500 to-rose-600",
   },
   {
@@ -46,21 +46,21 @@ const features = [
     icon: Zap,
     title: "AI-Powered Content",
     description:
-      "Generate cultural facts, menu descriptions, and promotional content with AI.",
+      "Generate engaging content, descriptions, and promotional materials with AI for any business type.",
     color: "from-purple-500 to-indigo-600",
   },
   {
     icon: QrCode,
     title: "QR Code Integration",
     description:
-      "Let customers scan QR codes to view your full menu or place orders.",
+      "Let customers scan QR codes to view your content, services, or contact information.",
     color: "from-indigo-500 to-blue-600",
   },
   {
     icon: Music,
     title: "Background Music",
     description:
-      "Add ambient music to create the perfect atmosphere for your restaurant.",
+      "Add ambient music to create the perfect atmosphere for your business space.",
     color: "from-emerald-500 to-purple-600",
   },
   {
@@ -101,13 +101,13 @@ export default function FeaturesSection() {
             Everything You Need for
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
               {" "}
-              Digital Restaurant Displays
+              Digital Business Displays
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             From creating stunning slideshows to managing multiple displays, we
-            provide all the tools you need to transform your restaurant's
-            digital presence.
+            provide all the tools you need to transform your business's
+            digital presence. Perfect for restaurants, real estate, retail, and more.
           </p>
         </motion.div>
 
@@ -149,12 +149,12 @@ export default function FeaturesSection() {
         >
           <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white">
             <h3 className="text-2xl font-bold mb-4">
-              Ready to Transform Your Restaurant?
+              Ready to Transform Your Business?
             </h3>
             <p className="text-lg opacity-90 mb-6">
-              Join thousands of restaurants already using our platform to create
-              engaging digital displays that drive sales and enhance customer
-              experience.
+              Join thousands of businesses already using our platform to create
+              engaging digital displays that drive engagement and enhance customer
+              experience. Perfect for restaurants, real estate, retail, and more.
             </p>
             <button className="inline-flex items-center px-8 py-4 bg-white text-purple-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-300">
               Start Your Free Trial

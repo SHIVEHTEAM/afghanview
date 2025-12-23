@@ -7,6 +7,7 @@ import {
   HeroSection,
   FeaturesSection,
   PricingSection,
+  BusinessTypesSection,
   Header,
 } from "../components/home";
 import Footer from "@/components/common/Footer";
@@ -18,15 +19,15 @@ export default function Home() {
     <>
       <Head>
         <title>
-          Shivehview - AI-Powered Business Display Platform | Digital Signage
+          Shivehview - AI-Powered Business Display Platform | Digital Signage for All Businesses
         </title>
         <meta
           name="description"
-          content="Transform your business with Shivehview - The AI-powered display platform for Afghan businesses with auto-generated cultural content, digital displays, and TV management."
+          content="Transform your business with Shivehview - The AI-powered display platform for restaurants, real estate, retail stores, and all business types. Create stunning digital displays, slideshows, and TV presentations with ease."
         />
         <meta
           name="keywords"
-          content="business digital signage, AI content creation, Afghan business technology, digital display, TV management, slideshow creator, Shivehview"
+          content="business digital signage, AI content creation, digital display, TV management, slideshow creator, restaurant displays, real estate displays, retail displays, Shivehview"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta
@@ -35,7 +36,7 @@ export default function Home() {
         />
         <meta
           property="og:description"
-          content="Transform your business with AI-powered digital signage, cultural content, and digital displays."
+          content="Transform your business with AI-powered digital signage for restaurants, real estate, retail, and all business types. Create stunning displays and presentations."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://shivehview.com" />
@@ -50,7 +51,7 @@ export default function Home() {
         />
         <meta
           name="twitter:description"
-          content="Transform your business with AI-powered digital signage and cultural content."
+          content="Transform your business with AI-powered digital signage for restaurants, real estate, retail, and all business types."
         />
         <meta
           name="twitter:image"
@@ -66,6 +67,7 @@ export default function Home() {
       {/* Main Content */}
       <main>
         <HeroSection />
+        <BusinessTypesSection />
         <FeaturesSection />
         <PricingSection />
       </main>

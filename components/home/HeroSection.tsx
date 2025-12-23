@@ -25,20 +25,20 @@ export default function HeroSection() {
           >
             <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white/90">
               <Sparkles className="w-4 h-4 mr-2" />
-              AI-Powered Restaurant Displays
+              AI-Powered Business Displays
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight text-white">
-              Transform Your Restaurant with
+              Transform Your Business with
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 font-extrabold drop-shadow-lg">
                 Smart Digital Displays
               </span>
             </h1>
 
             <p className="text-xl text-white/80 leading-relaxed font-medium">
-              Create stunning slideshows, showcase your menu, and engage
+              Create stunning slideshows, showcase your services, and engage
               customers with beautiful digital displays powered by AI. Perfect
-              for Afghan restaurants and beyond.
+              for restaurants, real estate, retail stores, and all types of businesses.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -70,12 +70,12 @@ export default function HeroSection() {
             <div className="relative bg-white/80 backdrop-blur-md rounded-2xl p-8 border border-purple-100">
               <div className="aspect-video bg-gradient-to-br from-yellow-200 via-pink-200 to-purple-200 rounded-lg flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-6xl mb-4">🍽️</div>
+                  <div className="text-6xl mb-4">📺</div>
                   <div className="text-2xl font-extrabold mb-2 text-white drop-shadow-lg">
-                    Taimorian
+                    Your Business
                   </div>
                   <div className="text-lg font-semibold text-white/90 drop-shadow">
-                    Authentic Afghan Cuisine
+                    Digital Display Platform
                   </div>
                 </div>
               </div>

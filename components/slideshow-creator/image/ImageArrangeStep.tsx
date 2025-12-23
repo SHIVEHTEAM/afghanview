@@ -1,6 +1,7 @@
 import React from "react";
-import { Grid, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { Grid, ChevronLeft, ChevronRight, Trash2, ArrowLeft, ArrowRight } from "lucide-react";
 import { SlideMedia } from "../shared/types";
+import { motion } from "framer-motion";
 
 interface ImageArrangeStepProps {
   images: SlideMedia[];
@@ -23,60 +24,60 @@ export default function ImageArrangeStep({
   };
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Grid className="w-5 h-5" />
-        Arrange Images
-      </h3>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between px-2">
+        <h3 className="text-xl font-bold text-black flex items-center gap-3">
+          <Grid className="w-5 h-5 text-black/20" />
+          Sequence Arrangement
+        </h3>
+        <span className="text-[10px] font-black text-black/20 uppercase tracking-[0.2em]">{images.length} Units Active</span>
+      </div>
 
       {images.length === 0 ? (
-        <div className="text-gray-500">
-          No images to arrange. Go back and upload images.
+        <div className="p-20 bg-gray-50 rounded-[2rem] border border-dashed border-black/5 text-center">
+          <p className="text-sm font-medium text-black/40">No units detected in memory. Please revert and upload.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {images.map((image, index) => (
-            <div
+            <motion.div
+              layout
               key={image.id}
-              className="relative group bg-gray-50 rounded-lg p-2 flex flex-col items-center"
+              className="relative group bg-white border border-black/5 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all"
             >
-              <img
-                src={image.url}
-                alt={image.name}
-                className="w-24 h-24 object-cover rounded-md border border-gray-200 mb-2"
-              />
-              <div className="text-xs text-gray-700 truncate w-full text-center">
-                {image.name}
+              <div className="aspect-square relative">
+                <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+                <div className="absolute top-3 left-3 w-6 h-6 bg-black text-white text-[10px] font-black rounded-lg flex items-center justify-center shadow-lg">
+                  {index + 1}
+                </div>
               </div>
 
-              <div className="absolute top-1 right-1 flex gap-1">
-                <button
-                  onClick={() => moveImage(index, Math.max(0, index - 1))}
-                  disabled={index === 0}
-                  className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                  title="Move Up"
-                >
-                  <ArrowUp className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() =>
-                    moveImage(index, Math.min(images.length - 1, index + 1))
-                  }
-                  disabled={index === images.length - 1}
-                  className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                  title="Move Down"
-                >
-                  <ArrowDown className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => removeImage(image.id)}
-                  className="p-1 text-pink-500 hover:text-red-700"
-                  title="Remove"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+              <div className="p-4 bg-white flex items-center justify-between">
+                <p className="text-[10px] font-black text-black uppercase tracking-tight truncate flex-1 mr-4">{image.name}</p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => moveImage(index, index - 1)}
+                    disabled={index === 0}
+                    className="p-1.5 text-black/20 hover:text-black disabled:opacity-0 transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => moveImage(index, index + 1)}
+                    disabled={index === images.length - 1}
+                    className="p-1.5 text-black/20 hover:text-black disabled:opacity-0 transition-colors"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => removeImage(image.id)}
+                    className="p-1.5 text-black/10 hover:text-red-500 transition-colors ml-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}

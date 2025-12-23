@@ -363,7 +363,7 @@ export default function AdminContent() {
         <title>Content Management - Admin Dashboard</title>
         <meta
           name="description"
-          content="Manage slideshows and slides in AfghanView"
+          content="Manage slideshows and slides in Shivehview"
         />
       </Head>
 

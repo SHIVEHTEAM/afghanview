@@ -206,7 +206,7 @@ export default function AdminAnalytics() {
         <title>Analytics - Admin Dashboard</title>
         <meta
           name="description"
-          content="Analytics and insights for AfghanView"
+          content="Analytics and insights for Shivehview"
         />
       </Head>
 

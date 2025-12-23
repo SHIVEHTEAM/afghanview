@@ -106,7 +106,7 @@ export function BusinessTab() {
   };
 
   const getGrowthColor = (growth: number) => {
-    return growth >= 0 ? "text-green-600" : "text-red-600";
+    return growth >= 0 ? "text-black" : "text-black/40";
   };
 
   const getGrowthIcon = (growth: number) => {
@@ -120,26 +120,26 @@ export function BusinessTab() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return "bg-black text-white";
       case "inactive":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-black/40";
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-100 text-black/60";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-black";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "active":
-        return <CheckCircle className="w-4 h-4" />;
+        return <CheckCircle className="w-3.5 h-3.5" />;
       case "inactive":
-        return <XCircle className="w-4 h-4" />;
+        return <XCircle className="w-3.5 h-3.5" />;
       case "pending":
-        return <Clock className="w-4 h-4" />;
+        return <Clock className="w-3.5 h-3.5" />;
       default:
-        return <XCircle className="w-4 h-4" />;
+        return <XCircle className="w-3.5 h-3.5" />;
     }
   };
 
@@ -162,38 +162,37 @@ export function BusinessTab() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-wrap gap-2"
+        className="flex flex-wrap gap-3 p-1.5 bg-gray-100/50 rounded-[2rem] border border-black/5 w-fit"
       >
         {[
           {
             id: "overview",
             label: "Overview",
-            icon: <BarChart3 className="w-4 h-4" />,
+            icon: BarChart3,
           },
           {
             id: "analytics",
             label: "Analytics",
-            icon: <TrendingUp className="w-4 h-4" />,
+            icon: TrendingUp,
           },
-          { id: "staff", label: "Staff", icon: <Users className="w-4 h-4" /> },
+          { id: "staff", label: "Staff", icon: Users },
           {
             id: "settings",
             label: "Settings",
-            icon: <Settings className="w-4 h-4" />,
+            icon: Settings,
           },
         ].map((tab) => (
           <motion.button
             key={tab.id}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setActiveSection(tab.id)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all duration-300 ${
-              activeSection === tab.id
-                ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg"
-                : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-            }`}
+            className={`flex items-center gap-2.5 px-6 py-3 rounded-[1.5rem] text-[13px] font-bold transition-all duration-300 ${activeSection === tab.id
+              ? "bg-black text-white shadow-xl shadow-black/10"
+              : "text-black/40 hover:text-black"
+              }`}
           >
-            {tab.icon}
+            <tab.icon className="w-4 h-4" />
             {tab.label}
           </motion.button>
         ))}
@@ -206,91 +205,36 @@ export function BusinessTab() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-8"
         >
-          {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
-            >
-              <div className="flex items-center justify-between">
+            {[
+              { label: "Asset Volume", value: businessStats.totalSlideshows, icon: Image, prefix: "", suffix: " Units" },
+              { label: "Active Nodes", value: businessStats.activeSlideshows, icon: Play, prefix: "", suffix: " Ready" },
+              { label: "Interaction Log", value: formatNumber(businessStats.totalViews), icon: Eye, prefix: "", suffix: " Total" },
+              { label: "Connected Ports", value: businessStats.totalDevices, icon: Tv, prefix: "", suffix: " Active" }
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * (i + 1) }}
+                className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-black/[0.03] border border-black/5"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center border border-black/5">
+                    <stat.icon className="w-5 h-5 text-black" />
+                  </div>
+                </div>
                 <div>
-                  <p className="text-gray-600 text-sm font-medium">
-                    Total Slideshows
+                  <p className="text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mb-1">
+                    {stat.label}
                   </p>
-                  <p className="text-3xl font-bold text-gray-800">
-                    {businessStats.totalSlideshows}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
-                  <Image className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">
-                    Active Slideshows
-                  </p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {businessStats.activeSlideshows}
+                  <p className="text-3xl font-bold text-black tracking-tight">
+                    {stat.prefix}{stat.value}
+                    <span className="text-xs font-bold text-black/20 ml-1 uppercase tracking-widest">{stat.suffix}</span>
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center">
-                  <Play className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">
-                    Total Views
-                  </p>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {formatNumber(businessStats.totalViews)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">
-                    Connected Devices
-                  </p>
-                  <p className="text-3xl font-bold text-orange-600">
-                    {businessStats.totalDevices}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center">
-                  <Tv className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            ))}
           </div>
 
           {/* Growth and Performance */}
@@ -299,26 +243,26 @@ export function BusinessTab() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+              className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/[0.03] border border-black/5"
             >
-              <h3 className="text-lg font-bold text-gray-800 mb-4">
-                Monthly Growth
+              <h3 className="text-xl font-bold text-black mb-10 tracking-tight">
+                Growth Vector
               </h3>
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-4 mb-10">
                 <div
-                  className={`flex items-center gap-1 ${getGrowthColor(
-                    businessStats.monthlyGrowth
-                  )}`}
+                  className="flex items-center gap-2 text-black"
                 >
-                  {getGrowthIcon(businessStats.monthlyGrowth)}
-                  <span className="text-2xl font-bold">
+                  <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
+                    {getGrowthIcon(businessStats.monthlyGrowth)}
+                  </div>
+                  <span className="text-4xl font-bold tracking-tighter">
                     {businessStats.monthlyGrowth}%
                   </span>
                 </div>
-                <span className="text-gray-600">vs last month</span>
+                <span className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em]">Cycle Increase</span>
               </div>
-              <div className="h-32 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl flex items-center justify-center">
-                <span className="text-gray-500">Chart placeholder</span>
+              <div className="h-40 bg-gray-50 rounded-[2rem] border border-black/5 border-dashed flex items-center justify-center">
+                <span className="text-[10px] font-bold text-black/20 uppercase tracking-[0.2em]">Visualizing Telemetry...</span>
               </div>
             </motion.div>
 
@@ -326,73 +270,72 @@ export function BusinessTab() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+              className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/[0.03] border border-black/5"
             >
-              <h3 className="text-lg font-bold text-gray-800 mb-4">
-                Financial Overview
+              <h3 className="text-xl font-bold text-black mb-10 tracking-tight">
+                Ledger Delta
               </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Revenue</span>
-                  <span className="font-bold text-green-600">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between group">
+                  <span className="text-[10px] font-bold text-black/40 uppercase tracking-widest">Gross Revenue</span>
+                  <span className="text-lg font-bold text-black">
                     {formatCurrency(businessStats.revenue)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Expenses</span>
-                  <span className="font-bold text-red-600">
-                    {formatCurrency(businessStats.expenses)}
+                <div className="flex items-center justify-between group">
+                  <span className="text-[10px] font-bold text-black/40 uppercase tracking-widest">Operational Expenses</span>
+                  <span className="text-lg font-bold text-black/20">
+                    ({formatCurrency(businessStats.expenses)})
                   </span>
                 </div>
-                <div className="border-t pt-4">
+                <div className="border-t border-black/5 pt-8 mt-6">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-gray-800">
-                      Net Profit
+                    <span className="text-sm font-bold text-black uppercase tracking-widest">
+                      Net Capital
                     </span>
-                    <span className="font-bold text-blue-600">
-                      {formatCurrency(
-                        businessStats.revenue - businessStats.expenses
-                      )}
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-3xl font-bold text-black tracking-tight">
+                        {formatCurrency(
+                          businessStats.revenue - businessStats.expenses
+                        )}
+                      </span>
+                      <span className="text-[9px] font-bold text-black/20 uppercase tracking-widest mt-1">Ready for withdrawal</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </motion.div>
           </div>
 
-          {/* Quick Actions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 rounded-3xl p-8 text-white"
+            className="bg-black rounded-[3rem] p-12 text-white shadow-2xl shadow-black/20 overflow-hidden relative"
           >
-            <h3 className="text-2xl font-bold mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-2xl hover:bg-opacity-30 transition-all duration-300"
-              >
-                <Plus className="w-8 h-8 mb-2" />
-                <p className="font-semibold">Create Slideshow</p>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-2xl hover:bg-opacity-30 transition-all duration-300"
-              >
-                <UserPlus className="w-8 h-8 mb-2" />
-                <p className="font-semibold">Add Staff Member</p>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-2xl hover:bg-opacity-30 transition-all duration-300"
-              >
-                <BarChart3 className="w-8 h-8 mb-2" />
-                <p className="font-semibold">View Analytics</p>
-              </motion.button>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+            <div className="relative z-10">
+              <h3 className="text-3xl font-bold mb-10 tracking-tight">Power Actions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { label: "Initialize Asset", icon: Plus, desc: "New Slideshow" },
+                  { label: "Onboard Staff", icon: UserPlus, desc: "Invite Team" },
+                  { label: "Deep Analytics", icon: BarChart3, desc: "View Data" }
+                ].map((action, i) => (
+                  <motion.button
+                    key={i}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-white/10 backdrop-blur-md p-8 rounded-[2rem] hover:bg-white/20 transition-all border border-white/5 text-left group"
+                  >
+                    <div className="w-12 h-12 bg-white rounded-[1.2rem] flex items-center justify-center mb-6 shadow-xl shadow-black/10 group-hover:scale-110 transition-transform">
+                      <action.icon className="w-6 h-6 text-black" />
+                    </div>
+                    <p className="font-bold text-lg mb-1">{action.label}</p>
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{action.desc}</p>
+                  </motion.button>
+                ))}
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -415,18 +358,18 @@ export function BusinessTab() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">
-                Views Over Time
+            <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/[0.03] border border-black/5">
+              <h3 className="text-xl font-bold text-black mb-8 tracking-tight">
+                Engagement Overview
               </h3>
-              <div className="h-64 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl flex items-center justify-center">
-                <span className="text-gray-500">Chart placeholder</span>
+              <div className="h-64 bg-gray-50 rounded-[2rem] border border-black/5 border-dashed flex items-center justify-center">
+                <span className="text-[10px] font-bold text-black/20 uppercase tracking-[0.2em]">Synthesizing Data...</span>
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">
-                Popular Content
+            <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/[0.03] border border-black/5">
+              <h3 className="text-xl font-bold text-black mb-8 tracking-tight">
+                Priority Assets
               </h3>
               <div className="space-y-4">
                 {[
@@ -437,21 +380,19 @@ export function BusinessTab() {
                 ].map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
+                    className="flex items-center justify-between p-5 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-xl hover:shadow-black/[0.02] transition-all border border-black/5 group"
                   >
                     <div>
-                      <p className="font-medium text-gray-800">{item.name}</p>
-                      <p className="text-sm text-gray-600">
-                        {formatNumber(item.views)} views
+                      <p className="font-bold text-black">{item.name}</p>
+                      <p className="text-[10px] font-bold text-black/20 uppercase tracking-widest mt-1">
+                        {formatNumber(item.views)} Logs
                       </p>
                     </div>
                     <div
-                      className={`flex items-center gap-1 ${getGrowthColor(
-                        item.growth
-                      )}`}
+                      className="flex items-center gap-2 p-2 bg-white rounded-xl border border-black/5 group-hover:scale-110 transition-transform"
                     >
                       {getGrowthIcon(item.growth)}
-                      <span className="text-sm font-medium">
+                      <span className="text-[10px] font-bold text-black">
                         {item.growth}%
                       </span>
                     </div>
@@ -470,37 +411,37 @@ export function BusinessTab() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-8"
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                Staff Management
+              <h2 className="text-3xl font-bold text-black tracking-tight">
+                Personnel
               </h2>
-              <p className="text-gray-600">
-                Manage your team members and their permissions
+              <p className="text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mt-2">
+                Unified Team Control
               </p>
             </div>
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setShowAddStaff(true)}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-2xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-3"
+              className="bg-black text-white px-8 py-4 rounded-2xl font-bold hover:bg-black/90 transition-all shadow-xl shadow-black/10 flex items-center gap-3"
             >
               <UserPlus className="w-5 h-5" />
-              Add Staff Member
+              Onboard Member
             </motion.button>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-black/[0.03] border border-black/5 overflow-hidden">
+            <div className="p-10 border-b border-black/5">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-800">
-                  Team Members ({staffMembers.length})
+                <h3 className="text-xl font-bold text-black tracking-tight">
+                  Active Directory ({staffMembers.length})
                 </h3>
-                <div className="flex gap-2">
-                  <button className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all duration-200">
+                <div className="flex gap-3">
+                  <button className="p-3 rounded-xl text-black/20 hover:text-black bg-gray-50 border border-black/5 transition-all">
                     <Search className="w-5 h-5" />
                   </button>
-                  <button className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all duration-200">
+                  <button className="p-3 rounded-xl text-black/20 hover:text-black bg-gray-50 border border-black/5 transition-all">
                     <Filter className="w-5 h-5" />
                   </button>
                 </div>
@@ -516,46 +457,51 @@ export function BusinessTab() {
                   transition={{ delay: index * 0.1 }}
                   className="p-6 hover:bg-gray-50 transition-colors duration-200"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-6">
+                      <div className="w-14 h-14 bg-black rounded-[1.2rem] flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-black/20 group-hover:scale-105 transition-transform">
                         {member.avatar}
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-800">
+                        <h4 className="font-bold text-black text-lg tracking-tight">
                           {member.name}
                         </h4>
-                        <p className="text-sm text-gray-600">{member.email}</p>
-                        <p className="text-xs text-gray-500">{member.role}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <p className="text-[10px] font-bold text-black/30 uppercase tracking-widest">{member.email}</p>
+                          <span className="w-1 h-1 bg-black/10 rounded-full"></span>
+                          <p className="text-[10px] font-bold text-black/60 uppercase tracking-widest">{member.role}</p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-8">
                       <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest ${getStatusColor(
                           member.status
-                        )}`}
+                        )} shadow-lg shadow-black/5`}
                       >
                         {getStatusIcon(member.status)}
-                        {member.status.charAt(0).toUpperCase() +
-                          member.status.slice(1)}
+                        {member.status}
                       </span>
-                      <span className="text-sm text-gray-500">
-                        {formatLastActive(member.lastActive)}
-                      </span>
+                      <div className="text-right">
+                        <p className="text-[9px] font-bold text-black/20 uppercase tracking-widest mb-0.5">Last Sync</p>
+                        <p className="text-[10px] font-bold text-black">
+                          {formatLastActive(member.lastActive)}
+                        </p>
+                      </div>
                       <div className="flex gap-2">
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => setSelectedStaff(member)}
-                          className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                          className="p-3 rounded-xl text-black/20 hover:text-black hover:bg-gray-50 border border-transparent hover:border-black/5 transition-all"
                         >
                           <Edit className="w-4 h-4" />
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+                          className="p-3 rounded-xl text-black/20 hover:text-black hover:bg-gray-50 border border-transparent hover:border-black/5 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </motion.button>
@@ -586,96 +532,62 @@ export function BusinessTab() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">
-                Business Information
+            <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/[0.03] border border-black/5">
+              <h3 className="text-xl font-bold text-black mb-8 tracking-tight">
+                Profile Configuration
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {[
+                  { label: "Identity Label", val: "Afghan Business" },
+                  { label: "Core Email", val: "contact@shivehview.com" },
+                  { label: "Direct Line", val: "+1 (555) 123-4567" }
+                ].map((input, i) => (
+                  <div key={i}>
+                    <label className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mb-2">
+                      {input.label}
+                    </label>
+                    <input
+                      type="text"
+                      defaultValue={input.val}
+                      className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-black/5 focus:bg-white focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none text-sm font-bold"
+                    />
+                  </div>
+                ))}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Name
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="Afghan Business"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    defaultValue="contact@afghanbusiness.com"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    defaultValue="+1 (555) 123-4567"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address
+                  <label className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mb-2">
+                    Operational Address
                   </label>
                   <textarea
                     defaultValue="123 Main Street, City, State 12345"
                     rows={3}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-black/5 focus:bg-white focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none text-sm font-bold resize-none"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">
+            <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/[0.03] border border-black/5">
+              <h3 className="text-xl font-bold text-black mb-8 tracking-tight">
                 Preferences
               </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-800">
-                      Email Notifications
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Receive updates about your slideshows
-                    </p>
+              <div className="space-y-6">
+                {[
+                  { label: "Protocol Alerts", desc: "System status updates", active: true },
+                  { label: "Auto-Synchronization", desc: "Live asset updates", active: true },
+                  { label: "Telemetry Tracking", desc: "Advanced usage logs", active: false }
+                ].map((pref, i) => (
+                  <div key={i} className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl border border-black/5">
+                    <div>
+                      <p className="font-bold text-black text-sm tracking-tight">{pref.label}</p>
+                      <p className="text-[10px] font-bold text-black/20 uppercase tracking-widest mt-1">
+                        {pref.desc}
+                      </p>
+                    </div>
+                    <button className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${pref.active ? "bg-black" : "bg-black/10"}`}>
+                      <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${pref.active ? "right-1" : "left-1"}`}></div>
+                    </button>
                   </div>
-                  <button className="w-12 h-6 bg-blue-500 rounded-full relative">
-                    <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 transition-transform"></div>
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-800">Auto-save</p>
-                    <p className="text-sm text-gray-600">
-                      Automatically save your work
-                    </p>
-                  </div>
-                  <button className="w-12 h-6 bg-blue-500 rounded-full relative">
-                    <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 transition-transform"></div>
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-800">
-                      Analytics Tracking
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Track slideshow performance
-                    </p>
-                  </div>
-                  <button className="w-12 h-6 bg-gray-300 rounded-full relative">
-                    <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform"></div>
-                  </button>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -692,74 +604,69 @@ export function BusinessTab() {
           onClick={() => setShowAddStaff(false)}
         >
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-white rounded-[3rem] p-12 max-w-xl w-full shadow-2xl shadow-black/20 border border-black/5 relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <UserPlus className="w-8 h-8 text-white" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.02] rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+            <div className="text-center mb-10">
+              <div className="w-20 h-20 bg-black rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-black/20">
+                <UserPlus className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">
-                Add Staff Member
-              </h3>
-              <p className="text-gray-600 mt-2">
-                Invite a new team member to collaborate
+              <h3 className="text-3xl font-bold text-black tracking-tight">Onboard Member</h3>
+              <p className="text-[10px] font-bold text-black/40 mt-3 uppercase tracking-widest">
+                Granting Access Privileges
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {[
+                { label: "Personnel Identity", placeholder: "Full legal name" },
+                { label: "Sync Channel", placeholder: "Primary email address" }
+              ].map((field, i) => (
+                <div key={i}>
+                  <label className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mb-2">
+                    {field.label}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={field.placeholder}
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-black/5 focus:bg-white focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none text-sm font-bold placeholder:text-black/10"
+                  />
+                </div>
+              ))}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
+                <label className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mb-2">
+                  Privilege Tier
                 </label>
-                <input
-                  type="text"
-                  placeholder="Enter full name"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  placeholder="Enter email address"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role
-                </label>
-                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option value="">Select a role</option>
-                  <option value="manager">Manager</option>
-                  <option value="content_creator">Content Creator</option>
-                  <option value="viewer">Viewer</option>
+                <select className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-black/5 focus:bg-white focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none text-sm font-bold appearance-none cursor-pointer">
+                  <option value="">Select Protocol</option>
+                  <option value="manager">Lead Protocol</option>
+                  <option value="content_creator">Creative Asset Unit</option>
+                  <option value="viewer">Read Only Sync</option>
                 </select>
               </div>
             </div>
 
-            <div className="flex gap-3 mt-8">
+            <div className="flex gap-4 mt-12">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowAddStaff(false)}
-                className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                className="flex-1 bg-gray-50 text-black/40 py-5 rounded-2xl hover:bg-black/5 transition-all text-sm font-bold"
               >
-                Cancel
+                Abort
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowAddStaff(false)}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 px-4 rounded-xl hover:from-purple-600 hover:to-blue-600 transition-all duration-200 font-medium"
+                className="flex-2 bg-black text-white py-5 px-10 rounded-2xl hover:bg-black/90 transition-all text-sm font-bold shadow-xl shadow-black/10"
               >
-                Send Invitation
+                Finalize Onboarding
               </motion.button>
             </div>
           </motion.div>

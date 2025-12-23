@@ -140,17 +140,24 @@ export interface TextOriginalData {
   textSlides: TextSlide[];
 }
 
+export interface PropertyOriginalData {
+  properties: any[];
+  theme: any;
+  layout: any;
+}
+
 export type OriginalData =
   | ImageOriginalData
   | VideoOriginalData
   | AiFactsOriginalData
   | MenuOriginalData
   | DealsOriginalData
-  | TextOriginalData;
+  | TextOriginalData
+  | PropertyOriginalData;
 
 export interface SlideshowData {
   name: string;
-  type: "image" | "video" | "ai-facts" | "menu" | "deals" | "text";
+  type: "image" | "video" | "ai-facts" | "menu" | "deals" | "text" | "property-listing";
   slides?: SlideMedia[];
   settings: SlideshowSettings;
   originalData?: OriginalData;

@@ -116,9 +116,8 @@ export default function MultiTrackMusicSelector({
       return {
         type: "playlist",
         name: "Custom Playlist",
-        description: `${
-          currentSettings.music_play_mode || "sequential"
-        } playback`,
+        description: `${currentSettings.music_play_mode || "sequential"
+          } playback`,
         icon: List,
         color: "from-purple-500 to-pink-600",
       };
@@ -550,47 +549,40 @@ export default function MultiTrackMusicSelector({
           className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[95vh] overflow-hidden border border-gray-100 flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50 flex-shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <Music className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between p-10 border-b border-black/5 bg-gray-50/50 flex-shrink-0">
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center shadow-2xl shadow-black/20">
+                <Music className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-                <p className="text-gray-600">{description}</p>
-                <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
-                  <Music className="w-4 h-4" />
-                  <span>
-                    Multiple tracks will play in sequence during your slideshow
-                  </span>
-                </div>
+                <h2 className="text-3xl font-bold text-black">{title}</h2>
+                <p className="text-sm text-black/40 mt-1">{description}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+              className="w-12 h-12 rounded-xl bg-white border border-black/5 hover:bg-gray-50 flex items-center justify-center transition-all text-black/20 hover:text-black"
             >
-              <X className="w-5 h-5 text-gray-600" />
+              <X className="w-6 h-6" />
             </button>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-gray-100 bg-white flex-shrink-0">
+          <div className="flex border-b border-black/5 bg-white flex-shrink-0 px-6">
             {[
-              { id: "current", label: "Current Music", icon: Music },
-              { id: "quick", label: "Quick Mixes", icon: Sparkles },
-              { id: "library", label: "Music Library", icon: Music },
-              { id: "playlists", label: "Playlists", icon: List },
-              { id: "upload", label: "Upload Music", icon: Upload },
+              { id: "current", label: "ACTIVE TRACKS", icon: Music },
+              { id: "quick", label: "QUICK MIXES", icon: Sparkles },
+              { id: "library", label: "DATA LIBRARY", icon: Music },
+              { id: "playlists", label: "COLLECTIONS", icon: List },
+              { id: "upload", label: "INGEST AUDIO", icon: Upload },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600 bg-blue-50"
-                    : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
+                className={`flex items-center gap-3 px-8 py-5 font-black text-[10px] tracking-[0.2em] transition-all border-b-2 uppercase ${activeTab === tab.id
+                    ? "border-black text-black bg-gray-50/50"
+                    : "border-transparent text-black/20 hover:text-black hover:bg-gray-50/30"
+                  }`}
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
@@ -603,8 +595,8 @@ export default function MultiTrackMusicSelector({
             {loading ? (
               <div className="flex items-center justify-center py-12 h-full">
                 <div className="text-center">
-                  <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-gray-600">Loading music library...</p>
+                  <div className="w-12 h-12 border-2 border-black/5 border-t-black rounded-full animate-spin mx-auto mb-6" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-black/40">Synchronizing Music Library...</p>
                 </div>
               </div>
             ) : (
@@ -877,16 +869,14 @@ export default function MultiTrackMusicSelector({
                         </select>
                         <button
                           onClick={() => setShowFavorites(!showFavorites)}
-                          className={`px-4 py-3 rounded-lg border transition-colors ${
-                            showFavorites
+                          className={`px-4 py-3 rounded-lg border transition-colors ${showFavorites
                               ? "bg-red-50 border-red-200 text-red-700"
                               : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                          }`}
+                            }`}
                         >
                           <Heart
-                            className={`w-4 h-4 ${
-                              showFavorites ? "fill-current" : ""
-                            }`}
+                            className={`w-4 h-4 ${showFavorites ? "fill-current" : ""
+                              }`}
                           />
                         </button>
                         <button
@@ -1006,15 +996,15 @@ export default function MultiTrackMusicSelector({
                                 <Music className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                   {searchTerm ||
-                                  selectedCategory !== "all" ||
-                                  showFavorites
+                                    selectedCategory !== "all" ||
+                                    showFavorites
                                     ? "No tracks found"
                                     : "No tracks available"}
                                 </h3>
                                 <p className="text-gray-600 mb-4">
                                   {searchTerm ||
-                                  selectedCategory !== "all" ||
-                                  showFavorites
+                                    selectedCategory !== "all" ||
+                                    showFavorites
                                     ? "Try adjusting your search or filters"
                                     : "Upload some music to get started"}
                                 </p>
@@ -1033,11 +1023,10 @@ export default function MultiTrackMusicSelector({
                             <motion.div
                               key={track.id}
                               whileHover={{ scale: 1.02, y: -2 }}
-                              className={`relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white shadow-sm hover:shadow-lg ${
-                                selectedTracks.some((t) => t.id === track.id)
+                              className={`relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white shadow-sm hover:shadow-lg ${selectedTracks.some((t) => t.id === track.id)
                                   ? "border-blue-500 bg-blue-50 shadow-lg"
                                   : "border-gray-200 hover:border-gray-300"
-                              }`}
+                                }`}
                               onClick={() => handleTrackSelect(track)}
                             >
                               <div className="flex items-start justify-between mb-3">
@@ -1134,11 +1123,10 @@ export default function MultiTrackMusicSelector({
                             <motion.div
                               key={playlist.id}
                               whileHover={{ scale: 1.02, y: -2 }}
-                              className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white shadow-sm hover:shadow-lg ${
-                                selectedPlaylist?.id === playlist.id
+                              className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white shadow-sm hover:shadow-lg ${selectedPlaylist?.id === playlist.id
                                   ? "border-blue-500 bg-blue-50 shadow-lg"
                                   : "border-gray-200 hover:border-gray-300"
-                              }`}
+                                }`}
                               onClick={() => handlePlaylistSelect(playlist)}
                             >
                               <div className="flex items-center gap-3 mb-3">
@@ -1219,10 +1207,10 @@ export default function MultiTrackMusicSelector({
                                 <p className="text-sm text-gray-600">
                                   {uploadingFile?.size
                                     ? (
-                                        uploadingFile.size /
-                                        1024 /
-                                        1024
-                                      ).toFixed(2)
+                                      uploadingFile.size /
+                                      1024 /
+                                      1024
+                                    ).toFixed(2)
                                     : "0"}{" "}
                                   MB
                                 </p>

@@ -491,6 +491,82 @@ const officeFeatures: BusinessFeature[] = [
   },
 ];
 
+// Real Estate-specific features
+const realEstateFeatures: BusinessFeature[] = [
+  {
+    id: "property-listings",
+    name: "Property Listings",
+    description: "Showcase available properties with photos and details",
+    icon: "🏠",
+    category: "real_estate",
+    isPremium: false,
+    requiredPlan: "starter",
+  },
+  {
+    id: "agent-profiles",
+    name: "Agent Profiles",
+    description: "Display agent profiles and contact information",
+    icon: "👔",
+    category: "real_estate",
+    isPremium: false,
+    requiredPlan: "starter",
+  },
+  {
+    id: "open-house-events",
+    name: "Open House Events",
+    description: "Promote open house events and property viewings",
+    icon: "📅",
+    category: "real_estate",
+    isPremium: false,
+    requiredPlan: "starter",
+  },
+  {
+    id: "property-details",
+    name: "Property Details",
+    description: "Display detailed property information, pricing, and specs",
+    icon: "📋",
+    category: "real_estate",
+    isPremium: false,
+    requiredPlan: "starter",
+  },
+  {
+    id: "market-updates",
+    name: "Market Updates",
+    description: "Share real estate market insights and trends",
+    icon: "📊",
+    category: "real_estate",
+    isPremium: false,
+    requiredPlan: "starter",
+  },
+  {
+    id: "virtual-tours",
+    name: "Virtual Tours",
+    description: "Embed virtual tour links and videos",
+    icon: "🎥",
+    category: "real_estate",
+    isPremium: true,
+    requiredPlan: "professional",
+  },
+  {
+    id: "neighborhood-info",
+    name: "Neighborhood Information",
+    description: "Display local area information and amenities",
+    icon: "🗺️",
+    category: "real_estate",
+    isPremium: false,
+    requiredPlan: "starter",
+  },
+  {
+    id: "testimonials",
+    name: "Client Testimonials",
+    description: "Showcase client reviews and success stories",
+    icon: "⭐",
+    category: "real_estate",
+    isPremium: true,
+    requiredPlan: "professional",
+  },
+];
+
 // Business categories with their specific features
 export const businessCategories: BusinessCategory[] = [
   {
@@ -598,6 +674,28 @@ export const businessCategories: BusinessCategory[] = [
     features: [...commonFeatures, ...officeFeatures],
     templates: ["services", "team-profiles", "contact-info", "company-news"],
     analytics: ["service-inquiries", "contact-clicks", "news-engagement"],
+  },
+  {
+    id: "real_estate",
+    name: "Real Estate",
+    slug: "real_estate",
+    description: "Real estate agencies and property management",
+    icon: "🏘️",
+    color: "#6C5CE7",
+    features: [...commonFeatures, ...realEstateFeatures],
+    templates: [
+      "property-showcase",
+      "agent-profiles",
+      "open-house-events",
+      "market-updates",
+      "neighborhood-info",
+    ],
+    analytics: [
+      "property-views",
+      "open-house-attendance",
+      "agent-inquiries",
+      "market-engagement",
+    ],
   },
 ];
 

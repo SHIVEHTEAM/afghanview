@@ -369,4 +369,4 @@ For questions or issues with the multi-track music system:
 
 ---
 
-_This guide covers the complete multi-track music system for AfghanView. The system provides a rich music experience with multiple tracks playing in sequence during slideshows._
+_This guide covers the complete multi-track music system for Shivehview. The system provides a rich music experience with multiple tracks playing in sequence during slideshows._

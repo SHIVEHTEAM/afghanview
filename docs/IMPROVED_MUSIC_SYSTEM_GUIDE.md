@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AfghanView music system has been completely redesigned to provide a better user experience with integrated music selection during slideshow creation, support for multiple music tracks, playlists, and enhanced playback controls.
+The Shivehview music system has been completely redesigned to provide a better user experience with integrated music selection during slideshow creation, support for multiple music tracks, playlists, and enhanced playback controls.
 
 ## 🚀 Key Improvements
 
@@ -340,4 +340,4 @@ For questions or issues with the music system:
 
 ---
 
-_This guide covers the complete improved music system for AfghanView. The system provides a seamless music selection experience with multiple music types, enhanced controls, and better user experience._
+_This guide covers the complete improved music system for Shivehview. The system provides a seamless music selection experience with multiple music types, enhanced controls, and better user experience._

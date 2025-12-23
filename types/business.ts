@@ -7,6 +7,7 @@ export enum BusinessType {
   ENTERTAINMENT = "entertainment",
   HEALTHCARE = "healthcare",
   EDUCATION = "education",
+  REAL_ESTATE = "real_estate",
   OTHER = "other",
 }
 
@@ -246,6 +247,31 @@ export const getBusinessTypeConfig = (
       features: {
         announcements_support: true,
         ai_facts: true,
+      },
+    },
+    [BusinessType.REAL_ESTATE]: {
+      name: "Real Estate",
+      description: "Real estate agencies and property management",
+      allowed_slideshow_types: [
+        "image",
+        "video",
+        "text",
+        "ai-facts",
+        "events",
+        "announcements",
+        "property-listing",
+      ],
+      default_settings: {
+        default_duration: 6000,
+        transition: "fade",
+      },
+      features: {
+        events_support: true,
+        announcements_support: true,
+        professional_templates: true,
+        ai_facts: true,
+        property_listings: true,
+        agent_profiles: true,
       },
     },
     [BusinessType.OTHER]: {

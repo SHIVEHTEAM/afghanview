@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowRight, ArrowLeft, Video, Music } from "lucide-react";
+import { Video, Music, Settings as SettingsIcon, CheckCircle } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 
 interface VideoFile {
@@ -16,9 +16,7 @@ interface VideoCustomizeStepProps {
   slideshowName: string;
   setSlideshowName: (name: string) => void;
   transition: "fade" | "slide" | "zoom" | "flip" | "bounce";
-  setTransition: (
-    transition: "fade" | "slide" | "zoom" | "flip" | "bounce"
-  ) => void;
+  setTransition: (transition: "fade" | "slide" | "zoom" | "flip" | "bounce") => void;
   backgroundMusic: File | null;
   onBackgroundMusicUpload: (url: string) => void;
   formatDuration: (ms: number) => string;
@@ -38,262 +36,113 @@ export default function VideoCustomizeStep({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<string>("");
 
-  const handleBackgroundMusicUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleBackgroundMusicUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    console.log("Selected file:", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      lastModified: file.lastModified,
-    });
-
     setIsUploadingMusic(true);
     setUploadProgress(0);
-    setUploadStatus("Validating file...");
+    setUploadStatus("Validating...");
 
-    // More flexible file type validation
-    const isAudioFile =
-      file.type.startsWith("audio/") ||
-      file.name.toLowerCase().match(/\.(mp3|mp4|wav|ogg|aac|webm|m4a)$/);
-
-    if (!isAudioFile) {
-      setUploadStatus("Error: Invalid file type");
+    const isAudioFile = file.type.startsWith("audio/") || file.name.toLowerCase().match(/\.(mp3|mp4|wav|ogg|aac|webm|m4a)$/);
+    if (!isAudioFile || file.size > 20 * 1024 * 1024) {
+      setUploadStatus("Invalid File");
       setTimeout(() => setUploadStatus(""), 3000);
-      alert(
-        "Please select a valid audio file (MP3, MP4, WAV, OGG, AAC, WebM, M4A)"
-      );
+      alert("Invalid file type or size (>20MB)");
+      setIsUploadingMusic(false);
       return;
     }
 
-    // Validate file size (max 20MB)
-    if (file.size > 20 * 1024 * 1024) {
-      setUploadStatus("Error: File too large");
-      setTimeout(() => setUploadStatus(""), 3000);
-      alert("Audio file size must be less than 20MB");
-      return;
-    }
-
-    // Check for problematic MIME types and provide guidance
-    const problematicTypes = [
-      "audio/mpeg", // MP3
-      "audio/mp3",
-      "audio/x-mpeg",
-      "audio/x-mpeg-3",
-    ];
-
+    const problematicTypes = ["audio/mpeg", "audio/mp3", "audio/x-mpeg", "audio/x-mpeg-3"];
     if (problematicTypes.includes(file.type)) {
-      setUploadStatus("Error: MP3 not supported");
+      setUploadStatus("MP3 Not Supported");
       setTimeout(() => setUploadStatus(""), 3000);
-      alert(
-        "MP3 files are not supported. Please convert your audio to WAV, OGG, or AAC format for better compatibility."
-      );
+      alert("Please use WAV, OGG, or AAC for better compatibility.");
+      setIsUploadingMusic(false);
       return;
     }
 
     setUploadProgress(25);
-    setUploadStatus("Preparing upload...");
-
-    console.log("Uploading file to Supabase:", {
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-    });
-
-    // Upload to Supabase Storage with explicit content type
+    setUploadStatus("Preparing...");
     const fileName = `audio/${Date.now()}-${file.name}`;
-
-    // Use a more compatible content type if needed
-    let contentType = file.type;
-    if (file.type === "audio/mpeg" || file.type === "audio/mp3") {
-      contentType = "audio/mpeg"; // Try with explicit type
-    }
-
     setUploadProgress(50);
-    setUploadStatus("Uploading to server...");
+    setUploadStatus("Uploading...");
 
-    const { data, error: uploadError } = await supabase.storage
-      .from("slideshow-media")
-      .upload(fileName, file, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: contentType,
-      });
-
+    const { data, error: uploadError } = await supabase.storage.from("slideshow-media").upload(fileName, file, { cacheControl: "3600", upsert: false, contentType: file.type });
     if (uploadError) {
-      console.error("Upload error details:", uploadError);
-      setUploadProgress(0);
-
-      // Provide specific guidance for MIME type errors
-      if (
-        uploadError.message.includes("mime type") ||
-        uploadError.message.includes("not supported")
-      ) {
-        setUploadStatus("Error: Format not supported");
-        setTimeout(() => setUploadStatus(""), 3000);
-        alert(
-          "This audio format is not supported. Please try converting your audio to WAV, OGG, or AAC format. You can use online converters or audio editing software."
-        );
-      } else {
-        setUploadStatus(`Error: ${uploadError.message}`);
-        setTimeout(() => setUploadStatus(""), 3000);
-        alert(`Failed to upload audio: ${uploadError.message}`);
-      }
+      setUploadStatus("Upload Failed");
+      setTimeout(() => setUploadStatus(""), 3000);
+      alert(uploadError.message);
+      setIsUploadingMusic(false);
       return;
     }
 
     setUploadProgress(75);
-    setUploadStatus("Getting public URL...");
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from("slideshow-media")
-      .getPublicUrl(fileName);
-
-    let audioUrl = urlData?.publicUrl || "";
-
-    console.log("Upload successful, audio URL:", audioUrl);
-
+    setUploadStatus("Finalizing...");
+    const { data: urlData } = supabase.storage.from("slideshow-media").getPublicUrl(fileName);
+    onBackgroundMusicUpload(urlData?.publicUrl || "");
     setUploadProgress(100);
-    setUploadStatus("Upload successful! ✓");
-
-    // Call the parent handler with the public URL
-    onBackgroundMusicUpload(audioUrl);
-
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      setUploadStatus("");
-      setUploadProgress(0);
-    }, 3000);
+    setUploadStatus("Ready ✓");
+    setTimeout(() => { setUploadStatus(""); setUploadProgress(0); setIsUploadingMusic(false); }, 3000);
   };
 
   return (
-    <div className="h-full flex flex-col min-h-0">
-      <div className="text-center mb-6 flex-shrink-0">
-        <h3 className="text-lg font-semibold mb-2">Customize Your Slideshow</h3>
-        <p className="text-gray-600">Set up your video slideshow settings</p>
+    <div className="space-y-10">
+      <div className="bg-white rounded-2xl border border-black/5 p-8 shadow-sm">
+        <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Module Identity</label>
+        <input
+          type="text"
+          value={slideshowName}
+          onChange={(e) => setSlideshowName(e.target.value)}
+          className="w-full px-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white focus:border-black/20 transition-all font-medium"
+          placeholder="Identity Reference..."
+        />
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-6 pb-6 min-h-0">
-        {/* Slideshow Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Slideshow Name
-          </label>
-          <input
-            type="text"
-            value={slideshowName}
-            onChange={(e) => setSlideshowName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            placeholder="Enter slideshow name"
-          />
-        </div>
-
-        {/* Transition */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Transition Effect
-          </label>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white rounded-2xl border border-black/5 p-8 shadow-sm">
+          <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-4">Transition Logic</label>
           <select
             value={transition}
-            onChange={(e) =>
-              setTransition(
-                e.target.value as "fade" | "slide" | "zoom" | "flip" | "bounce"
-              )
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            onChange={(e) => setTransition(e.target.value as any)}
+            className="w-full px-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white transition-all font-medium"
           >
-            <option value="fade">Fade</option>
-            <option value="slide">Slide</option>
-            <option value="zoom">Zoom</option>
-            <option value="flip">Flip</option>
-            <option value="bounce">Bounce</option>
+            {["fade", "slide", "zoom", "flip", "bounce"].map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
           </select>
         </div>
 
-        {/* Background Music */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Background Music (Optional)
+        <div className="bg-white rounded-2xl border border-black/5 p-8 shadow-sm">
+          <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-4">Audio Synchronization</label>
+          <input type="file" id="music-upload" accept="audio/*,.mp3,.mp4,.wav,.ogg,.aac,.webm,.m4a" onChange={handleBackgroundMusicUpload} className="hidden" />
+          <label htmlFor="music-upload" className="flex items-center gap-4 p-4 bg-gray-50 border border-black/5 rounded-xl hover:bg-black hover:text-white transition-all cursor-pointer group">
+            <div className="w-10 h-10 bg-white group-hover:bg-white/20 rounded-lg flex items-center justify-center border border-black/5 shadow-sm transition-colors">
+              <Music className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold uppercase tracking-widest">{backgroundMusic ? backgroundMusic.name : "Select Audio Asset"}</span>
           </label>
-          <input
-            type="file"
-            id="music-upload"
-            accept="audio/*,.mp3,.mp4,.wav,.ogg,.aac,.webm,.m4a"
-            onChange={handleBackgroundMusicUpload}
-            className="hidden"
-          />
-          <label
-            htmlFor="music-upload"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 cursor-pointer"
-          >
-            <Music className="w-4 h-4 mr-2" />
-            {backgroundMusic ? backgroundMusic.name : "Choose Audio File"}
-          </label>
-          {backgroundMusic && (
-            <p className="text-sm text-gray-500 mt-1">
-              Selected: {backgroundMusic.name}
-            </p>
-          )}
 
-          {/* Upload Progress Indicator */}
           {isUploadingMusic && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-blue-800">
-                  {uploadStatus || "Uploading..."}
-                </span>
-                <span className="text-sm text-blue-600">{uploadProgress}%</span>
+            <div className="mt-6 p-6 bg-black text-white rounded-2xl shadow-xl">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-[10px] font-black uppercase tracking-widest">{uploadStatus}</span>
+                <span className="text-[10px] font-black">{uploadProgress}%</span>
               </div>
-              <div className="w-full bg-blue-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-white transition-all duration-500" style={{ width: `${uploadProgress}%` }}></div>
               </div>
             </div>
           )}
-
-          {/* Audio Format Note */}
-          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-800">
-              <strong>Supported audio formats:</strong> WAV, OGG, AAC, WebM,
-              MP4. MP3 files are not supported due to storage limitations.
-            </p>
-          </div>
         </div>
+      </div>
 
-        {/* Video Preview */}
-        <div>
-          <h4 className="font-medium mb-3">Videos ({videos.length})</h4>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {videos.map((video, index) => (
-              <div key={video.id} className="relative">
-                {video.thumbnail ? (
-                  <img
-                    src={video.thumbnail}
-                    alt={video.name}
-                    className="w-full h-20 object-cover rounded"
-                  />
-                ) : (
-                  <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center">
-                    <Video className="w-6 h-6 text-gray-400" />
-                  </div>
-                )}
-                <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-                  {index + 1}
-                </div>
-                {video.duration && (
-                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-                    {formatDuration(video.duration)}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+      <div className="bg-gray-50/50 rounded-2xl p-8 border border-black/5">
+        <h4 className="text-[10px] font-black text-black/20 uppercase tracking-widest mb-6">Units in Manfest ({videos.length})</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {videos.map((v, i) => (
+            <div key={v.id} className="relative aspect-video rounded-xl bg-black overflow-hidden group border border-white/5">
+              {v.thumbnail ? <img src={v.thumbnail} alt={v.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Video className="w-5 h-5 text-white/10" /></div>}
+              <div className="absolute top-1.5 left-1.5 w-5 h-5 bg-white text-black text-[8px] font-black rounded flex items-center justify-center">{i + 1}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

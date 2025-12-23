@@ -12,14 +12,16 @@ import {
   ArrowLeft,
   Home,
 } from "lucide-react";
-import { SimpleImageViewer } from "../../components/slideshow";
+import { SimpleImageViewer, SlideshowPlayer } from "../../components/slideshow";
 
 interface SlideImage {
   id: string;
-  file: File;
-  url: string;
+  file?: File;
+  url?: string;
   name: string;
   base64?: string;
+  type?: "image" | "video";
+  file_path?: string;
 }
 
 interface SlideshowSettings {
@@ -184,31 +186,50 @@ export default function PublicSlideshow() {
         />
       </Head>
 
-      <SimpleImageViewer
-        images={slideshow.images}
-        settings={{
-          duration: slideshow.settings.duration || 5000,
-          transition: slideshow.settings.transition as any,
-          autoPlay: slideshow.settings.autoPlay || true,
-          showControls: slideshow.settings.showControls || true,
-          // Add music settings from the new multi-track system
-          backgroundMusic: slideshow.settings?.music_playlist_id
-            ? `playlist:${slideshow.settings.music_playlist_id}`
-            : slideshow.settings?.background_music ||
-              (typeof slideshow.settings?.backgroundMusic === "string"
-                ? slideshow.settings.backgroundMusic
-                : undefined),
-          musicVolume:
-            slideshow.settings?.music_volume ||
-            slideshow.settings?.musicVolume ||
-            50,
-          musicLoop:
-            slideshow.settings?.music_loop ??
-            slideshow.settings?.musicLoop ??
-            true,
-        }}
-        onClose={() => router.push("/")}
-      />
+      {/* Check if this is a video slideshow */}
+      {slideshow.images.length > 0 && slideshow.images[0].type === "video" ? (
+        <SimpleImageViewer
+          images={slideshow.images.map(slide => ({
+            id: slide.id,
+            name: slide.name,
+            url: slide.url || slide.file_path,
+            file_path: slide.file_path,
+            type: "video"
+          }))}
+          settings={{
+            duration: slideshow.settings.duration || 5000,
+            transition: slideshow.settings.transition || "fade",
+            autoPlay: slideshow.settings.autoPlay ?? true,
+            showControls: slideshow.settings.showControls ?? true,
+            tvMode: false, // Allow native video fullscreen controls
+            backgroundMusic: (typeof slideshow.settings.background_music === 'string' ? slideshow.settings.background_music :
+              typeof slideshow.settings.backgroundMusic === 'string' ? slideshow.settings.backgroundMusic :
+                undefined) as string | undefined,
+            musicVolume: slideshow.settings.music_volume || slideshow.settings.musicVolume || 50,
+            musicLoop: slideshow.settings.music_loop ?? slideshow.settings.musicLoop ?? true,
+          }}
+          onClose={() => router.push("/")}
+        />
+      ) : (
+        <SlideshowPlayer
+          slideshow={{
+            id: slideshow.id,
+            name: slideshow.name,
+            images: slideshow.images as any,
+            settings: slideshow.settings as any
+          }}
+          autoPlay={slideshow.settings.autoPlay ?? true}
+          showControls={slideshow.settings.showControls ?? true}
+          onFullscreenToggle={() => {
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen();
+            } else {
+              document.exitFullscreen();
+            }
+          }}
+          isFullscreen={true} // Default to fullscreen styling for full page
+        />
+      )}
     </>
   );
 }

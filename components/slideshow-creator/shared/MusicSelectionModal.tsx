@@ -219,10 +219,15 @@ export default function MusicSelectionModal({
 
   const updateSlideshowMusic = async (musicUrl: string) => {
     try {
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
       const response = await fetch(`/api/slideshows/${slideshowId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({
           settings: {
@@ -370,16 +375,14 @@ export default function MusicSelectionModal({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowFavorites(!showFavorites)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        showFavorites
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${showFavorites
                           ? "bg-red-100 text-red-700"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                        }`}
                     >
                       <Heart
-                        className={`w-4 h-4 ${
-                          showFavorites ? "fill-current" : ""
-                        }`}
+                        className={`w-4 h-4 ${showFavorites ? "fill-current" : ""
+                          }`}
                       />
                       Favorites
                     </button>
@@ -397,46 +400,41 @@ export default function MusicSelectionModal({
                           <button
                             key={category.id}
                             onClick={() => setSelectedCategory(category.id)}
-                            className={`w-full text-left p-4 rounded-xl transition-all duration-200 ${
-                              selectedCategory === category.id
+                            className={`w-full text-left p-4 rounded-xl transition-all duration-200 ${selectedCategory === category.id
                                 ? "bg-gradient-to-r " +
-                                  category.color +
-                                  " text-white shadow-lg"
+                                category.color +
+                                " text-white shadow-lg"
                                 : "bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center gap-3">
                               <div
-                                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  selectedCategory === category.id
+                                className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedCategory === category.id
                                     ? "bg-white/20"
                                     : "bg-gray-100"
-                                }`}
+                                  }`}
                               >
                                 <IconComponent
-                                  className={`w-5 h-5 ${
-                                    selectedCategory === category.id
+                                  className={`w-5 h-5 ${selectedCategory === category.id
                                       ? "text-white"
                                       : "text-gray-600"
-                                  }`}
+                                    }`}
                                 />
                               </div>
                               <div>
                                 <div
-                                  className={`font-semibold ${
-                                    selectedCategory === category.id
+                                  className={`font-semibold ${selectedCategory === category.id
                                       ? "text-white"
                                       : "text-gray-900"
-                                  }`}
+                                    }`}
                                 >
                                   {category.name}
                                 </div>
                                 <div
-                                  className={`text-sm ${
-                                    selectedCategory === category.id
+                                  className={`text-sm ${selectedCategory === category.id
                                       ? "text-white/80"
                                       : "text-gray-500"
-                                  }`}
+                                    }`}
                                 >
                                   {category.description}
                                 </div>
@@ -459,8 +457,8 @@ export default function MusicSelectionModal({
                       {showFavorites
                         ? "Favorite Tracks"
                         : selectedCategory === "all"
-                        ? "All Music Tracks"
-                        : MUSIC_CATEGORIES.find(
+                          ? "All Music Tracks"
+                          : MUSIC_CATEGORIES.find(
                             (c) => c.id === selectedCategory
                           )?.name}
                     </h3>
@@ -473,11 +471,10 @@ export default function MusicSelectionModal({
                   {/* No Music Option */}
                   <button
                     onClick={handleNoMusic}
-                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                      selectedMusic === "none"
+                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${selectedMusic === "none"
                         ? "bg-red-100 text-red-700 border-2 border-red-200"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-200"
-                    }`}
+                      }`}
                   >
                     No Music
                   </button>
@@ -498,11 +495,10 @@ export default function MusicSelectionModal({
                         <motion.div
                           key={track.id}
                           whileHover={{ scale: 1.02, y: -2 }}
-                          className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white shadow-sm hover:shadow-lg ${
-                            selectedMusic === track.id
+                          className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white shadow-sm hover:shadow-lg ${selectedMusic === track.id
                               ? "border-blue-500 bg-blue-50 shadow-lg"
                               : "border-gray-200 hover:border-gray-300"
-                          }`}
+                            }`}
                           onClick={() => handleMusicChange(track)}
                         >
                           {/* Track Header */}
@@ -522,18 +518,16 @@ export default function MusicSelectionModal({
                                   e.stopPropagation();
                                   toggleFavorite(track.id);
                                 }}
-                                className={`p-1.5 rounded-full transition-colors ${
-                                  favorites.has(track.id)
+                                className={`p-1.5 rounded-full transition-colors ${favorites.has(track.id)
                                     ? "text-red-500 hover:text-red-600 bg-red-50"
                                     : "text-gray-400 hover:text-red-500 hover:bg-gray-50"
-                                }`}
+                                  }`}
                               >
                                 <Heart
-                                  className={`w-3.5 h-3.5 ${
-                                    favorites.has(track.id)
+                                  className={`w-3.5 h-3.5 ${favorites.has(track.id)
                                       ? "fill-current"
                                       : ""
-                                  }`}
+                                    }`}
                                 />
                               </button>
                               <button
@@ -643,11 +637,10 @@ export default function MusicSelectionModal({
                     />
                     <label
                       htmlFor="custom-music-upload"
-                      className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-colors cursor-pointer ${
-                        isUploadingMusic
+                      className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-colors cursor-pointer ${isUploadingMusic
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                           : "bg-blue-600 text-white hover:bg-blue-700"
-                      }`}
+                        }`}
                     >
                       <Upload className="w-4 h-4" />
                       {isUploadingMusic ? "Uploading..." : "Choose Music File"}

@@ -51,19 +51,19 @@ const roleConfig = {
   owner: {
     label: "Owner",
     icon: Crown,
-    color: "bg-purple-100 text-purple-800",
+    color: "bg-black text-white",
     description: "Full access to all features and settings",
   },
   manager: {
     label: "Manager",
     icon: Shield,
-    color: "bg-blue-100 text-blue-800",
+    color: "bg-black text-white",
     description: "Can manage slides and invite staff members",
   },
   staff: {
     label: "Staff",
     icon: User,
-    color: "bg-gray-100 text-gray-800",
+    color: "bg-gray-100 text-black",
     description: "Can view and edit slides",
   },
 };
@@ -255,7 +255,7 @@ export default function StaffManagement({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
       </div>
     );
   }
@@ -263,19 +263,19 @@ export default function StaffManagement({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center bg-white p-8 rounded-3xl border border-black/5 shadow-sm">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-3xl font-bold tracking-tight text-black">Staff Management</h2>
+          <p className="text-black/40 mt-1 font-medium">
             Manage your restaurant staff and their permissions
           </p>
         </div>
         {canInvite && (
           <button
             onClick={() => setShowInviteModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-bold rounded-2xl text-white bg-black hover:bg-black/90 transition-all duration-300 shadow-xl shadow-black/10"
           >
-            <UserPlus className="w-4 h-4 mr-2" />
+            <UserPlus className="w-5 h-5 mr-2" />
             Invite Staff
           </button>
         )}
@@ -283,37 +283,40 @@ export default function StaffManagement({
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex">
-            <XCircle className="w-5 h-5 text-red-400 mr-3" />
-            <p className="text-red-800">{error}</p>
+        <div className="bg-white border-2 border-black rounded-2xl p-5 shadow-lg shadow-black/5">
+          <div className="flex items-center">
+            <XCircle className="w-6 h-6 text-black mr-4" />
+            <p className="text-black font-bold uppercase tracking-tight">{error}</p>
           </div>
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex">
-            <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
-            <p className="text-green-800">{success}</p>
+        <div className="bg-black text-white rounded-2xl p-5 shadow-2xl shadow-black/20">
+          <div className="flex items-center">
+            <CheckCircle className="w-6 h-6 text-white mr-4" />
+            <p className="text-white font-bold uppercase tracking-tight">{success}</p>
           </div>
         </div>
       )}
 
       {/* Staff List */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Staff Members</h3>
+      <div className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-2xl shadow-black/[0.02]">
+        <div className="px-8 py-6 border-b border-black/5 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-black uppercase tracking-tight">Staff Members</h3>
+          <div className="text-[10px] font-bold text-black/20 uppercase tracking-widest">{staff.length} Members</div>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-black/[0.03]">
           {staff.length === 0 ? (
-            <div className="px-6 py-8 text-center">
-              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No staff members yet</p>
+            <div className="px-8 py-16 text-center">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Users className="w-10 h-10 text-black/20" />
+              </div>
+              <p className="text-black/40 font-medium">No staff members yet</p>
               {canInvite && (
                 <button
                   onClick={() => setShowInviteModal(true)}
-                  className="mt-4 text-purple-600 hover:text-purple-700 font-medium"
+                  className="mt-6 text-black font-bold uppercase tracking-widest text-xs hover:underline"
                 >
                   Invite your first staff member
                 </button>
@@ -330,12 +333,12 @@ export default function StaffManagement({
                   key={staffMember.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="px-6 py-4 hover:bg-gray-50 transition-colors"
+                  className="px-8 py-6 hover:bg-gray-50 transition-all duration-300"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm font-medium">
+                    <div className="flex items-center space-x-6">
+                      <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center shadow-lg shadow-black/10">
+                        <span className="text-white text-lg font-bold">
                           {staffMember.user.first_name
                             ?.charAt(0)
                             ?.toUpperCase() ||
@@ -344,15 +347,15 @@ export default function StaffManagement({
                         </span>
                       </div>
                       <div>
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium text-gray-900">
+                        <div className="flex items-center space-x-3">
+                          <p className="text-base font-bold text-black tracking-tight">
                             {staffMember.user.first_name &&
-                            staffMember.user.last_name
+                              staffMember.user.last_name
                               ? `${staffMember.user.first_name} ${staffMember.user.last_name}`
                               : staffMember.user.email}
                           </p>
                           {isCurrentUser && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            <span className="text-[10px] bg-black text-white px-2.5 py-1 rounded-full font-bold uppercase tracking-widest">
                               You
                             </span>
                           )}
@@ -362,49 +365,47 @@ export default function StaffManagement({
                         </p>
                         <div className="flex items-center space-x-2 mt-1">
                           <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${roleInfo.color}`}
+                            className={`inline-flex items-center px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm shadow-black/5 ${roleInfo.color}`}
                           >
-                            <RoleIcon className="w-3 h-3 mr-1" />
+                            <RoleIcon className="w-3.5 h-3.5 mr-2" />
                             {roleInfo.label}
                           </span>
                           {!staffMember.is_active && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              <XCircle className="w-3 h-3 mr-1" />
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-gray-50 text-black/20 border border-black/5">
+                              <XCircle className="w-3.5 h-3.5 mr-2" />
                               Inactive
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">
-                          Joined{" "}
-                          {new Date(staffMember.joined_at).toLocaleDateString()}
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right hidden sm:block">
+                        <p className="text-[10px] text-black font-bold uppercase tracking-tight">
+                          Since {new Date(staffMember.joined_at).toLocaleDateString()}
                         </p>
                         {staffMember.invited_by && (
-                          <p className="text-xs text-gray-500">
-                            Invited by {staffMember.invited_by.first_name}{" "}
-                            {staffMember.invited_by.last_name}
+                          <p className="text-[10px] text-black/30 font-bold uppercase tracking-widest mt-0.5">
+                            By {staffMember.invited_by.first_name}
                           </p>
                         )}
                       </div>
                       {!isCurrentUser && (canEdit || canRemove) && (
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-2">
                           {canEdit && (
                             <button
                               onClick={() => openEditModal(staffMember)}
-                              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                              className="p-3 text-black/20 hover:text-black hover:bg-gray-100 rounded-xl transition-all duration-200"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-5 h-5" />
                             </button>
                           )}
                           {canRemove && (
                             <button
                               onClick={() => handleRemoveStaff(staffMember.id)}
-                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                              className="p-3 text-black/20 hover:text-black hover:bg-gray-100 rounded-xl transition-all duration-200"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           )}
                         </div>
@@ -420,20 +421,20 @@ export default function StaffManagement({
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-black/5"
           >
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">
+            <div className="px-8 py-6 border-b border-black/5">
+              <h3 className="text-xl font-bold text-black uppercase tracking-tight">
                 Invite Staff Member
               </h3>
             </div>
-            <form onSubmit={handleInviteStaff} className="px-6 py-4 space-y-4">
+            <form onSubmit={handleInviteStaff} className="px-8 py-8 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[10px] font-bold text-black/40 uppercase tracking-widest mb-3">
                   Email Address
                 </label>
                 <input
@@ -443,12 +444,12 @@ export default function StaffManagement({
                   onChange={(e) =>
                     setInviteForm({ ...inviteForm, email: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-5 py-4 bg-gray-50 border border-black/5 rounded-2xl focus:outline-none focus:border-black transition-all duration-300 font-medium"
                   placeholder="staff@restaurant.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[10px] font-bold text-black/40 uppercase tracking-widest mb-3">
                   Role
                 </label>
                 <select
@@ -459,7 +460,7 @@ export default function StaffManagement({
                       role: e.target.value as any,
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-5 py-4 bg-gray-50 border border-black/5 rounded-2xl focus:outline-none focus:border-black transition-all duration-300 font-medium appearance-none"
                 >
                   {userRole === "owner" && (
                     <option value="owner">Owner - Full access</option>
@@ -474,17 +475,17 @@ export default function StaffManagement({
                   </option>
                 </select>
               </div>
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-6">
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-6 py-4 text-black font-bold border border-black/5 rounded-2xl hover:bg-gray-50 transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="px-8 py-4 bg-black text-white font-bold rounded-2xl hover:bg-black/90 transition-all duration-300 shadow-xl shadow-black/10"
                 >
                   Send Invitation
                 </button>
@@ -496,23 +497,23 @@ export default function StaffManagement({
 
       {/* Edit Modal */}
       {showEditModal && selectedStaff && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-black/5"
           >
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">
+            <div className="px-8 py-6 border-b border-black/5">
+              <h3 className="text-xl font-bold text-black uppercase tracking-tight">
                 Edit Staff Member
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-[10px] text-black/40 font-bold uppercase tracking-widest mt-1">
                 {selectedStaff.user.first_name} {selectedStaff.user.last_name}
               </p>
             </div>
-            <form onSubmit={handleUpdateStaff} className="px-6 py-4 space-y-4">
+            <form onSubmit={handleUpdateStaff} className="px-8 py-8 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[10px] font-bold text-black/40 uppercase tracking-widest mb-3">
                   Role
                 </label>
                 <select
@@ -520,7 +521,7 @@ export default function StaffManagement({
                   onChange={(e) =>
                     setEditForm({ ...editForm, role: e.target.value as any })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-5 py-4 bg-gray-50 border border-black/5 rounded-2xl focus:outline-none focus:border-black transition-all duration-300 font-medium appearance-none"
                 >
                   <option value="owner">Owner - Full access</option>
                   <option value="manager">
@@ -532,31 +533,35 @@ export default function StaffManagement({
                 </select>
               </div>
               <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={editForm.is_active}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, is_active: e.target.checked })
-                    }
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">
+                <label className="flex items-center cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={editForm.is_active}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, is_active: e.target.checked })
+                      }
+                      className="sr-only"
+                    />
+                    <div className={`w-10 h-6 rounded-full transition-colors duration-300 ${editForm.is_active ? 'bg-black' : 'bg-gray-200'}`}></div>
+                    <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${editForm.is_active ? 'translate-x-4' : ''}`}></div>
+                  </div>
+                  <span className="ml-3 text-sm font-bold text-black uppercase tracking-tight">
                     Active member
                   </span>
                 </label>
               </div>
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-6">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-6 py-4 text-black font-bold border border-black/5 rounded-2xl hover:bg-gray-50 transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="px-10 py-4 bg-black text-white font-bold rounded-2xl hover:bg-black/90 transition-all duration-300 shadow-xl shadow-black/10"
                 >
                   Update
                 </button>

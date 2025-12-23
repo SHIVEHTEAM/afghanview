@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AfghanView Music Library is a comprehensive system that provides:
+The Shivehview Music Library is a comprehensive system that provides:
 
 - **No hardcoded music** - All music comes from user uploads or external APIs
 - **Shared library** - Uploaded music is available to all users

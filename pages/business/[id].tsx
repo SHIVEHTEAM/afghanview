@@ -109,7 +109,7 @@ export default function BusinessDisplay() {
   return (
     <>
       <Head>
-        <title>{business.name} - AfghanView</title>
+        <title>{business.name} - Shivehview</title>
         <meta name="description" content={business.description} />
       </Head>
 

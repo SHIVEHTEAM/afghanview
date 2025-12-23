@@ -113,12 +113,10 @@ export default function OnboardingPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        // No user logged in, redirect to pricing
         router.push("/pricing");
         return;
       }
 
-      // Check if user has an active subscription by looking for their business
       const { data: business } = await supabase
         .from("businesses")
         .select("id")
@@ -126,12 +124,10 @@ export default function OnboardingPage() {
         .single();
 
       if (!business) {
-        console.log("No business found for user, redirecting to pricing");
         router.push("/pricing");
         return;
       }
 
-      // Check if business has an active subscription
       const { data: subscription } = await supabase
         .from("business_subscriptions")
         .select("status")
@@ -142,8 +138,6 @@ export default function OnboardingPage() {
       if (subscription) {
         setHasValidSubscription(true);
       } else {
-        // No valid subscription, redirect to pricing
-        console.log("No valid subscription found, redirecting to pricing");
         router.push("/pricing");
         return;
       }
@@ -182,12 +176,8 @@ export default function OnboardingPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        alert("Please sign in to continue");
-        return;
-      }
+      if (!user) return;
 
-      // Update user profile
       await supabase
         .from("profiles")
         .update({
@@ -196,7 +186,6 @@ export default function OnboardingPage() {
         })
         .eq("id", user.id);
 
-      // Update business
       await supabase
         .from("businesses")
         .update({
@@ -205,48 +194,60 @@ export default function OnboardingPage() {
         })
         .eq("user_id", user.id);
 
-      // Redirect to dashboard
       router.push("/client");
     } catch (error) {
       console.error("Error completing onboarding:", error);
-      alert("Error completing onboarding. Please try again.");
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="relative">
+          <div className="w-24 h-24 border-2 border-black/5 rounded-full"></div>
+          <div className="absolute top-0 left-0 w-24 h-24 border-t-2 border-black rounded-full animate-spin"></div>
+        </div>
+        <p className="mt-12 text-[10px] font-black uppercase tracking-[0.5em] text-black animate-pulse">
+          Initialising Deployment Protocol
+        </p>
       </div>
     );
   }
 
-  if (!hasValidSubscription) {
-    return null; // Will redirect to pricing
-  }
+  if (!hasValidSubscription) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-white">
+    <div className="min-h-screen bg-white selection:bg-black selection:text-white">
       <Head>
-        <title>Complete Your Setup - Shivehview</title>
+        <title>Initialise Terminal // Shivehview</title>
       </Head>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Complete Your Setup
-            </h1>
-            <span className="text-sm text-gray-500">
-              Step {currentStep} of 3
-            </span>
+      <div className="max-w-5xl mx-auto px-10 py-24">
+        {/* Progress System */}
+        <div className="mb-24">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest mb-6 shadow-lg shadow-black/10">
+                <div className="w-1 h-1 bg-white rounded-full animate-pulse"></div>
+                System Setup Active
+              </div>
+              <h1 className="text-6xl font-black text-black tracking-tighter uppercase leading-none">
+                Initialise Terminal
+              </h1>
+              <p className="text-[10px] font-bold text-black/20 uppercase tracking-[0.4em] mt-4">
+                Node Configuration // Step {currentStep} of 3
+              </p>
+            </div>
+            <div className="text-[24px] font-black text-black/10 tabular-nums">
+              0{currentStep} / 03
+            </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-purple-600 to-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / 3) * 100}%` }}
-            ></div>
+          <div className="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${(currentStep / 3) * 100}%` }}
+              className="bg-black h-full rounded-full shadow-lg shadow-black/10"
+            />
           </div>
         </div>
 
@@ -254,67 +255,71 @@ export default function OnboardingPage() {
           {currentStep === 1 && (
             <motion.div
               key="step1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl shadow-xl p-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              className="bg-white rounded-[4rem] border border-black/5 p-16 shadow-2xl shadow-black/[0.02] relative overflow-hidden"
             >
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">
-                Personal Information
-              </h2>
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      value={form.firstName}
-                      onChange={(e) =>
-                        handleInputChange("firstName", e.target.value)
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Enter your first name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      value={form.lastName}
-                      onChange={(e) =>
-                        handleInputChange("lastName", e.target.value)
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Enter your last name"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter your email address"
-                  />
-                </div>
+              <div className="absolute top-0 right-0 p-16 opacity-[0.02] pointer-events-none">
+                <User className="w-64 h-64 text-black" />
               </div>
-              <div className="mt-8 flex justify-end">
-                <button
-                  onClick={handleNext}
-                  disabled={!form.firstName || !form.lastName || !form.email}
-                  className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next Step
-                  <ArrowRight className="inline ml-2 h-5 w-5" />
-                </button>
+
+              <div className="relative">
+                <h2 className="text-[11px] font-black text-black/20 uppercase tracking-[0.5em] mb-12">
+                  Operator Identity
+                </h2>
+                <div className="space-y-12">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div>
+                      <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest mb-4 px-4">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        value={form.firstName}
+                        onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        className="w-full px-8 py-5 bg-gray-50/50 border border-black/[0.03] rounded-2xl font-black text-[12px] uppercase tracking-tight focus:bg-white focus:border-black/10 outline-none transition-all placeholder:text-black/5"
+                        placeholder="Operator First"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest mb-4 px-4">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        value={form.lastName}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        className="w-full px-8 py-5 bg-gray-50/50 border border-black/[0.03] rounded-2xl font-black text-[12px] uppercase tracking-tight focus:bg-white focus:border-black/10 outline-none transition-all placeholder:text-black/5"
+                        placeholder="Operator Last"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest mb-4 px-4">
+                      Terminal Email
+                    </label>
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      className="w-full px-8 py-5 bg-gray-50/50 border border-black/[0.03] rounded-2xl font-black text-[12px] uppercase tracking-tight focus:bg-white focus:border-black/10 outline-none transition-all placeholder:text-black/5"
+                      placeholder="node@shivehview.com"
+                    />
+                  </div>
+                </div>
+                <div className="mt-16 flex justify-end">
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleNext}
+                    disabled={!form.firstName || !form.lastName || !form.email}
+                    className="bg-black text-white px-12 py-6 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-black/20 flex items-center gap-4 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next Protocol
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -322,73 +327,86 @@ export default function OnboardingPage() {
           {currentStep === 2 && (
             <motion.div
               key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl shadow-xl p-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              className="bg-white rounded-[4rem] border border-black/5 p-16 shadow-2xl shadow-black/[0.02] relative overflow-hidden"
             >
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">
-                Business Information
-              </h2>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Name
-                  </label>
-                  <input
-                    type="text"
-                    value={form.businessName}
-                    onChange={(e) =>
-                      handleInputChange("businessName", e.target.value)
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter your business name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-4">
-                    Business Type
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {businessTypes.map((type) => (
-                      <button
-                        key={type.id}
-                        onClick={() => handleBusinessTypeSelect(type.id)}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          form.businessType === type.id
-                            ? "border-purple-500 bg-purple-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <type.icon
-                          className={`h-8 w-8 mx-auto mb-2 ${type.color} text-white p-1 rounded`}
-                        />
-                        <h3 className="font-semibold text-gray-900">
-                          {type.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {type.description}
-                        </p>
-                      </button>
-                    ))}
+              <div className="absolute top-0 right-0 p-16 opacity-[0.02] pointer-events-none">
+                <Building className="w-64 h-64 text-black" />
+              </div>
+
+              <div className="relative">
+                <h2 className="text-[11px] font-black text-black/20 uppercase tracking-[0.5em] mb-12">
+                  Business Node Registry
+                </h2>
+                <div className="space-y-12">
+                  <div>
+                    <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest mb-4 px-4">
+                      Business Identity
+                    </label>
+                    <input
+                      type="text"
+                      value={form.businessName}
+                      onChange={(e) => handleInputChange("businessName", e.target.value)}
+                      className="w-full px-8 py-5 bg-gray-50/50 border border-black/[0.03] rounded-2xl font-black text-[12px] uppercase tracking-tight focus:bg-white focus:border-black/10 outline-none transition-all placeholder:text-black/5"
+                      placeholder="Enter Business Name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-black/40 uppercase tracking-widest mb-8 px-4">
+                      Unit Classification
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {businessTypes.map((type) => (
+                        <motion.button
+                          key={type.id}
+                          whileHover={{ scale: 1.05, y: -5 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleBusinessTypeSelect(type.id)}
+                          className={`p-6 rounded-3xl border transition-all text-center flex flex-col items-center gap-4 ${form.businessType === type.id
+                              ? "bg-black border-black shadow-2xl shadow-black/20"
+                              : "bg-gray-50/50 border-black/[0.03] hover:border-black/10"
+                            }`}
+                        >
+                          <div className={`p-4 rounded-xl ${form.businessType === type.id ? 'bg-white/10' : 'bg-gray-100'}`}>
+                            <type.icon
+                              className={`h-6 w-6 ${form.businessType === type.id ? 'text-white' : 'text-black/20'}`}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className={`text-[11px] font-black uppercase tracking-tight ${form.businessType === type.id ? 'text-white' : 'text-black'}`}>
+                              {type.name}
+                            </h3>
+                            <p className={`text-[8px] font-bold uppercase tracking-widest ${form.businessType === type.id ? 'text-white/40' : 'text-black/20'}`}>
+                              {type.description.split(' ')[0]}
+                            </p>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-8 flex justify-between">
-                <button
-                  onClick={handleBack}
-                  className="px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleNext}
-                  disabled={!form.businessName || !form.businessType}
-                  className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next Step
-                  <ArrowRight className="inline ml-2 h-5 w-5" />
-                </button>
+                <div className="mt-20 flex justify-between items-center">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleBack}
+                    className="px-8 py-5 border border-black/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-black/40 hover:text-black hover:bg-gray-50 transition-all"
+                  >
+                    Back
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleNext}
+                    disabled={!form.businessName || !form.businessType}
+                    className="bg-black text-white px-12 py-6 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-black/20 flex items-center gap-4 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                  >
+                    Continue Pipeline
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -396,69 +414,66 @@ export default function OnboardingPage() {
           {currentStep === 3 && (
             <motion.div
               key="step3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl shadow-xl p-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              className="bg-white rounded-[4rem] border border-black/5 p-16 shadow-2xl shadow-black/[0.02] relative overflow-hidden"
             >
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">
-                Review & Complete
-              </h2>
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h3 className="font-semibold text-gray-900 mb-4">
-                  Your Information
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Name:</span>
-                    <span className="font-medium">
-                      {form.firstName} {form.lastName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Email:</span>
-                    <span className="font-medium">{form.email}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Business Name:</span>
-                    <span className="font-medium">{form.businessName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Business Type:</span>
-                    <span className="font-medium">
-                      {
-                        businessTypes.find((t) => t.id === form.businessType)
-                          ?.name
-                      }
-                    </span>
-                  </div>
-                </div>
+              <div className="absolute top-0 right-0 p-16 opacity-[0.02] pointer-events-none">
+                <Check className="w-64 h-64 text-black" />
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                <div className="flex items-center">
-                  <Check className="h-5 w-5 text-green-600 mr-2" />
-                  <span className="text-green-800 font-medium">
-                    Your subscription is active! You're all set to start
-                    creating amazing slideshows.
-                  </span>
-                </div>
-              </div>
+              <div className="relative">
+                <h2 className="text-[11px] font-black text-black/20 uppercase tracking-[0.5em] mb-12">
+                  System Finalisation
+                </h2>
 
-              <div className="flex justify-between">
-                <button
-                  onClick={handleBack}
-                  className="px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="bg-gradient-to-r from-green-600 to-blue-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-blue-600 transition-all"
-                >
-                  Complete Setup
-                  <Check className="inline ml-2 h-5 w-5" />
-                </button>
+                <div className="bg-gray-50/50 rounded-[3rem] p-12 border border-black/[0.03] mb-12">
+                  <h3 className="text-[10px] font-black text-black/30 uppercase tracking-[0.4em] mb-8 px-2">Registry Summary</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                    {[
+                      { label: "Lead Operator", val: `${form.firstName} ${form.lastName}` },
+                      { label: "Terminal Access", val: form.email },
+                      { label: "Node Identifier", val: form.businessName },
+                      { label: "Unit Class", val: businessTypes.find((t) => t.id === form.businessType)?.name || 'UNITS_PENDING' },
+                    ].map((item, i) => (
+                      <div key={i} className="space-y-2 border-b border-black/[0.03] pb-4 px-2">
+                        <span className="text-[8px] font-black text-black/20 uppercase tracking-widest">{item.label}</span>
+                        <p className="text-[12px] font-black text-black uppercase tracking-tight">{item.val}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-black text-white rounded-[2.5rem] p-10 flex items-center gap-8 mb-16 shadow-2xl shadow-black/20">
+                  <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
+                    <Check className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-widest mb-1">Quota Verified</p>
+                    <p className="text-[9px] font-bold text-white/40 uppercase tracking-tight">Active Matrix Subscription Confirmed // Network Ready</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleBack}
+                    className="px-8 py-5 border border-black/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-black/40 hover:text-black hover:bg-gray-50 transition-all"
+                  >
+                    Modify Params
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleSubmit}
+                    className="bg-black text-white px-16 py-7 rounded-[2.5rem] font-black uppercase tracking-[0.5em] text-[12px] shadow-2xl shadow-black/40 flex items-center gap-4 transition-all"
+                  >
+                    Execute Boot Sequence
+                    <Check className="w-5 h-5" />
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           )}

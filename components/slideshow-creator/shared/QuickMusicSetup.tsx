@@ -118,10 +118,15 @@ export default function QuickMusicSetup({
       const preset = QUICK_MUSIC_PRESETS.find((p) => p.id === presetId);
       if (!preset) return;
 
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
       const response = await fetch(`/api/slideshows/${slideshowId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({
           settings: {
@@ -247,11 +252,10 @@ export default function QuickMusicSetup({
                   <motion.div
                     key={preset.id}
                     whileHover={{ scale: 1.02, y: -2 }}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white shadow-sm hover:shadow-lg ${
-                      selectedPreset === preset.id
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white shadow-sm hover:shadow-lg ${selectedPreset === preset.id
                         ? "border-blue-500 bg-blue-50 shadow-lg"
                         : "border-gray-200 hover:border-gray-300"
-                    }`}
+                      }`}
                     onClick={() => handleQuickMusicSelect(preset.id)}
                   >
                     {/* Preset Header */}

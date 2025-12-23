@@ -73,68 +73,101 @@ export default function VideoSlideshowWizard({
     const files = event.target.files;
     if (!files) return;
 
+    console.log('Starting video upload, files:', files.length);
     setIsUploading(true);
     const newVideos: VideoFile[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        console.log(`Processing file ${i + 1}/${files.length}:`, file.name, file.type, file.size);
 
-      if (!file.type.startsWith("video/")) {
-        alert(`${file.name} is not a video file`);
-        continue;
+        if (!file.type.startsWith("video/")) {
+          console.warn(`Skipping ${file.name} - not a video file`);
+          alert(`${file.name} is not a video file`);
+          continue;
+        }
+
+        if (file.size > 50 * 1024 * 1024) {
+          console.warn(`Skipping ${file.name} - too large (${file.size} bytes)`);
+          alert(`${file.name} is too large. Maximum size is 50MB`);
+          continue;
+        }
+
+        try {
+          // Sanitize filename for Supabase Storage
+          // Remove special characters and replace spaces with underscores
+          const sanitizedFileName = file.name
+            .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace special chars with underscore
+            .replace(/\s+/g, '_') // Replace spaces with underscore
+            .replace(/_+/g, '_'); // Replace multiple underscores with single
+
+          const fileName = `videos/${Date.now()}-${sanitizedFileName}`;
+          console.log('Uploading to Supabase:', fileName);
+
+          const { data, error: uploadError } = await supabase.storage
+            .from("slideshow-media")
+            .upload(fileName, file, {
+              cacheControl: "3600",
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.error('Supabase upload error:', uploadError);
+            alert(`Failed to upload ${file.name}: ${uploadError.message}`);
+            continue;
+          }
+
+          console.log('Upload successful, getting public URL...');
+
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from("slideshow-media")
+            .getPublicUrl(fileName);
+
+          let videoUrl = urlData?.publicUrl || "";
+          console.log('Public URL:', videoUrl);
+
+          const videoFile: VideoFile = {
+            id: Date.now().toString() + i,
+            file,
+            name: file.name,
+            size: file.size,
+            url: videoUrl,
+          };
+
+          try {
+            console.log('Generating thumbnail and getting duration...');
+            const [thumbnail, duration] = await Promise.all([
+              generateVideoThumbnail(file),
+              getVideoDuration(file),
+            ]);
+            videoFile.thumbnail = thumbnail;
+            videoFile.duration = duration;
+            console.log('Video processing complete:', { duration, hasThumbnail: !!thumbnail });
+          } catch (error) {
+            console.error("Error processing video metadata:", error);
+            // Continue anyway - thumbnail/duration are optional
+          }
+
+          newVideos.push(videoFile);
+          console.log('Video added to list:', videoFile.name);
+        } catch (fileError) {
+          console.error(`Error processing file ${file.name}:`, fileError);
+          alert(`Error processing ${file.name}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`);
+        }
       }
 
-      if (file.size > 50 * 1024 * 1024) {
-        alert(`${file.name} is too large. Maximum size is 50MB`);
-        continue;
-      }
-
-      // Upload to Supabase Storage
-      const fileName = `videos/${Date.now()}-${file.name}`;
-      const { data, error: uploadError } = await supabase.storage
-        .from("slideshow-media")
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (uploadError) {
-        alert(`Failed to upload ${file.name}: ${uploadError.message}`);
-        continue;
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from("slideshow-media")
-        .getPublicUrl(fileName);
-
-      let videoUrl = urlData?.publicUrl || "";
-
-      const videoFile: VideoFile = {
-        id: Date.now().toString() + i,
-        file,
-        name: file.name,
-        size: file.size,
-        url: videoUrl,
-      };
-
-      try {
-        const [thumbnail, duration] = await Promise.all([
-          generateVideoThumbnail(file),
-          getVideoDuration(file),
-        ]);
-        videoFile.thumbnail = thumbnail;
-        videoFile.duration = duration;
-      } catch (error) {
-        console.error("Error processing video:", error);
-      }
-
-      newVideos.push(videoFile);
+      console.log('All files processed, adding to videos list:', newVideos.length);
+      setVideos([...videos, ...newVideos]);
+    } catch (error) {
+      console.error('Fatal error during upload:', error);
+      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+      console.log('Upload process complete');
     }
-
-    setVideos([...videos, ...newVideos]);
-    setIsUploading(false);
-    event.target.value = "";
   };
 
   const generateVideoThumbnail = (file: File): Promise<string> => {
@@ -317,10 +350,10 @@ export default function VideoSlideshowWizard({
                 <div className="aspect-video bg-white rounded border">
                   {videos.length > 0 ? (
                     <video
-                      src={URL.createObjectURL(videos[0].file)}
+                      src={videos[0].url || URL.createObjectURL(videos[0].file)}
                       className="w-full h-full object-cover rounded"
+                      controls
                       muted
-                      loop
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-400">

@@ -271,7 +271,7 @@ export default function AdminBusinesses() {
     <AdminLayout>
       <Head>
         <title>Business Management - Admin Dashboard</title>
-        <meta name="description" content="Manage businesses in AfghanView" />
+        <meta name="description" content="Manage businesses in Shivehview" />
       </Head>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

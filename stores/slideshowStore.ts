@@ -219,19 +219,29 @@ export const useSlideshowStore = create<SlideshowStore>((set, get) => ({
     // Determine slideshow type
     let slideshowType = slideshow.slideshowType;
     if (!slideshowType) {
-      if (
-        slideshow.title.toLowerCase().includes("ai") ||
-        slideshow.title.toLowerCase().includes("fact")
+      // Check if it's a video slideshow by checking the slides
+      const hasVideoSlides = slideshow.content?.slides?.some((s: any) => s.type === "video") ||
+        slideshow.images?.some((s: any) => s.type === "video");
+
+      if (hasVideoSlides || slideshow.title?.toLowerCase().includes("video") || slideshow.mediaType === "video") {
+        slideshowType = "video";
+      } else if (
+        slideshow.title?.toLowerCase().includes("ai") ||
+        slideshow.title?.toLowerCase().includes("fact")
       ) {
         slideshowType = "ai-facts";
-      } else if (slideshow.title.toLowerCase().includes("menu")) {
+      } else if (slideshow.title?.toLowerCase().includes("menu")) {
         slideshowType = "menu";
-      } else if (slideshow.title.toLowerCase().includes("deal")) {
+      } else if (slideshow.title?.toLowerCase().includes("deal")) {
         slideshowType = "deals";
-      } else if (slideshow.title.toLowerCase().includes("text")) {
+      } else if (slideshow.title?.toLowerCase().includes("text")) {
         slideshowType = "text";
-      } else if (slideshow.mediaType === "video") {
-        slideshowType = "video";
+      } else if (
+        slideshow.content?.type === "property-listing" ||
+        slideshow.type === "property-listing" ||
+        slideshow.content?.slides?.some((s: any) => s.type === "property-listing")
+      ) {
+        slideshowType = "property-listing";
       } else {
         slideshowType = "image";
       }

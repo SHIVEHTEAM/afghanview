@@ -15,6 +15,7 @@ import {
   List,
   MoreVertical,
   RefreshCw,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -183,10 +184,18 @@ export default function SlideshowsPage() {
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading slideshows...</p>
+        <div className="flex flex-col items-center justify-center py-40 px-8">
+          <div className="relative">
+            <div className="w-24 h-24 border-2 border-black/5 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-24 h-24 border-t-2 border-black rounded-full animate-spin"></div>
+          </div>
+          <div className="mt-12 text-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-black animate-pulse">
+              Accessing Module Registry
+            </p>
+            <p className="text-[8px] font-bold text-black/20 uppercase tracking-[0.3em] mt-4">
+              Synchronising Content Nodes // Archive Active
+            </p>
           </div>
         </div>
       </ClientLayout>
@@ -196,268 +205,238 @@ export default function SlideshowsPage() {
   return (
     <>
       <Head>
-        <title>Slideshows - AfghanView</title>
-        <meta name="description" content="Manage your slideshows" />
+        <title>Module Archive - Shivehview</title>
       </Head>
 
       <ClientLayout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-10 py-16">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 border-b border-black/[0.04] pb-12 mb-20">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                My Slideshows
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest mb-6 shadow-lg shadow-black/10">
+                <div className="w-1 h-1 bg-white rounded-full animate-pulse"></div>
+                System Content Hub
+              </div>
+              <h1 className="text-6xl font-black text-black mb-4 tracking-tighter uppercase">
+                Module Archive
               </h1>
-              <p className="text-gray-600 mt-2">
-                Create and manage your slideshow content
+              <p className="text-[10px] font-bold text-black/30 uppercase tracking-[0.4em]">
+                System // Content Registry // {slideshows.length} Units Registered
               </p>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <button
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleRefresh}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="p-5 bg-white rounded-2xl border border-black/[0.04] shadow-2xl shadow-black/[0.02] text-black hover:bg-black hover:text-white transition-all group"
               >
-                <RefreshCw className="w-5 h-5" />
-              </button>
-              <Link
-                href="/slideshow-creator"
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Slideshow</span>
+                <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-700" />
+              </motion.button>
+              <Link href="/slideshow-creator">
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-10 py-5 bg-black text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-2xl shadow-black/20 text-[10px] flex items-center gap-4 group"
+                >
+                  <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                  <span>Initialise New</span>
+                </motion.button>
               </Link>
             </div>
           </div>
 
-          {/* Filters and Search */}
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          {/* Controls Bar */}
+          <div className="bg-white rounded-[2.5rem] p-10 border border-black/[0.05] shadow-2xl shadow-black/[0.02] mb-16">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex flex-1 items-center gap-6 w-full">
+                <div className="relative flex-1 group">
+                  <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-black/20 w-4 h-4 group-focus-within:text-black transition-colors" />
                   <input
                     type="text"
-                    placeholder="Search slideshows..."
+                    placeholder="Search Unit Registry..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-14 pr-6 py-5 bg-gray-50/50 rounded-2xl border border-black/[0.04] font-black text-[11px] uppercase tracking-tight focus:bg-white focus:border-black/10 outline-none transition-all placeholder:text-black/10"
                   />
                 </div>
 
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as any)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                <div className="relative group">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value as any)}
+                    className="pl-8 pr-12 py-5 bg-gray-50/50 rounded-2xl border border-black/[0.04] font-black text-[10px] uppercase tracking-widest focus:bg-white focus:border-black/10 outline-none transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="all">Status: Global</option>
+                    <option value="active">Status: Online</option>
+                    <option value="inactive">Status: Offline</option>
+                  </select>
+                  <Filter className="absolute right-6 top-1/2 -translate-y-1/2 w-3 h-3 text-black/20 pointer-events-none" />
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <button
+              <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-2xl border border-black/[0.03]">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "grid"
-                      ? "bg-blue-100 text-blue-600"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                  }`}
+                  className={`p-4 rounded-xl transition-all ${viewMode === "grid" ? "bg-white text-black shadow-lg" : "text-black/20 hover:text-black"
+                    }`}
                 >
-                  <Grid className="w-5 h-5" />
-                </button>
-                <button
+                  <Grid className="w-4 h-4" />
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "list"
-                      ? "bg-blue-100 text-blue-600"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                  }`}
+                  className={`p-4 rounded-xl transition-all ${viewMode === "list" ? "bg-white text-black shadow-lg" : "text-black/20 hover:text-black"
+                    }`}
                 >
-                  <List className="w-5 h-5" />
-                </button>
+                  <List className="w-4 h-4" />
+                </motion.button>
               </div>
             </div>
           </div>
 
-          {/* Slideshows Grid/List */}
+          {/* Content Grid/List */}
           {slideshows.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 shadow-lg border border-gray-100 text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="w-8 h-8 text-blue-600" />
+            <div className="bg-white rounded-[3rem] border border-black/5 shadow-2xl shadow-black/[0.02] p-32 text-center">
+              <div className="w-24 h-24 bg-gray-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-inner group">
+                <Plus className="w-10 h-10 text-black/10 group-hover:text-black transition-all duration-500" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No slideshows yet
+              <h3 className="text-3xl font-black text-black mb-4 uppercase tracking-tighter">
+                Registry Depleted
               </h3>
-              <p className="text-gray-600 mb-6">
-                Create your first slideshow to get started
+              <p className="text-[11px] font-bold text-black/30 mb-12 uppercase tracking-[0.2em] leading-relaxed max-w-sm mx-auto">
+                No content modules detected within the system perimeter. Initialize a primary unit to begin.
               </p>
-              <Link
-                href="/slideshow-creator"
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
-              >
-                Create Your First Slideshow
+              <Link href="/slideshow-creator">
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-12 py-6 bg-black text-white font-black uppercase tracking-[0.3em] rounded-2xl shadow-2xl shadow-black/20 text-[10px]"
+                >
+                  Create Primary Unit
+                </motion.button>
               </Link>
             </div>
           ) : (
             <div
               className={
                 viewMode === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  : "space-y-4"
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+                  : "space-y-6"
               }
             >
-              {filteredSlideshows.map((slideshow) => (
+              {filteredSlideshows.map((slideshow, i) => (
                 <motion.div
                   key={slideshow.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 ${
-                    viewMode === "list" ? "flex items-center p-6" : "p-6"
-                  }`}
+                  transition={{ delay: i * 0.05 }}
+                  className={`bg-white rounded-[2.5rem] border border-black/5 shadow-2xl shadow-black/[0.02] hover:shadow-black/[0.06] transition-all duration-500 group overflow-hidden ${viewMode === "list" ? "flex flex-col md:flex-row md:items-center p-10 gap-10" : "p-10"
+                    }`}
                 >
-                  {viewMode === "list" ? (
-                    <>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900">
-                              {slideshow.name}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {slideshow.description || "No description"}
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <span>
-                              Created:{" "}
-                              {new Date(
-                                slideshow.created_at
-                              ).toLocaleDateString()}
-                            </span>
-                            <span>{slideshow.play_count || 0} plays</span>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                slideshow.is_active
-                                  ? "bg-green-100 text-green-600"
-                                  : "bg-gray-100 text-gray-600"
-                              }`}
-                            >
-                              {slideshow.is_active ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-                        </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-8">
+                      <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border shadow-sm ${slideshow.is_active
+                        ? 'bg-black text-white border-black'
+                        : 'bg-white text-black/30 border-black/5'
+                        }`}>
+                        {slideshow.is_active ? 'Status: Optimal' : 'Status: Offline'}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleToggleActive(slideshow)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            slideshow.is_active
-                              ? "bg-green-100 text-green-600 hover:bg-green-200"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                          }`}
-                        >
-                          {slideshow.is_active ? (
-                            <Power className="w-4 h-4" />
-                          ) : (
-                            <PowerOff className="w-4 h-4" />
-                          )}
-                        </button>
-                        <Link
-                          href={`/slideshow/${slideshow.slug || slideshow.id}`}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
-                        >
-                          <Play className="w-4 h-4 inline mr-2" />
-                          Play
-                        </Link>
-                        <Link
-                          href={`/slideshow-creator?edit=${slideshow.id}`}
-                          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteSlideshow(slideshow.id)}
-                          className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-sm font-medium"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <div className="w-1.5 h-1.5 rounded-full bg-black/5"></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-black/5"></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-black/5"></div>
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-1">
-                            {slideshow.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {slideshow.description || "No description"}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleToggleActive(slideshow)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              slideshow.is_active
-                                ? "bg-green-100 text-green-600 hover:bg-green-200"
-                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                            }`}
-                          >
-                            {slideshow.is_active ? (
-                              <Power className="w-4 h-4" />
-                            ) : (
-                              <PowerOff className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
+                    </div>
 
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                        <span>
-                          Created:{" "}
-                          {new Date(slideshow.created_at).toLocaleDateString()}
-                        </span>
-                        <span>{slideshow.play_count || 0} plays</span>
-                      </div>
+                    <div className="flex flex-col gap-3">
+                      <h3 className="text-2xl font-black text-black uppercase tracking-tighter leading-none group-hover:text-black/70 transition-colors">
+                        {slideshow.name}
+                      </h3>
+                      <p className="text-[10px] font-bold text-black/30 uppercase tracking-[0.1em] leading-relaxed line-clamp-2 min-h-[3em]">
+                        {slideshow.description || "System metadata entry pending..."}
+                      </p>
+                    </div>
 
-                      <div className="flex items-center space-x-2">
-                        <Link
-                          href={`/slideshow/${slideshow.slug || slideshow.id}`}
-                          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium text-center"
-                        >
-                          <Play className="w-4 h-4 inline mr-2" />
-                          Play
-                        </Link>
-                        <Link
-                          href={`/slideshow-creator?edit=${slideshow.id}`}
-                          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteSlideshow(slideshow.id)}
-                          className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-sm font-medium"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                    <div className="flex items-center gap-6 mt-10 pt-8 border-t border-black/[0.03]">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[7px] font-black text-black/10 uppercase tracking-widest">Initialised</span>
+                        <div className="flex items-center gap-2 text-[10px] font-black text-black uppercase tracking-tight">
+                          <Calendar className="w-3 h-3 text-black/20" />
+                          <span>{new Date(slideshow.created_at).toLocaleDateString()}</span>
+                        </div>
                       </div>
-                    </>
-                  )}
+                      <div className="flex flex-col gap-1 pl-6 border-l border-black/[0.03]">
+                        <span className="text-[7px] font-black text-black/10 uppercase tracking-widest">Broadcasts</span>
+                        <div className="flex items-center gap-2 text-[10px] font-black text-black uppercase tracking-tight">
+                          <Play className="w-3 h-3 text-black/20" />
+                          <span>{slideshow.play_count || 0}_Cycles</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`grid gap-4 ${viewMode === 'list' ? 'grid-cols-2 md:grid-cols-4 min-w-[440px]' : 'grid-cols-2 mt-10'}`}>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleToggleActive(slideshow)}
+                      className={`p-5 rounded-2xl border transition-all flex items-center justify-center shadow-lg ${slideshow.is_active
+                        ? "bg-black text-white border-black shadow-black/20"
+                        : "bg-white text-black/20 border-black/5 hover:border-black/20 shadow-none"
+                        }`}
+                      title={slideshow.is_active ? "Terminate Feed" : "Activate Feed"}
+                    >
+                      {slideshow.is_active ? (
+                        <Power className="w-5 h-5" />
+                      ) : (
+                        <PowerOff className="w-5 h-5" />
+                      )}
+                    </motion.button>
+                    <Link href={`/slideshow/${slideshow.slug || slideshow.id}`}>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="p-5 w-full bg-white text-black border border-black/5 rounded-2xl flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-xl shadow-black/[0.02] hover:shadow-black/20"
+                      >
+                        <Play className="w-5 h-5" />
+                      </motion.button>
+                    </Link>
+                    <Link href={`/slideshow-creator?edit=${slideshow.id}`}>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="p-5 w-full bg-white text-black border border-black/5 rounded-2xl flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-xl shadow-black/[0.02] hover:shadow-black/20"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </motion.button>
+                    </Link>
+                    <motion.button
+                      whileHover={{ scale: 1.05, backgroundColor: '#000', color: '#fff' }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleDeleteSlideshow(slideshow.id)}
+                      className="p-5 bg-white text-black/20 border border-black/5 rounded-2xl flex items-center justify-center hover:border-black/20 transition-all shadow-xl shadow-black/[0.02]"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </motion.button>
+                  </div>
                 </motion.div>
               ))}
             </div>
           )}
 
           {filteredSlideshows.length === 0 && slideshows.length > 0 && (
-            <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 text-center">
-              <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No slideshows found
+            <div className="bg-white rounded-[3rem] border border-black/5 p-32 text-center mt-12 shadow-2xl shadow-black/[0.02]">
+              <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+                <Search className="w-10 h-10 text-black/10" />
+              </div>
+              <h3 className="text-2xl font-black text-black mb-4 uppercase tracking-tighter">
+                Query Zero Results
               </h3>
-              <p className="text-gray-600">
-                Try adjusting your search or filter criteria
+              <p className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] max-w-sm mx-auto leading-relaxed">
+                Adjust search parameters or status filters to locate the desired unit node.
               </p>
             </div>
           )}

@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload, Trash2, Video, ArrowRight } from "lucide-react";
+import { Upload, Trash2, Video, CheckCircle } from "lucide-react";
 
 interface VideoFile {
   id: string;
@@ -26,106 +26,93 @@ export default function VideoUploadStep({
   formatDuration,
 }: VideoUploadStepProps) {
   return (
-    <div className="h-full flex flex-col min-h-0">
-      <div className="text-center mb-6 flex-shrink-0">
-        <h3 className="text-lg font-semibold mb-2">Upload Videos</h3>
-        <p className="text-gray-600">
-          Add video files to create your slideshow
-        </p>
+    <div className="space-y-10">
+      <div
+        className={`border-2 border-dashed rounded-[2rem] p-16 text-center transition-all ${isUploading ? "bg-gray-50 border-black/5" : "bg-white border-black/10 hover:bg-gray-50 hover:border-black/20"
+          }`}
+      >
+        <div className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-black/10">
+          <Upload className="w-7 h-7" />
+        </div>
+        <h3 className="text-xl font-bold text-black mb-2">
+          {isUploading ? "Syncing cinematic data..." : "Add Video Assets"}
+        </h3>
+        <p className="text-sm text-black/40 mb-8">Drag and drop MP4/MOV files or click to browse</p>
+
+        <input
+          type="file"
+          multiple
+          accept="video/*"
+          onChange={onFileUpload}
+          className="hidden"
+          id="video-upload"
+          disabled={isUploading}
+        />
+
+        <button
+          onClick={() => {
+            const input = document.getElementById("video-upload") as HTMLInputElement;
+            if (input) input.click();
+          }}
+          disabled={isUploading}
+          className="inline-flex items-center px-10 py-4 bg-black text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black/90 transition-all shadow-xl shadow-black/10 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Video className="w-4 h-4 mr-3" />
+          Initialize Upload
+        </button>
+        <p className="text-[10px] font-bold text-black/10 uppercase tracking-widest mt-8">Supported: MP4, MOV, WebM (Max 50MB)</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4 pb-6 min-h-0">
-        {/* Upload Area */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-          <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">
-            Drag and drop video files here, or click to browse
-          </p>
-          <input
-            type="file"
-            multiple
-            accept="video/*"
-            onChange={onFileUpload}
-            className="hidden"
-            id="video-upload"
-          />
-          <label
-            htmlFor="video-upload"
-            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer"
-          >
-            <Video className="w-4 h-4 mr-2" />
-            Choose Videos
-          </label>
-          <p className="text-sm text-gray-500 mt-2">
-            Supported formats: MP4, MOV, AVI, WebM (Max 50MB each)
-          </p>
+      {isUploading && (
+        <div className="flex flex-col items-center justify-center py-10">
+          <div className="w-12 h-12 border-2 border-black/5 border-t-black rounded-full animate-spin"></div>
+          <p className="mt-6 text-[10px] font-black uppercase tracking-widest text-black/40">Encrypting & Storing Data Units...</p>
         </div>
+      )}
 
-        {/* Upload Progress */}
-        {isUploading && (
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">Processing videos...</p>
-            <p className="text-sm text-gray-500">
-              This may take a moment for large files
-            </p>
+      {videos.length > 0 && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-sm font-bold text-black uppercase tracking-widest flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-black" />
+              Manifest Locked ({videos.length})
+            </h3>
           </div>
-        )}
-
-        {/* Videos List */}
-        {videos.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <h4 className="font-medium">Uploaded Videos ({videos.length})</h4>
-              <div className="flex items-center text-purple-600 text-sm">
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Ready
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {videos.map((video) => (
-              <div
-                key={video.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-              >
-                {video.thumbnail ? (
-                  <img
-                    src={video.thumbnail}
-                    alt={video.name}
-                    className="w-16 h-12 object-cover rounded"
-                  />
-                ) : (
-                  <div className="w-16 h-12 bg-gray-200 rounded flex items-center justify-center">
-                    <Video className="w-6 h-6 text-gray-400" />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{video.name}</div>
-                  <div className="text-xs text-gray-500">
-                    {(video.size / 1024 / 1024).toFixed(1)} MB
-                    {video.duration && ` • ${formatDuration(video.duration)}`}
+              <div key={video.id} className="flex items-center gap-6 p-6 bg-gray-50/50 rounded-2xl border border-black/5 group relative overflow-hidden">
+                <div className="w-24 h-16 bg-black rounded-xl overflow-hidden shadow-lg flex-shrink-0 border border-white/10">
+                  {video.thumbnail ? (
+                    <img src={video.thumbnail} alt={video.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Video className="w-6 h-6 text-white/20" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-bold text-black truncate uppercase tracking-tight">{video.name}</h4>
+                  <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-black/20 uppercase tracking-widest">
+                    <span>{(video.size / 1024 / 1024).toFixed(1)} MB</span>
+                    {video.duration && (
+                      <>
+                        <div className="w-1 h-1 rounded-full bg-black/10"></div>
+                        <span>{formatDuration(video.duration)}</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <button
-                  onClick={() => onRemoveVideo(video.id)}
-                  className="text-pink-500 hover:text-red-700"
+                  onClick={(e) => { e.stopPropagation(); onRemoveVideo(video.id); }}
+                  className="p-3 bg-white text-black border border-black/5 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

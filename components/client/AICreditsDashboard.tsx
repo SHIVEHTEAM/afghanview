@@ -5,15 +5,12 @@ import {
   Zap,
   TrendingUp,
   Calendar,
-  Download,
   RefreshCw,
   Info,
   AlertCircle,
-  CheckCircle,
   Clock,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth";
-import { supabase } from "../../lib/supabase";
 
 interface AICredits {
   total: number;
@@ -35,294 +32,125 @@ export default function AICreditsDashboard() {
   const [credits, setCredits] = useState<AICredits | null>(null);
   const [usageHistory, setUsageHistory] = useState<UsageHistory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Fetch AI credits data
   useEffect(() => {
-    const fetchCredits = async () => {
-      if (!user?.id) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        // For now, we'll use a simple credits system
-        // In a real app, this would come from a dedicated AI credits table
-        const mockCredits: AICredits = {
-          total: 100,
-          used: 35,
-          remaining: 65,
-          resetDate: new Date(
-            Date.now() + 30 * 24 * 60 * 60 * 1000
-          ).toISOString(), // 30 days from now
-        };
-
-        setCredits(mockCredits);
-
-        // Mock usage history - in real app, this would come from AI usage logs
-        const mockHistory: UsageHistory[] = [
-          {
-            id: "1",
-            type: "fact_generation",
-            credits: 5,
-            description: "Generated 10 AI facts for slideshow",
-            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          },
-          {
-            id: "2",
-            type: "content_creation",
-            credits: 10,
-            description: "Created AI-powered menu content",
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-          },
-          {
-            id: "3",
-            type: "image_enhancement",
-            credits: 3,
-            description: "Enhanced 5 images with AI",
-            timestamp: new Date(
-              Date.now() - 3 * 24 * 60 * 60 * 1000
-            ).toISOString(), // 3 days ago
-          },
-        ];
-
-        setUsageHistory(mockHistory);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch credits data"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCredits();
-  }, [user?.id]);
-
-  const handleRefresh = () => {
-    setLoading(true);
-    // Re-fetch data
-    setTimeout(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setCredits({ total: 100, used: 35, remaining: 65, resetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() });
+      setUsageHistory([
+        { id: "1", type: "fact_generation", credits: 5, description: "Generated 10 AI facts", timestamp: new Date().toISOString() },
+        { id: "2", type: "content_creation", credits: 10, description: "Created AI menu content", timestamp: new Date(Date.now() - 86400000).toISOString() },
+      ]);
       setLoading(false);
-    }, 1000);
-  };
-
-  const getUsagePercentage = () => {
-    if (!credits) return 0;
-    return (credits.used / credits.total) * 100;
-  };
-
-  const getUsageColor = () => {
-    const percentage = getUsagePercentage();
-    if (percentage < 50) return "text-green-600 bg-green-100";
-    if (percentage < 80) return "text-yellow-600 bg-yellow-100";
-    return "text-red-600 bg-red-100";
-  };
+    };
+    fetchData();
+  }, [user?.id]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading AI credits...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center py-40">
+        <div className="w-10 h-10 border-2 border-black/5 border-t-black rounded-full animate-spin"></div>
+        <p className="mt-6 text-sm font-medium text-black/40">Loading AI dashboard...</p>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error loading credits
-          </h3>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={handleRefresh}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!credits) return null;
 
-  if (!credits) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-8 h-8 text-gray-600" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No credits data
-          </h3>
-          <p className="text-gray-600">
-            Contact support to set up your AI credits
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const usagePercent = (credits.used / credits.total) * 100;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-5xl mx-auto px-6 py-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">AI Credits</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your AI-powered features and usage
-          </p>
+          <h1 className="text-3xl font-bold text-black">AI Credits</h1>
+          <p className="text-sm text-black/40 mt-1">Monitor your AI usage and resource allocation</p>
         </div>
-
-        <button
-          onClick={handleRefresh}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-        >
+        <button onClick={() => window.location.reload()} className="p-3 bg-white border border-black/5 rounded-xl hover:bg-gray-50 transition-all text-black/20 hover:text-black">
           <RefreshCw className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Credits Overview */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Credits Overview
-          </h2>
-          <div
-            className={`px-3 py-1 rounded-full text-sm font-medium ${getUsageColor()}`}
-          >
-            {getUsagePercentage().toFixed(1)}% used
-          </div>
+      <div className="bg-white border border-black/5 p-12 rounded-2xl shadow-sm mb-12">
+        <div className="flex justify-between items-center mb-10">
+          <h2 className="text-xs font-bold text-black/30 uppercase tracking-widest">Usage Overview</h2>
+          <span className="px-3 py-1 bg-black text-white text-[10px] font-bold uppercase rounded-full">{usagePercent.toFixed(0)}% Used</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900 mb-2">
-              {credits.total}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+          {[
+            { label: "Total Allocation", val: credits.total },
+            { label: "Credits Used", val: credits.used },
+            { label: "Remaining", val: credits.remaining },
+          ].map((s, i) => (
+            <div key={i}>
+              <p className="text-[10px] font-bold text-black/20 uppercase tracking-widest mb-2">{s.label}</p>
+              <p className="text-5xl font-bold text-black tracking-tight">{s.val}</p>
             </div>
-            <div className="text-sm text-gray-600">Total Credits</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-600 mb-2">
-              {credits.used}
-            </div>
-            <div className="text-sm text-gray-600">Used Credits</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">
-              {credits.remaining}
-            </div>
-            <div className="text-sm text-gray-600">Remaining Credits</div>
-          </div>
+          ))}
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-          <div
-            className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-            style={{ width: `${getUsagePercentage()}%` }}
-          ></div>
+        <div className="h-3 bg-gray-50 rounded-full overflow-hidden mb-10">
+          <div className="h-full bg-black rounded-full" style={{ width: `${usagePercent}%` }}></div>
         </div>
 
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <span>
-            Credits reset on {new Date(credits.resetDate).toLocaleDateString()}
-          </span>
-          <span>{credits.remaining} credits remaining</span>
+        <div className="flex items-center gap-2 text-xs text-black/40">
+          <Calendar className="w-4 h-4" />
+          <span>Credits reset on {new Date(credits.resetDate).toLocaleDateString()}</span>
         </div>
       </div>
 
-      {/* Usage Tips */}
-      <div className="bg-blue-50 rounded-xl p-6 mb-8">
-        <div className="flex items-start space-x-3">
-          <Info className="w-5 h-5 text-blue-600 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-blue-900 mb-2">AI Credits Tips</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• AI fact generation uses 5 credits per batch</li>
-              <li>• Content creation uses 10 credits per session</li>
-              <li>• Image enhancement uses 3 credits per image</li>
-              <li>• Credits reset monthly with your subscription</li>
-              <li>• Upgrade your plan for more credits</li>
-            </ul>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="bg-gray-50 p-10 rounded-2xl border border-black/5">
+          <div className="flex items-center gap-3 mb-8">
+            <Zap className="w-5 h-5 text-black/20" />
+            <h3 className="text-sm font-bold uppercase tracking-widest">Usage Rates</h3>
           </div>
-        </div>
-      </div>
-
-      {/* Usage History */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
-          Recent Usage
-        </h2>
-
-        {usageHistory.length === 0 ? (
-          <div className="text-center py-8">
-            <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No usage history yet</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {usageHistory.map((item) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Zap className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {item.description}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(item.timestamp).toLocaleDateString()} at{" "}
-                      {new Date(item.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-red-600">
-                    -{item.credits} credits
-                  </p>
-                  <p className="text-xs text-gray-600 capitalize">
-                    {item.type.replace("_", " ")}
-                  </p>
-                </div>
-              </motion.div>
+          <div className="space-y-6">
+            {[
+              { label: "Fact Generation", cost: "5 Credits" },
+              { label: "Content Assembly", cost: "10 Credits" },
+              { label: "Image Enhancement", cost: "3 Credits" },
+            ].map((r, i) => (
+              <div key={i} className="flex justify-between items-center pb-4 border-b border-black/5 last:border-0 last:pb-0">
+                <span className="text-sm font-medium">{r.label}</span>
+                <span className="text-sm font-bold">{r.cost}</span>
+              </div>
             ))}
           </div>
-        )}
+        </div>
+
+        <div className="bg-white border border-black/5 rounded-2xl p-10 shadow-sm flex flex-col justify-center">
+          <h3 className="text-2xl font-bold mb-4">Need more credits?</h3>
+          <p className="text-sm text-black/40 mb-8">Upgrade your plan to get more monthly AI credits and unlock advanced features.</p>
+          <button className="bg-black text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-black/90 transition-all">Upgrade Plan</button>
+        </div>
       </div>
 
-      {/* Upgrade CTA */}
-      {credits.remaining < 20 && (
-        <div className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">
-                Running low on credits?
-              </h3>
-              <p className="text-blue-100">
-                Upgrade your plan to get more AI credits and unlock advanced
-                features.
-              </p>
-            </div>
-            <button className="px-6 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100">
-              Upgrade Plan
-            </button>
-          </div>
+      <div className="bg-white border border-black/5 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-black/5 bg-gray-50/50 flex justify-between items-center">
+          <h2 className="text-xs font-bold text-black/30 uppercase tracking-widest">Recent Activity</h2>
+          <Clock className="w-4 h-4 text-black/10" />
         </div>
-      )}
+        <div className="divide-y divide-black/5">
+          {usageHistory.map(item => (
+            <div key={item.id} className="p-8 flex items-center justify-between hover:bg-gray-50/30 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center"><Zap className="w-4 h-4 text-black/10" /></div>
+                <div>
+                  <h4 className="text-base font-bold text-black">{item.description}</h4>
+                  <p className="text-xs text-black/40">{new Date(item.timestamp).toLocaleDateString()} • {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold">-{item.credits}</p>
+                <p className="text-[10px] text-black/20 font-bold uppercase tracking-widest">Credits</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

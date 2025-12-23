@@ -134,7 +134,19 @@ export default async function handler(
 
   if (req.method === "PATCH") {
     try {
-      const { isActive, is_active, settings } = req.body;
+      const {
+        isActive,
+        is_active,
+        settings,
+        name,
+        content,
+        slides,
+        is_favorite,
+        play_count,
+        playCount,
+        last_played,
+        lastPlayed,
+      } = req.body;
 
       // Handle both field names for compatibility
       const shouldActivate = isActive !== undefined ? isActive : is_active;
@@ -146,13 +158,39 @@ export default async function handler(
         updateData.is_active = shouldActivate;
       }
 
-      // Handle music settings
+      if (name) {
+        updateData.title = name;
+      }
+
+      // Handle settings
       if (settings) {
-        const currentSettings = updateData.settings || {};
-        updateData.settings = {
-          ...currentSettings,
-          ...settings,
-        };
+        // We'll merge with existing settings if needed, but for now replace or merge
+        // Since we don't have existing data here easily without a fetch, typically PATCH should merge.
+        // But for full wizard saves, we probably want to replace.
+        // Let's assume the wizard sends full settings.
+        updateData.settings = settings;
+      }
+
+      // Handle content
+      if (content) {
+        updateData.content = content;
+      } else if (slides) {
+        // For backwards compatibility with image wizard that sends 'slides' top-level
+        // We need to fetch current content to merge, strictly speaking, but usually we can just set content.slides
+        // However, to be safe, let's just create a content object
+        updateData.content = { slides, images: slides };
+      }
+
+      if (is_favorite !== undefined) {
+        updateData.is_favorite = is_favorite;
+      }
+
+      if (play_count !== undefined || playCount !== undefined) {
+        updateData.play_count = play_count !== undefined ? play_count : playCount;
+      }
+
+      if (last_played || lastPlayed) {
+        updateData.last_played = last_played || lastPlayed;
       }
 
       // First try to update in slideshows table

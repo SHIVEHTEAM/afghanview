@@ -55,7 +55,7 @@ export default function AdminSettings() {
   const router = useRouter();
   const { user } = useAuth();
   const [settings, setSettings] = useState<SystemSettings>({
-    siteName: "AfghanView",
+    siteName: "Shivehview",
     siteDescription: "Digital signage platform for Afghan businesses",
     maintenanceMode: false,
     registrationEnabled: true,

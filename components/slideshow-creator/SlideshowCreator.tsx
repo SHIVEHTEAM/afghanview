@@ -10,10 +10,15 @@ import {
   Menu,
   Tag,
   Zap,
+  Home,
+  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { BusinessType } from "@/types/business";
+import {
+  BusinessType,
+  getAllowedSlideshowTypes,
+} from "@/types/business";
 
 interface SlideshowCreatorProps {
   onClose: () => void;
@@ -21,69 +26,14 @@ interface SlideshowCreatorProps {
 }
 
 const slideshowTypes = [
-  {
-    id: "image",
-    name: "Image Slideshow",
-    description: "Create beautiful slideshows with your images",
-    icon: Image,
-    color: "from-blue-500 to-cyan-500",
-    bgColor: "from-blue-100 to-cyan-100",
-    available: true,
-  },
-  {
-    id: "video",
-    name: "Video Slideshow",
-    description: "Create dynamic slideshows with videos",
-    icon: Video,
-    color: "from-purple-500 to-pink-500",
-    bgColor: "from-purple-100 to-pink-100",
-    available: true,
-  },
-  {
-    id: "text",
-    name: "Text Slideshow",
-    description: "Create informative text-based slideshows",
-    icon: FileText,
-    color: "from-green-500 to-emerald-500",
-    bgColor: "from-green-100 to-emerald-100",
-    available: true,
-  },
-  {
-    id: "menu",
-    name: "Menu Slideshow",
-    description: "Create professional menu displays",
-    icon: Menu,
-    color: "from-orange-500 to-red-500",
-    bgColor: "from-orange-100 to-red-100",
-    available: true,
-  },
-  {
-    id: "deals",
-    name: "Deals & Promotions",
-    description: "Create promotional content and special offers",
-    icon: Tag,
-    color: "from-yellow-500 to-orange-500",
-    bgColor: "from-yellow-100 to-orange-100",
-    available: true,
-  },
-  {
-    id: "ai-facts",
-    name: "AI Facts",
-    description: "Generate interesting facts with AI",
-    icon: Sparkles,
-    color: "from-indigo-500 to-purple-500",
-    bgColor: "from-indigo-100 to-purple-100",
-    available: true,
-  },
-  {
-    id: "ai-all-in-one",
-    name: "AI All-in-One",
-    description: "Let AI create everything for you",
-    icon: Zap,
-    color: "from-pink-500 to-rose-500",
-    bgColor: "from-pink-100 to-rose-100",
-    available: true,
-  },
+  { id: "image", name: "Image Slideshow", description: "Create beautiful displays with high-resolution imagery", icon: Image, available: true },
+  { id: "video", name: "Video Slideshow", description: "Engage your audience with dynamic cinematic content", icon: Video, available: true },
+  { id: "text", name: "Text Slideshow", description: "Deliver clean, informative messages and announcements", icon: FileText, available: true },
+  { id: "menu", name: "Menu Display", description: "Professional digital menu boards for your restaurant", icon: Menu, available: true },
+  { id: "deals", name: "Promotions", description: "Highlight special offers and time-limited deals", icon: Tag, available: true },
+  { id: "ai-facts", name: "AI Insights", description: "Generate automated interesting content with AI", icon: Sparkles, available: true },
+  { id: "ai-all-in-one", name: "AI Autopilot", description: "Complete automated content creation from scratch", icon: Zap, available: true },
+  { id: "property-listing", name: "Real Estate", description: "Showcase premium property listings and details", icon: Home, available: true },
 ];
 
 export default function SlideshowCreator({
@@ -91,166 +41,101 @@ export default function SlideshowCreator({
   onStartCreation,
 }: SlideshowCreatorProps) {
   const { user } = useAuth();
-  const [userBusinessType, setUserBusinessType] = useState<BusinessType | null>(
-    null
-  );
+  const [userBusinessType, setUserBusinessType] = useState<BusinessType | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user's business type
   useEffect(() => {
     const fetchBusinessType = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
+      if (!user?.id) { setLoading(false); return; }
       try {
-        // Get user's business type
-        const { data: staffMember } = await supabase
-          .from("business_staff")
-          .select(
-            `
-            business:businesses!inner(
-              id,
-              type
-            )
-          `
-          )
-          .eq("user_id", user.id)
-          .eq("is_active", true)
-          .single();
-
-        if (
-          staffMember?.business &&
-          Array.isArray(staffMember.business) &&
-          staffMember.business.length > 0
-        ) {
-          setUserBusinessType(staffMember.business[0].type as BusinessType);
+        const { data: staffMember } = await supabase.from("business_staff").select(`business:businesses!inner(id, type)`).eq("user_id", user.id).eq("is_active", true).single();
+        if (staffMember?.business) {
+          const b = Array.isArray(staffMember.business) ? staffMember.business[0] : staffMember.business;
+          setUserBusinessType(b.type as BusinessType);
         } else {
-          // Check if user created a business
-          const { data: userBusiness } = await supabase
-            .from("businesses")
-            .select("type")
-            .eq("user_id", user.id)
-            .eq("is_active", true)
-            .single();
-
-          if (userBusiness) {
-            setUserBusinessType(userBusiness.type as BusinessType);
-          } else {
-            // Default to restaurant if no business found
-            setUserBusinessType(BusinessType.RESTAURANT);
-          }
+          const { data: userBusiness } = await supabase.from("businesses").select("type").eq("user_id", user.id).eq("is_active", true).single();
+          setUserBusinessType(userBusiness ? userBusiness.type as BusinessType : BusinessType.RESTAURANT);
         }
-      } catch (error) {
-        console.error("Error fetching business type:", error);
-        // Default to restaurant on error
-        setUserBusinessType(BusinessType.RESTAURANT);
-      } finally {
-        setLoading(false);
-      }
+      } catch (error) { setUserBusinessType(BusinessType.RESTAURANT); }
+      finally { setLoading(false); }
     };
-
     fetchBusinessType();
   }, [user?.id]);
 
-  const handleTypeSelect = (type: string) => {
-    onStartCreation(type);
-  };
-
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading slideshow creator...</p>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[500]">
+        <div className="bg-white rounded-2xl p-8 text-center shadow-2xl">
+          <div className="w-10 h-10 border-2 border-black/5 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm font-medium text-black/40">Initializing creator...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-          className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden border border-gray-100"
-        >
-          {/* Enhanced Header */}
-          <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white p-8 relative overflow-hidden">
-            {/* Enhanced Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16 animate-pulse"></div>
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white rounded-full translate-x-12 -translate-y-12 animate-pulse delay-1000"></div>
-              <div className="absolute bottom-0 left-1/4 w-20 h-20 bg-white rounded-full -translate-x-10 translate-y-10 animate-pulse delay-500"></div>
-              <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-white rounded-full -translate-x-8 -translate-y-8 animate-pulse delay-1500"></div>
-            </div>
-
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm border border-white/20">
-                  <h2 className="text-3xl font-bold">Create New Slideshow</h2>
-                </div>
-              </div>
-              <button
-                onClick={onClose}
-                className="p-3 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 backdrop-blur-sm hover:scale-110"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <p className="text-white/90 text-xl font-medium relative z-10">
-              Choose a slideshow type to get started
-            </p>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[500] p-6" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white rounded-[2.5rem] shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden border border-black/5 flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-10 pb-0 flex justify-between items-start">
+          <div>
+            <h2 className="text-3xl font-bold text-black mb-2">Create New Module</h2>
+            <p className="text-sm text-black/40">Select a template type to begin building your content</p>
           </div>
+          <button onClick={onClose} className="p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all text-black/20 hover:text-black">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
 
-          {/* Enhanced Content */}
-          <div className="p-8 overflow-y-auto max-h-[calc(90vh-200px)]">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {slideshowTypes.map((type, index) => {
-                const Icon = type.icon;
-                return (
-                  <motion.button
-                    key={type.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleTypeSelect(type.id)}
-                    disabled={!type.available}
-                    className={`p-6 rounded-2xl border-2 border-gray-100 hover:border-gray-200 transition-all duration-300 text-left group ${
-                      type.available
-                        ? "hover:shadow-xl cursor-pointer bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-white"
-                        : "opacity-50 cursor-not-allowed bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`p-4 rounded-xl bg-gradient-to-br ${type.color} group-hover:scale-110 transition-transform duration-300 shadow-lg group-hover:shadow-xl`}
-                      >
-                        <Icon className={`w-8 h-8 text-white`} />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 mb-2 text-lg group-hover:text-gray-800 transition-colors">
-                          {type.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors">
-                          {type.description}
-                        </p>
-                      </div>
+        <div className="p-10 overflow-y-auto custom-scrollbar flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {slideshowTypes
+              .filter(type => {
+                if (!userBusinessType) return true;
+                if (type.id === "image" || type.id === "video") return true;
+                const allowed = getAllowedSlideshowTypes(userBusinessType);
+                return allowed.includes(type.id);
+              })
+              .map((type, index) => (
+                <motion.button
+                  key={type.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onStartCreation(type.id)}
+                  className="p-8 rounded-2xl border border-black/5 text-left bg-white transition-all group relative overflow-hidden"
+                >
+                  <div className="flex items-start gap-5 mb-6">
+                    <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all duration-300 border border-black/5">
+                      <type.icon className="w-6 h-6 text-black/20 group-hover:text-white" />
                     </div>
-                  </motion.button>
-                );
-              })}
-            </div>
+                  </div>
+                  <h3 className="font-bold text-black text-lg mb-2 group-hover:text-black transition-colors">{type.name}</h3>
+                  <p className="text-sm text-black/40 leading-relaxed group-hover:text-black/60 transition-colors">{type.description}</p>
+
+                  <div className="mt-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-black/20 group-hover:text-black transition-all">
+                    <span>Create Module</span>
+                    <ChevronRight className="w-3 h-3 translate-x-0 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </motion.button>
+              ))}
           </div>
-        </motion.div>
-      </div>
-    </>
+        </div>
+
+        <div className="p-10 pt-0 flex justify-end">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-black/10 uppercase tracking-widest">
+            <div className="w-1.5 h-1.5 rounded-full bg-black/10"></div>
+            <span>System Ready for Deployment</span>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }

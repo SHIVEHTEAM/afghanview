@@ -1,6 +1,26 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.agencies (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  description text,
+  logo_url text,
+  website text,
+  industry text,
+  size text DEFAULT '1-10'::text CHECK (size = ANY (ARRAY['1-10'::text, '11-50'::text, '51-200'::text, '201-500'::text, '500+'::text])),
+  timezone text DEFAULT 'UTC'::text,
+  language text DEFAULT 'en'::text,
+  settings jsonb DEFAULT '{}'::jsonb,
+  subscription_plan text DEFAULT 'free'::text CHECK (subscription_plan = ANY (ARRAY['free'::text, 'starter'::text, 'professional'::text, 'enterprise'::text])),
+  subscription_status text DEFAULT 'trial'::text CHECK (subscription_status = ANY (ARRAY['active'::text, 'trial'::text, 'expired'::text, 'cancelled'::text])),
+  trial_ends_at timestamp with time zone,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT agencies_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.analytics_events (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   business_id uuid,
@@ -71,7 +91,7 @@ CREATE TABLE public.business_categories (
 CREATE TABLE public.business_staff (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   business_id uuid NOT NULL,
-  business_type text NOT NULL CHECK (business_type = ANY (ARRAY['restaurant'::text, 'retail'::text, 'service'::text, 'entertainment'::text, 'healthcare'::text, 'education'::text, 'other'::text])),
+  business_type text NOT NULL CHECK (business_type = ANY (ARRAY['restaurant'::text, 'retail'::text, 'service'::text, 'entertainment'::text, 'healthcare'::text, 'education'::text, 'real_estate'::text, 'other'::text])),
   user_id uuid NOT NULL,
   role text NOT NULL CHECK (role = ANY (ARRAY['owner'::text, 'manager'::text, 'staff'::text])),
   permissions jsonb DEFAULT '{}'::jsonb,
@@ -79,9 +99,9 @@ CREATE TABLE public.business_staff (
   invited_by uuid,
   is_active boolean DEFAULT true,
   CONSTRAINT business_staff_pkey PRIMARY KEY (id),
+  CONSTRAINT business_staff_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
   CONSTRAINT business_staff_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
-  CONSTRAINT business_staff_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES auth.users(id),
-  CONSTRAINT business_staff_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+  CONSTRAINT business_staff_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.business_subscriptions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -139,6 +159,80 @@ CREATE TABLE public.businesses (
   max_staff_members integer DEFAULT 1 CHECK (max_staff_members >= 1),
   CONSTRAINT businesses_pkey PRIMARY KEY (id),
   CONSTRAINT businesses_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
+);
+CREATE TABLE public.chat_message_reactions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  message_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  reaction_type text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT chat_message_reactions_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.chat_message_status (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  message_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  status text NOT NULL CHECK (status = ANY (ARRAY['sent'::text, 'delivered'::text, 'read'::text])),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT chat_message_status_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.chat_messages (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  content text NOT NULL,
+  sender_id uuid NOT NULL,
+  room_id uuid NOT NULL,
+  message_type text DEFAULT 'text'::text CHECK (message_type = ANY (ARRAY['text'::text, 'file'::text, 'image'::text, 'system'::text])),
+  attachments jsonb,
+  is_edited boolean DEFAULT false,
+  edited_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  reply_to_message_id uuid,
+  is_system boolean DEFAULT false,
+  is_pinned boolean DEFAULT false,
+  edit_history jsonb,
+  CONSTRAINT chat_messages_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.chat_room_members (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  room_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  role text DEFAULT 'member'::text CHECK (role = ANY (ARRAY['admin'::text, 'member'::text])),
+  joined_at timestamp with time zone DEFAULT now(),
+  left_at timestamp with time zone,
+  is_active boolean DEFAULT true,
+  CONSTRAINT chat_room_members_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.chat_rooms (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['direct'::text, 'group'::text, 'project'::text, 'client'::text])),
+  participants ARRAY NOT NULL,
+  project_id uuid,
+  client_id uuid,
+  settings jsonb,
+  created_by uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  agency_id uuid,
+  CONSTRAINT chat_rooms_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.clients (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  email text UNIQUE,
+  phone text,
+  company text,
+  website text,
+  industry text,
+  status text DEFAULT 'prospect'::text CHECK (status = ANY (ARRAY['active'::text, 'inactive'::text, 'prospect'::text, 'archived'::text])),
+  assigned_to uuid,
+  billing_address jsonb,
+  notes text,
+  tags ARRAY,
+  source text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  agency_id uuid,
+  CONSTRAINT clients_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.content_analytics (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -217,9 +311,9 @@ CREATE TABLE public.facts (
   is_auto_generated boolean DEFAULT false,
   generation_prompt text,
   CONSTRAINT facts_pkey PRIMARY KEY (id),
-  CONSTRAINT facts_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT facts_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
   CONSTRAINT facts_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id),
-  CONSTRAINT facts_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
+  CONSTRAINT facts_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
 );
 CREATE TABLE public.media_collection_items (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -242,8 +336,8 @@ CREATE TABLE public.media_collections (
   created_by uuid,
   updated_by uuid,
   CONSTRAINT media_collections_pkey PRIMARY KEY (id),
-  CONSTRAINT media_collections_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
   CONSTRAINT media_collections_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT media_collections_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
   CONSTRAINT media_collections_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.media_files (
@@ -271,8 +365,8 @@ CREATE TABLE public.media_files (
   processing_status text DEFAULT 'completed'::text,
   processing_error text,
   CONSTRAINT media_files_pkey PRIMARY KEY (id),
-  CONSTRAINT media_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES auth.users(id),
-  CONSTRAINT media_files_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+  CONSTRAINT media_files_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT media_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.music_categories (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -296,8 +390,8 @@ CREATE TABLE public.music_playlists (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT music_playlists_pkey PRIMARY KEY (id),
-  CONSTRAINT music_playlists_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
-  CONSTRAINT music_playlists_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id)
+  CONSTRAINT music_playlists_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT music_playlists_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.music_tracks (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -370,8 +464,8 @@ CREATE TABLE public.playlist_tracks (
   position integer NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT playlist_tracks_pkey PRIMARY KEY (id),
-  CONSTRAINT playlist_tracks_track_id_fkey FOREIGN KEY (track_id) REFERENCES public.music_tracks(id),
-  CONSTRAINT playlist_tracks_playlist_id_fkey FOREIGN KEY (playlist_id) REFERENCES public.music_playlists(id)
+  CONSTRAINT playlist_tracks_playlist_id_fkey FOREIGN KEY (playlist_id) REFERENCES public.music_playlists(id),
+  CONSTRAINT playlist_tracks_track_id_fkey FOREIGN KEY (track_id) REFERENCES public.music_tracks(id)
 );
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
@@ -391,6 +485,26 @@ CREATE TABLE public.profiles (
   subscription_expires_at timestamp with time zone,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.projects (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  description text,
+  client_id uuid NOT NULL,
+  status text DEFAULT 'planning'::text CHECK (status = ANY (ARRAY['planning'::text, 'in_progress'::text, 'review'::text, 'completed'::text, 'on_hold'::text, 'cancelled'::text])),
+  priority text DEFAULT 'medium'::text CHECK (priority = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'urgent'::text])),
+  start_date date,
+  end_date date,
+  budget numeric,
+  actual_cost numeric,
+  progress integer DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+  tags ARRAY,
+  settings jsonb,
+  created_by uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  agency_id uuid,
+  CONSTRAINT projects_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.roles (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -513,8 +627,8 @@ CREATE TABLE public.staff_invitations (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT staff_invitations_pkey PRIMARY KEY (id),
-  CONSTRAINT staff_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES auth.users(id),
   CONSTRAINT staff_invitations_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id),
+  CONSTRAINT staff_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES auth.users(id),
   CONSTRAINT staff_invitations_accepted_by_fkey FOREIGN KEY (accepted_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.staff_members (

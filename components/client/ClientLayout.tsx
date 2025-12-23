@@ -236,7 +236,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       period: "per month",
       features: ["5 slideshows", "100 AI credits", "HD quality"],
       icon: Rocket,
-      color: "from-blue-500 to-purple-600",
+      color: "bg-black/10",
       href: "/pricing?plan=starter",
     },
     {
@@ -245,7 +245,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       period: "per month",
       features: ["20 slideshows", "500 AI credits", "4K quality"],
       icon: Crown,
-      color: "from-purple-500 to-pink-600",
+      color: "bg-black/40",
       href: "/pricing?plan=professional",
     },
     {
@@ -254,7 +254,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       period: "per month",
       features: ["Unlimited slideshows", "Unlimited AI credits", "8K quality"],
       icon: Sparkles,
-      color: "from-yellow-500 to-orange-600",
+      color: "bg-black",
       href: "/pricing?plan=unlimited",
     },
   ];
@@ -332,35 +332,21 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* Slideshow Creator Modal - Disabled */}
-      {false && (
-        <SlideshowCreator
-          onClose={() => setShowSlideshowCreator(false)}
-          onStartCreation={(type) => {
-            // Handle slideshow creation start
-            console.log("Starting slideshow creation:", type);
-            setShowSlideshowCreator(false);
-            // You can add navigation logic here if needed
-          }}
-        />
-      )}
-
+    <div className="min-h-screen bg-white">
       {/* Mobile sidebar */}
       <div
-        className={`fixed inset-0 z-50 lg:hidden ${
-          sidebarOpen ? "block" : "hidden"
-        }`}
+        className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? "block" : "hidden"
+          }`}
       >
         <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-75 backdrop-blur-sm"
+          className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
-        <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl">
+        <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl border-r border-black/10">
           <div className="absolute top-0 right-0 -mr-12 pt-2">
             <button
               type="button"
-              className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              className="ml-1 flex items-center justify-center h-10 w-10 border border-white/20 rounded-full focus:outline-none backdrop-blur-md"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-6 w-6 text-white" />
@@ -371,10 +357,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 flex items-center px-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center shadow-lg shadow-black/10">
                   <Eye className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900">Shivehview</h1>
+                <h1 className="text-xl font-bold tracking-tight text-black">Shivehview</h1>
               </div>
             </div>
             <nav className="mt-8 px-2 space-y-1">
@@ -382,14 +368,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`group flex items-center px-3 py-3 text-base font-medium rounded-xl transition-all duration-200 ${
-                    item.current
-                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
+                  className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 border ${item.current
+                    ? "bg-black text-white border-black shadow-lg shadow-black/5"
+                    : "text-black/70 border-transparent hover:bg-gray-50 hover:text-black"
+                    }`}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon className="mr-4 h-6 w-6" />
+                  <item.icon className="mr-4 h-5 w-5" />
                   {item.name}
                 </Link>
               ))}
@@ -397,43 +382,38 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           </div>
 
           {/* Mobile sidebar footer */}
-          <div className="flex-shrink-0 border-t border-gray-200 p-4">
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
-              <div className="flex items-center mb-3">
-                <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white text-lg font-bold">
-                      {user?.first_name?.charAt(0)?.toUpperCase() ||
-                        user?.email?.charAt(0)?.toUpperCase() ||
-                        "U"}
-                    </span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+          <div className="flex-shrink-0 border-t border-black/5 p-4">
+            <div className="bg-gray-50 rounded-2xl p-4 border border-black/5">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/5 flex items-center justify-center">
+                  <span className="text-black text-lg font-bold">
+                    {user?.first_name?.charAt(0)?.toUpperCase() ||
+                      user?.email?.charAt(0)?.toUpperCase() ||
+                      "U"}
+                  </span>
                 </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
+                <div className="ml-3 flex-1 overflow-hidden">
+                  <p className="text-sm font-bold text-black truncate">
                     {user?.first_name && user?.last_name
                       ? `${user.first_name} ${user.last_name}`
                       : user?.first_name ||
-                        user?.email?.split("@")[0] ||
-                        "User"}
+                      user?.email?.split("@")[0] ||
+                      "User"}
                   </p>
-                  <p className="text-xs text-gray-600 truncate">
+                  <p className="text-xs text-black/40 truncate">
                     {user?.email || "user@example.com"}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-gray-600 font-medium">
-                    Online
-                  </span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-black/20"></div>
+                  <span className="text-[10px] text-black/60 font-medium uppercase tracking-widest">Online</span>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center space-x-1 px-3 py-1.5 bg-white/80 hover:bg-white text-gray-600 hover:text-red-600 rounded-lg border border-gray-200 hover:border-red-200 transition-all duration-200 text-xs font-medium"
+                  className="flex items-center space-x-1 px-3 py-1.5 bg-black text-white rounded-lg hover:bg-black/80 transition-all duration-200 text-xs font-bold"
                 >
                   <LogOut className="h-3 w-3" />
                   <span>Sign Out</span>
@@ -445,145 +425,162 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200 shadow-lg">
-          <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+      <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0">
+        <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-black/[0.04]">
+          <div className="flex-1 flex flex-col pt-12 pb-6 overflow-y-auto px-6">
+            {/* Logo Area */}
+            <div className="flex items-center flex-shrink-0 px-4 mb-14">
+              <div className="flex items-center gap-4 group cursor-pointer">
+                <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center shadow-lg">
                   <Eye className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900">Shivehview</h1>
+                <div className="flex flex-col">
+                  <h1 className="text-xl font-bold tracking-tight text-black">
+                    Shivehview
+                  </h1>
+                </div>
               </div>
             </div>
-            <nav className="mt-8 flex-1 px-2 space-y-1">
+
+            {/* Navigation */}
+            <nav className="flex-1 space-y-2">
+              <div className="px-4 mb-4">
+                <p className="text-xs font-semibold text-black/40 uppercase tracking-wider">
+                  Main Menu
+                </p>
+              </div>
               {filteredNavigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
-                    item.current
-                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
+                  className={`group relative flex items-center px-4 py-3 rounded-xl transition-all ${item.current
+                    ? "bg-black text-white shadow-md"
+                    : "text-black/60 hover:text-black hover:bg-gray-50"
+                    }`}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
+                  <item.icon
+                    className={`mr-3 h-5 w-5 ${item.current ? "text-white" : "text-black/30 group-hover:text-black"
+                      }`}
+                  />
+                  <span className="text-sm font-medium">
+                    {item.name}
+                  </span>
                 </Link>
               ))}
             </nav>
           </div>
 
-          {/* Desktop sidebar footer */}
-          <div className="flex-shrink-0 border-t border-gray-200 p-4">
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
-              <div className="flex items-center mb-3">
-                <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white text-lg font-bold">
-                      {user?.first_name?.charAt(0)?.toUpperCase() ||
-                        user?.email?.charAt(0)?.toUpperCase() ||
-                        "U"}
-                    </span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {user?.first_name && user?.last_name
-                      ? `${user.first_name} ${user.last_name}`
-                      : user?.first_name ||
-                        user?.email?.split("@")[0] ||
-                        "User"}
-                  </p>
-                  <p className="text-xs text-gray-600 truncate">
-                    {user?.email || "user@example.com"}
-                  </p>
-                </div>
+          {/* Desktop sidebar footer - User Profile */}
+          <div className="flex-shrink-0 p-6 border-t border-black/5">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center shadow-md">
+                <span className="text-white text-sm font-bold">
+                  {user?.first_name?.charAt(0)?.toUpperCase() ||
+                    user?.email?.charAt(0)?.toUpperCase() ||
+                    "U"}
+                </span>
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-gray-600 font-medium">
-                    Online
-                  </span>
-                </div>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-1 px-3 py-1.5 bg-white/80 hover:bg-white text-gray-600 hover:text-red-600 rounded-lg border border-gray-200 hover:border-red-200 transition-all duration-200 text-xs font-medium"
-                >
-                  <LogOut className="h-3 w-3" />
-                  <span>Sign Out</span>
-                </button>
+              <div className="ml-3 flex-1 overflow-hidden">
+                <p className="text-sm font-bold text-black truncate">
+                  {user?.first_name && user?.last_name
+                    ? `${user.first_name} ${user.last_name}`
+                    : user?.first_name || "User"}
+                </p>
+                <p className="text-xs text-black/40 truncate">
+                  {userPlan.name} Plan
+                </p>
               </div>
+              <button
+                onClick={handleSignOut}
+                className="p-2 text-black/40 hover:text-black transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
+      <div className="lg:pl-72 flex flex-col flex-1">
         {/* Top bar */}
-        <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+        <div className="sticky top-0 z-30 flex-shrink-0 flex h-24 bg-white/80 backdrop-blur-xl border-b border-black/[0.04]">
           <button
             type="button"
-            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-600 lg:hidden"
+            className="px-8 border-r border-black/[0.04] text-black lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-6 w-6" />
           </button>
-          <div className="flex-1 px-4 flex justify-between">
-            <div className="flex-1 flex">
-              <h1 className="text-2xl font-bold text-gray-900 my-auto">
+          <div className="flex-1 px-10 flex justify-between">
+            <div className="flex items-center">
+              <motion.h1
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-xl font-black text-black tracking-tighter uppercase"
+              >
                 {filteredNavigation.find((item) => item.current)?.name ||
                   "Dashboard"}
-              </h1>
+              </motion.h1>
             </div>
 
             {/* Upgrade Dropdown */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               {/* AI Credits Display */}
-              <div className="hidden md:flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
-                <Zap className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium text-gray-700">
-                  {userPlan.usedCredits}/{userPlan.credits} AI Credits
-                </span>
+              <div className="hidden md:flex items-center gap-3 bg-gray-50 border border-black/[0.03] px-6 py-3 rounded-2xl shadow-inner group cursor-help">
+                <Zap className="w-3.5 h-3.5 text-black/20 group-hover:text-black transition-colors" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-black uppercase tracking-tight leading-none">
+                    {userPlan.usedCredits}/{userPlan.credits}
+                  </span>
+                  <span className="text-[8px] font-bold text-black/20 uppercase tracking-widest mt-0.5">
+                    Credits
+                  </span>
+                </div>
               </div>
 
               {/* Plan & Upgrade Dropdown */}
               <div className="relative upgrade-dropdown">
-                <button
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setUpgradeDropdownOpen(!upgradeDropdownOpen)}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-2 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all duration-200"
+                  className="flex items-center space-x-4 bg-black px-6 py-3.5 rounded-2xl text-white transition-all duration-500 shadow-2xl shadow-black/10 hover:bg-black/90"
                 >
-                  <Crown className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-700">
+                  <Crown className="w-4 h-4 text-white/60" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">
                     {userPlan.name}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-purple-600" />
-                </button>
+                  <ChevronDown
+                    className={`w-4 h-4 text-white/40 transition-transform duration-500 ${upgradeDropdownOpen ? "rotate-180" : ""
+                      }`}
+                  />
+                </motion.button>
 
                 {/* Dropdown Menu */}
                 {upgradeDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-4 z-50">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    className="absolute right-0 mt-4 w-80 bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)] border border-black/5 rounded-[2.5rem] p-4 z-50 overflow-hidden"
+                  >
                     {/* Current Plan */}
-                    <div className="px-4 pb-4 border-b border-gray-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-semibold text-gray-900">
-                          Current Plan
-                        </h3>
-                        <span className="text-xs text-gray-500">
+                    <div className="px-6 py-6 bg-gray-50/50 rounded-[2rem] mb-4 border border-black/[0.03]">
+                      <div className="flex items-center justify-between mb-6">
+                        <span className="text-[10px] font-black text-black/20 uppercase tracking-[0.2em]">
+                          Active Tier
+                        </span>
+                        <span className="px-3 py-1 bg-black text-white text-[8px] font-black uppercase tracking-widest rounded-full">
                           {userPlan.name}
                         </span>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {userPlan.features.map((feature, index) => (
                           <div
                             key={index}
-                            className="flex items-center text-xs text-gray-600"
+                            className="flex items-center gap-3 text-[9px] font-bold text-black uppercase tracking-tight"
                           >
-                            <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></div>
+                            <div className="w-1.5 h-1.5 bg-black/10 rounded-full" />
                             {feature}
                           </div>
                         ))}
@@ -591,47 +588,35 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                     </div>
 
                     {/* Upgrade Options */}
-                    <div className="px-4 pt-4">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                        Upgrade Options
-                      </h3>
-                      <div className="space-y-3">
+                    <div className="px-4 pb-4">
+                      <p className="text-[9px] font-black text-black/20 uppercase tracking-[0.2em] mb-4 px-2">
+                        System Upgrades
+                      </p>
+                      <div className="space-y-2">
                         {upgradePlans.map((plan) => {
                           const Icon = plan.icon;
+                          if (plan.name === userPlan.name) return null;
                           return (
                             <Link
                               key={plan.name}
                               href={plan.href}
                               onClick={() => setUpgradeDropdownOpen(false)}
-                              className="block p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all duration-200"
+                              className="group block p-4 bg-white border border-black/[0.04] rounded-[1.5rem] hover:border-black/10 hover:bg-gray-50/50 transition-all duration-300 shadow-sm"
                             >
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center space-x-2">
-                                  <div
-                                    className={`w-8 h-8 bg-gradient-to-r ${plan.color} rounded-lg flex items-center justify-center`}
-                                  >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
                                     <Icon className="w-4 h-4 text-white" />
                                   </div>
                                   <div>
-                                    <h4 className="text-sm font-semibold text-gray-900">
+                                    <h4 className="text-[10px] font-black text-black uppercase tracking-tight">
                                       {plan.name}
                                     </h4>
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-[9px] font-bold text-black/30 uppercase tracking-widest mt-0.5">
                                       {plan.price}/{plan.period}
                                     </p>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="space-y-1">
-                                {plan.features.map((feature, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-center text-xs text-gray-600"
-                                  >
-                                    <div className="w-1 h-1 bg-green-500 rounded-full mr-2"></div>
-                                    {feature}
-                                  </div>
-                                ))}
                               </div>
                             </Link>
                           );
@@ -640,16 +625,16 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                     </div>
 
                     {/* View All Plans */}
-                    <div className="px-4 pt-4 border-t border-gray-100">
+                    <div className="px-4 pb-2">
                       <Link
                         href="/pricing"
                         onClick={() => setUpgradeDropdownOpen(false)}
-                        className="block w-full text-center py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                        className="block w-full text-center py-5 text-[10px] font-black bg-black text-white rounded-[1.5rem] hover:bg-black/90 transition-all duration-300 uppercase tracking-[0.2em] shadow-lg shadow-black/10"
                       >
-                        View All Plans
+                        TV Display View
                       </Link>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </div>
             </div>
@@ -657,7 +642,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 bg-white">{children}</main>
       </div>
     </div>
   );

@@ -726,15 +726,15 @@ export default function SimpleImageViewer({
               <motion.video
                 key={currentIndex}
                 src={getImageUrl(currentIndex)}
-                className="w-full h-full object-cover select-none pointer-events-none"
+                className="w-full h-full object-contain select-none"
                 initial={{ opacity: 0, scale: 1.1 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 1 }}
                 autoPlay
-                muted
+                muted={isMuted}
                 loop
-                controls={false}
+                controls={showControls}
                 playsInline
                 preload="auto"
                 onLoadStart={() =>
@@ -765,7 +765,7 @@ export default function SimpleImageViewer({
                   });
                 }}
                 style={{
-                  objectFit: "cover",
+                  objectFit: "contain",
                   width: "100%",
                   height: "100%",
                 }}
@@ -853,9 +853,8 @@ export default function SimpleImageViewer({
             {images.map((_, index) => (
               <div
                 key={index}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentIndex ? "bg-white" : "bg-white bg-opacity-30"
-                }`}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex ? "bg-white" : "bg-white bg-opacity-30"
+                  }`}
               />
             ))}
           </div>

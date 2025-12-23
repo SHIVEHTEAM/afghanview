@@ -10,7 +10,7 @@ export default function AICreditsPage() {
   return (
     <>
       <Head>
-        <title>AI Credits - AfghanView</title>
+        <title>AI Credits - Shivehview</title>
         <meta name="description" content="Manage your AI credits and usage" />
       </Head>
 

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { motion } from "framer-motion";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import ClientLayout from "../../components/client/ClientLayout";
+import { RefreshCw, Save, User as UserIcon, Building2, Globe, Phone, Mail, FileText } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -15,49 +17,38 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Fetch business and user profile
   useEffect(() => {
     const fetchData = async () => {
       if (!user?.id) return;
       setLoading(true);
       setError("");
       try {
-        // Try to find business where user is staff
         const { data: staffMember } = await supabase
           .from("business_staff")
-          .select(
-            `business:businesses!inner(
-              id, name, description, address, phone, website, logo_url, is_active
-            )`
-          )
+          .select(`business:businesses!inner(id, name, description, address, phone, website, logo_url, is_active)`)
           .eq("user_id", user.id)
           .eq("is_active", true)
           .maybeSingle();
+
         let foundBusiness = null;
         if (staffMember?.business) {
-          foundBusiness = Array.isArray(staffMember.business)
-            ? staffMember.business[0]
-            : staffMember.business;
+          foundBusiness = Array.isArray(staffMember.business) ? staffMember.business[0] : staffMember.business;
         }
-        // If not found as staff, try as owner
+
         if (!foundBusiness) {
           const { data: userBusiness } = await supabase
             .from("businesses")
-            .select(
-              "id, name, description, address, phone, website, logo_url, is_active"
-            )
+            .select("id, name, description, address, phone, website, logo_url, is_active")
             .eq("user_id", user.id)
             .eq("is_active", true)
             .maybeSingle();
           if (userBusiness) foundBusiness = userBusiness;
         }
-        if (!foundBusiness) {
-          setError("No business found. Please contact support.");
-          setBusiness(null);
-        } else {
+
+        if (foundBusiness) {
           setBusiness(foundBusiness);
         }
-        // Fetch user profile
+
         setProfile({
           email: user.email,
           first_name: user.first_name || "",
@@ -72,30 +63,25 @@ export default function SettingsPage() {
     if (user && !authLoading) fetchData();
   }, [user, authLoading]);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace("/auth/signin");
     }
   }, [user, authLoading, router]);
 
-  // Handle input changes
-  const handleBusinessChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleBusinessChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setBusiness({ ...business, [e.target.name]: e.target.value });
   };
+
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  // Save changes
   const handleSave = async () => {
     setSaving(true);
     setError("");
     setSuccess("");
     try {
-      // Update business
       if (business?.id) {
         const { error: bizError } = await supabase
           .from("businesses")
@@ -110,7 +96,6 @@ export default function SettingsPage() {
           .eq("id", business.id);
         if (bizError) throw bizError;
       }
-      // Update user profile (first_name, last_name)
       if (user?.id) {
         const { error: userError } = await supabase
           .from("users")
@@ -132,22 +117,9 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading settings...</p>
-          </div>
-        </div>
-      </ClientLayout>
-    );
-  }
-  if (error) {
-    return (
-      <ClientLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-red-600 mb-2">{error}</h2>
-          </div>
+        <div className="flex flex-col items-center justify-center py-40">
+          <div className="w-10 h-10 border-2 border-black/5 border-t-black rounded-full animate-spin"></div>
+          <p className="mt-6 text-sm font-medium text-black/40">Loading settings...</p>
         </div>
       </ClientLayout>
     );
@@ -157,132 +129,142 @@ export default function SettingsPage() {
     <ClientLayout>
       <Head>
         <title>Settings - Shivehview</title>
-        <meta
-          name="description"
-          content="Manage your business and profile settings"
-        />
       </Head>
-      <div className="max-w-2xl mx-auto py-12 px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Settings</h1>
-        {success && <div className="mb-4 text-green-600">{success}</div>}
-        {error && <div className="mb-4 text-red-600">{error}</div>}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Business Info
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={business?.name || ""}
-                onChange={handleBusinessChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
-              />
+
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+          <div>
+            <h1 className="text-3xl font-bold text-black">Settings</h1>
+            <p className="text-sm text-black/40 mt-1">Manage your profile and business information</p>
+          </div>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-black text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-black/10 flex items-center gap-2 hover:bg-black/90 transition-all disabled:opacity-50"
+          >
+            {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+
+        {success && (
+          <div className="mb-8 p-4 bg-black text-white rounded-xl text-center text-sm font-bold shadow-md">
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-8 p-4 bg-gray-50 border border-black/10 text-black rounded-xl text-center text-sm font-bold">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-12">
+          {/* Profile Section */}
+          <div className="bg-white border border-black/5 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-8 border-b border-black/5 bg-gray-50/50 flex items-center gap-3">
+              <UserIcon className="w-5 h-5 text-black/20" />
+              <h2 className="text-sm font-bold uppercase tracking-widest text-black/40">Personal Profile</h2>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={business?.description || ""}
-                onChange={handleBusinessChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
-              />
+            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Email Address</label>
+                <div className="flex items-center gap-3 px-6 py-4 bg-gray-50 rounded-xl border border-black/5 text-sm font-medium text-black/30">
+                  <Mail className="w-4 h-4" />
+                  {profile?.email}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">First Name</label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={profile?.first_name || ""}
+                  onChange={handleProfileChange}
+                  className="w-full px-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white focus:border-black/20 transition-all font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Last Name</label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={profile?.last_name || ""}
+                  onChange={handleProfileChange}
+                  className="w-full px-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white focus:border-black/20 transition-all font-medium"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Address
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={business?.address || ""}
-                onChange={handleBusinessChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
-              />
+          </div>
+
+          {/* Business Section */}
+          <div className="bg-white border border-black/5 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-8 border-b border-black/5 bg-gray-50/50 flex items-center gap-3">
+              <Building2 className="w-5 h-5 text-black/20" />
+              <h2 className="text-sm font-bold uppercase tracking-widest text-black/40">Business Information</h2>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
-              </label>
-              <input
-                type="text"
-                name="phone"
-                value={business?.phone || ""}
-                onChange={handleBusinessChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Website
-              </label>
-              <input
-                type="text"
-                name="website"
-                value={business?.website || ""}
-                onChange={handleBusinessChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
-              />
+            <div className="p-8 space-y-8">
+              <div>
+                <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Business Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={business?.name || ""}
+                  onChange={handleBusinessChange}
+                  className="w-full px-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white focus:border-black/20 transition-all font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Description</label>
+                <textarea
+                  name="description"
+                  value={business?.description || ""}
+                  onChange={handleBusinessChange}
+                  rows={4}
+                  className="w-full px-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white focus:border-black/20 transition-all font-medium"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/20" />
+                    <input
+                      type="text"
+                      name="phone"
+                      value={business?.phone || ""}
+                      onChange={handleBusinessChange}
+                      className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white focus:border-black/20 transition-all font-medium"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Website</label>
+                  <div className="relative">
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/20" />
+                    <input
+                      type="text"
+                      name="website"
+                      value={business?.website || ""}
+                      onChange={handleBusinessChange}
+                      className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white focus:border-black/20 transition-all font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Physical Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={business?.address || ""}
+                  onChange={handleBusinessChange}
+                  className="w-full px-6 py-4 bg-gray-50 border border-black/5 rounded-xl outline-none focus:bg-white focus:border-black/20 transition-all font-medium"
+                />
+              </div>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Your Profile
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={profile?.email || ""}
-                disabled
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                First Name
-              </label>
-              <input
-                type="text"
-                name="first_name"
-                value={profile?.first_name || ""}
-                onChange={handleProfileChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                name="last_name"
-                value={profile?.last_name || ""}
-                onChange={handleProfileChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 bg-white"
-              />
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-60"
-        >
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
       </div>
     </ClientLayout>
   );

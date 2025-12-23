@@ -229,7 +229,7 @@ export default function AdminUsers() {
     <AdminLayout>
       <Head>
         <title>User Management - Admin Dashboard</title>
-        <meta name="description" content="Manage users in AfghanView" />
+        <meta name="description" content="Manage users in Shivehview" />
       </Head>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

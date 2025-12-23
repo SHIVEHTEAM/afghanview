@@ -127,7 +127,7 @@ export default function BusinessCategoryDashboard({
         description: "Quick stats and recent activity",
         icon: <Activity className="w-5 h-5" />,
         features: availableFeatures.filter((f) => f.category === "analytics"),
-        color: "bg-blue-500",
+        color: "bg-black",
       },
       {
         id: "content",
@@ -135,7 +135,7 @@ export default function BusinessCategoryDashboard({
         description: "Create and manage your slideshows",
         icon: <Image className="w-5 h-5" />,
         features: availableFeatures.filter((f) => f.category === "content"),
-        color: "bg-green-500",
+        color: "bg-black",
       },
       {
         id: "business",
@@ -143,7 +143,7 @@ export default function BusinessCategoryDashboard({
         description: `Specific features for ${category.name.toLowerCase()}s`,
         icon: getCategoryIcon(category.slug),
         features: availableFeatures.filter((f) => f.category === category.slug),
-        color: "bg-purple-500",
+        color: "bg-black",
       },
       {
         id: "management",
@@ -151,7 +151,7 @@ export default function BusinessCategoryDashboard({
         description: "Team and business management tools",
         icon: <Users className="w-5 h-5" />,
         features: availableFeatures.filter((f) => f.category === "management"),
-        color: "bg-orange-500",
+        color: "bg-black",
       },
     ];
 
@@ -168,7 +168,7 @@ export default function BusinessCategoryDashboard({
         description: "Start a new slideshow",
         icon: <Plus className="w-5 h-5" />,
         action: () => onCreateSlideshow("image"),
-        color: "bg-gradient-to-r from-purple-500 to-pink-500",
+        color: "bg-black",
       },
     ];
 
@@ -182,7 +182,7 @@ export default function BusinessCategoryDashboard({
             description: "Design a digital menu",
             icon: <Menu className="w-5 h-5" />,
             action: () => onCreateSlideshow("menu"),
-            color: "bg-gradient-to-r from-green-500 to-blue-500",
+            color: "bg-black/90",
           },
           {
             id: "daily-specials",
@@ -190,7 +190,7 @@ export default function BusinessCategoryDashboard({
             description: "Highlight today's specials",
             icon: <Star className="w-5 h-5" />,
             action: () => onCreateSlideshow("promo"),
-            color: "bg-gradient-to-r from-yellow-500 to-orange-500",
+            color: "bg-black/80",
           }
         );
         break;
@@ -202,7 +202,7 @@ export default function BusinessCategoryDashboard({
             description: "Display your products",
             icon: <ShoppingCart className="w-5 h-5" />,
             action: () => onCreateSlideshow("image"),
-            color: "bg-gradient-to-r from-blue-500 to-purple-500",
+            color: "bg-black/90",
           },
           {
             id: "promotions",
@@ -210,7 +210,7 @@ export default function BusinessCategoryDashboard({
             description: "Create promotional content",
             icon: <Target className="w-5 h-5" />,
             action: () => onCreateSlideshow("promo"),
-            color: "bg-gradient-to-r from-red-500 to-pink-500",
+            color: "bg-black/80",
           }
         );
         break;
@@ -222,7 +222,7 @@ export default function BusinessCategoryDashboard({
             description: "Showcase your services",
             icon: <Scissors className="w-5 h-5" />,
             action: () => onCreateSlideshow("menu"),
-            color: "bg-gradient-to-r from-pink-500 to-purple-500",
+            color: "bg-black/90",
           },
           {
             id: "stylist-showcase",
@@ -230,7 +230,7 @@ export default function BusinessCategoryDashboard({
             description: "Highlight your stylists",
             icon: <Users className="w-5 h-5" />,
             action: () => onCreateSlideshow("image"),
-            color: "bg-gradient-to-r from-purple-500 to-indigo-500",
+            color: "bg-black/80",
           }
         );
         break;
@@ -243,7 +243,7 @@ export default function BusinessCategoryDashboard({
   if (!category) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-black" />
       </div>
     );
   }
@@ -254,25 +254,25 @@ export default function BusinessCategoryDashboard({
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      {/* Header */}
+      <div className="bg-white rounded-3xl shadow-2xl shadow-black/[0.03] border border-black/5 p-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <div
-              className="w-12 h-12 rounded-lg flex items-center justify-center text-white"
-              style={{ backgroundColor: category.color }}
+              className="w-16 h-16 rounded-2xl flex items-center justify-center text-white bg-black shadow-lg shadow-black/10"
             >
               {getCategoryIcon(category.slug)}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-black tracking-tight">
                 {category.name} Dashboard
               </h1>
-              <p className="text-gray-600">{category.description}</p>
+              <p className="text-black/40 font-medium">{category.description}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">Plan:</span>
-            <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+          <div className="flex items-center space-x-3">
+            <span className="text-[10px] font-bold text-black/20 uppercase tracking-widest">Active Plan</span>
+            <span className="px-4 py-1.5 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/10">
               {subscription?.plan?.name || "Starter"}
             </span>
           </div>
@@ -280,25 +280,31 @@ export default function BusinessCategoryDashboard({
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      {/* Quick Actions */}
+      <div className="bg-gray-50 rounded-3xl border border-black/5 p-8">
+        <h2 className="text-[10px] font-bold text-black/20 uppercase tracking-[0.2em] mb-8">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {quickActions.map((action) => (
             <motion.button
               key={action.id}
               onClick={action.action}
-              className={`${action.color} text-white p-4 rounded-lg text-left hover:shadow-lg transition-all duration-200`}
+              className={`${action.color} text-white p-6 rounded-2xl text-left shadow-xl shadow-black/10 hover:shadow-black/20 transition-all duration-300 relative overflow-hidden group`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <div className="flex items-center space-x-3">
-                {action.icon}
-                <div>
-                  <h3 className="font-semibold">{action.title}</h3>
-                  <p className="text-sm opacity-90">{action.description}</p>
+              <div className="flex items-center space-x-4 relative z-10">
+                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md">
+                  {action.icon}
                 </div>
+                <div>
+                  <h3 className="font-bold tracking-tight">{action.title}</h3>
+                  <p className="text-xs opacity-60 font-medium">{action.description}</p>
+                </div>
+              </div>
+              <div className="absolute top-0 right-0 p-4 opacity-5 transform group-hover:scale-110 transition-transform duration-500">
+                {action.icon}
               </div>
             </motion.button>
           ))}
@@ -306,21 +312,20 @@ export default function BusinessCategoryDashboard({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
+      <div className="bg-white rounded-3xl shadow-2xl shadow-black/[0.03] border border-black/5 overflow-hidden">
+        <div className="border-b border-black/[0.03]">
+          <nav className="flex space-x-12 px-8">
             {sections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeSection === section.id
-                    ? "border-purple-500 text-purple-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-6 px-1 border-b-2 font-bold text-[10px] uppercase tracking-widest transition-all duration-300 ${activeSection === section.id
+                    ? "border-black text-black"
+                    : "border-transparent text-black/20 hover:text-black/40"
+                  }`}
               >
-                <div className="flex items-center space-x-2">
-                  <span className={section.color.replace("bg-", "text-")}>
+                <div className="flex items-center space-x-3">
+                  <span className={activeSection === section.id ? "text-black" : "text-black/10"}>
                     {section.icon}
                   </span>
                   <span>{section.title}</span>
@@ -337,34 +342,34 @@ export default function BusinessCategoryDashboard({
               key={section.id}
               className={activeSection === section.id ? "block" : "hidden"}
             >
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="mb-10">
+                <h3 className="text-[10px] font-bold text-black/20 uppercase tracking-[0.2em] mb-2">
                   {section.title}
                 </h3>
-                <p className="text-gray-600">{section.description}</p>
+                <p className="text-base font-bold text-black tracking-tight">{section.description}</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {section.features.map((feature) => (
                   <motion.div
                     key={feature.id}
-                    className="bg-gray-50 rounded-lg p-4 border hover:shadow-md transition-shadow cursor-pointer"
+                    className="bg-gray-50 rounded-2xl p-6 border border-black/5 hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all duration-300 cursor-pointer group"
                     onClick={() => onFeatureClick(feature.id)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <div className="flex items-start space-x-3">
-                      <div className="text-2xl">{feature.icon}</div>
+                    <div className="flex items-start space-x-4">
+                      <div className="text-3xl grayscale group-hover:grayscale-0 transition-all">{feature.icon}</div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 mb-1">
+                        <h4 className="font-bold text-black mb-1 tracking-tight">
                           {feature.name}
                         </h4>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-sm text-black/40 mb-4 font-medium leading-relaxed">
                           {feature.description}
                         </p>
                         {feature.isPremium && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            <Sparkles className="w-3 h-3 mr-1" />
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-black text-white shadow-lg shadow-black/10">
+                            <Sparkles className="w-3 h-3 mr-1.5" />
                             Premium
                           </span>
                         )}
@@ -380,52 +385,52 @@ export default function BusinessCategoryDashboard({
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-2xl shadow-xl shadow-black/[0.03] border border-black/5 p-8">
           <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Eye className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-black/40">
+              <Eye className="w-6 h-6" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Views</p>
-              <p className="text-2xl font-semibold text-gray-900">1,234</p>
+            <div className="ml-5">
+              <p className="text-[10px] font-bold text-black/20 uppercase tracking-widest">Total Views</p>
+              <p className="text-2xl font-bold text-black tracking-tight">1,234</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-2xl shadow-xl shadow-black/[0.03] border border-black/5 p-8">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Image className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-black/40">
+              <Image className="w-6 h-6" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">
+            <div className="ml-5">
+              <p className="text-[10px] font-bold text-black/20 uppercase tracking-widest">
                 Active Slideshows
               </p>
-              <p className="text-2xl font-semibold text-gray-900">5</p>
+              <p className="text-2xl font-bold text-black tracking-tight">5</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-2xl shadow-xl shadow-black/[0.03] border border-black/5 p-8">
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Tv className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-black/40">
+              <Tv className="w-6 h-6" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Connected TVs</p>
-              <p className="text-2xl font-semibold text-gray-900">2</p>
+            <div className="ml-5">
+              <p className="text-[10px] font-bold text-black/20 uppercase tracking-widest">Connected TVs</p>
+              <p className="text-2xl font-bold text-black tracking-tight">2</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-2xl shadow-xl shadow-black/[0.03] border border-black/5 p-8">
           <div className="flex items-center">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-orange-600" />
+            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-black/40">
+              <TrendingUp className="w-6 h-6" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Engagement</p>
-              <p className="text-2xl font-semibold text-gray-900">87%</p>
+            <div className="ml-5">
+              <p className="text-[10px] font-bold text-black/20 uppercase tracking-widest">Engagement</p>
+              <p className="text-2xl font-bold text-black tracking-tight">87%</p>
             </div>
           </div>
         </div>

@@ -1,442 +1,141 @@
 import React, { useState, useEffect } from "react";
+import Head from "next/head";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import ClientLayout from "../../components/client/ClientLayout";
 import { motion } from "framer-motion";
 import {
   Crown,
-  Star,
   Zap,
   Shield,
-  Users,
-  BarChart3,
   Check,
   CreditCard,
-  Calendar,
   FileText,
   TrendingUp,
   Sparkles,
+  BarChart3,
 } from "lucide-react";
-
-interface Subscription {
-  id: string;
-  status: string;
-  plan: string;
-  current_period_end: string;
-  cancel_at_period_end: boolean;
-}
-
-interface UserProfile {
-  subscription_plan: string;
-  subscription_status: string;
-  subscription_expires_at: string;
-  ai_credits: number;
-  ai_credits_used: number;
-}
 
 export default function PremiumPage() {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [business, setBusiness] = useState<any>(null);
 
   useEffect(() => {
-    if (user) {
-      fetchSubscriptionData();
-    }
-  }, [user]);
-
-  const fetchSubscriptionData = async () => {
-    try {
+    const fetchData = async () => {
       if (!user) return;
-
-      // Get user profile data
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-      } else {
-        setUserProfile(profileData);
-      }
-
-      // First, check if user is a staff member and get their business
-      const { data: staffMember, error: staffError } = await supabase
-        .from("business_staff")
-        .select(
-          `
-          business:businesses!inner(
-            id,
-            name,
-            subscription_plan,
-            ai_credits,
-            ai_credits_used,
-            max_slideshows,
-            max_staff_members
-          )
-        `
-        )
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      let businessData = null;
-      if (staffMember?.business) {
-        // Handle both array and object
-        businessData = Array.isArray(staffMember.business)
-          ? staffMember.business[0]
-          : staffMember.business;
-        console.log(
-          "🔍 Debug: User is staff member, using business:",
-          businessData.name
-        );
-      }
-
-      // If not found as staff, try as owner
-      if (!businessData) {
-        const { data: userBusiness, error: businessError } = await supabase
-          .from("businesses")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-
-        if (businessError && businessError.code !== "PGRST116") {
-          console.error("Error fetching business:", businessError);
-        } else if (userBusiness) {
-          businessData = userBusiness;
-          console.log(
-            "🔍 Debug: User is business owner, using own business:",
-            businessData.name
-          );
-        }
-      }
-
-      if (businessData) {
-        setBusiness(businessData);
-      }
-
-      // Get business subscription data - check business table first, then business_subscriptions
-      if (businessData) {
-        // First check if business has a direct subscription plan
-        if (
-          businessData.subscription_plan &&
-          businessData.subscription_plan !== "free"
-        ) {
-          setSubscription({
-            id: "business",
-            status: "active",
-            plan:
-              businessData.subscription_plan.charAt(0).toUpperCase() +
-              businessData.subscription_plan.slice(1), // Capitalize first letter
-            current_period_end: new Date(
-              Date.now() + 365 * 24 * 60 * 60 * 1000
-            ).toISOString(), // Default to 1 year
-            cancel_at_period_end: false,
-          });
-        } else {
-          // Check business_subscriptions table
-          const { data: subscriptionData, error: subscriptionError } =
-            await supabase
-              .from("business_subscriptions")
-              .select(
-                `
-                *,
-                plan:subscription_plans(name, slug, features, limits)
-              `
-              )
-              .eq("business_id", businessData.id)
-              .eq("status", "active")
-              .single();
-
-          if (subscriptionError && subscriptionError.code !== "PGRST116") {
-            console.error("Error fetching subscription:", subscriptionError);
-          }
-
-          if (subscriptionData) {
-            setSubscription({
-              id: subscriptionData.id,
-              status: subscriptionData.status,
-              plan: subscriptionData.plan?.name || "Free",
-              current_period_end: subscriptionData.current_period_end,
-              cancel_at_period_end: false,
-            });
-          }
-        }
-      }
-
-      // If no business subscription, use profile subscription
-      if (!subscription && profileData) {
-        setSubscription({
-          id: "profile",
-          status: profileData.subscription_status || "active",
-          plan: profileData.subscription_plan || "Free",
-          current_period_end:
-            profileData.subscription_expires_at ||
-            new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          cancel_at_period_end: false,
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching subscription:", error);
-    } finally {
+      setLoading(true);
+      const { data: bData } = await supabase.from("businesses").select("*").eq("user_id", user.id).single();
+      setBusiness(bData);
       setLoading(false);
-    }
-  };
-
-  const getPlanFeatures = (plan: string) => {
-    const features = {
-      Starter: [
-        "5 slideshows",
-        "Premium templates",
-        "Priority support",
-        "5 TV displays",
-        "Basic analytics",
-        "100 AI credits",
-      ],
-      Professional: [
-        "20 slideshows",
-        "All templates",
-        "Priority support",
-        "Unlimited TV displays",
-        "Advanced analytics",
-        "Team management",
-        "Custom branding",
-        "500 AI credits",
-      ],
-      Unlimited: [
-        "Unlimited slideshows",
-        "All templates",
-        "Priority support",
-        "Unlimited TV displays",
-        "Enterprise analytics",
-        "Unlimited team members",
-        "Custom branding",
-        "Unlimited AI credits",
-        "API access",
-        "White-label solution",
-      ],
     };
-    return features[plan as keyof typeof features] || features.Starter;
-  };
-
-  const getPlanColor = (plan: string) => {
-    switch (plan) {
-      case "Professional":
-        return "from-purple-500 to-pink-500";
-      case "Starter":
-        return "from-blue-500 to-cyan-500";
-      case "Unlimited":
-        return "from-yellow-500 to-orange-500";
-      default:
-        return "from-gray-500 to-gray-600";
-    }
-  };
-
-  const getCurrentPlanName = () => {
-    return subscription?.plan || userProfile?.subscription_plan || "Free";
-  };
-
-  const getCurrentAICredits = () => {
-    return business?.ai_credits || userProfile?.ai_credits || 10;
-  };
-
-  const getCurrentMaxSlideshows = () => {
-    return business?.max_slideshows || 1;
-  };
-
-  const getCurrentMaxStaffMembers = () => {
-    return business?.max_staff_members || 1;
-  };
+    fetchData();
+  }, [user]);
 
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex flex-col items-center justify-center py-40">
+          <div className="w-10 h-10 border-2 border-black/5 border-t-black rounded-full animate-spin"></div>
+          <p className="mt-6 text-sm font-medium text-black/40">Loading subscription details...</p>
         </div>
       </ClientLayout>
     );
   }
 
+  const features = [
+    "Unlimited HD Slideshows",
+    "Premium Design Templates",
+    "Real-time TV Synchronization",
+    "Advanced Analytics Dashboard",
+    "Multiple Staff Seats",
+    "AI-Powered Content Generation",
+    "Custom Branding Options",
+    "Priority Customer Support",
+  ];
+
   return (
     <ClientLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Premium Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Manage your subscription and premium features
-          </p>
+      <Head>
+        <title>Subscription - Shivehview</title>
+      </Head>
+
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 pb-12 border-b border-black/5">
+          <div>
+            <h1 className="text-3xl font-bold text-black">Subscription</h1>
+            <p className="text-sm text-black/40 mt-1">Manage your account plan and billing details</p>
+          </div>
+          <div className="px-6 py-3 bg-white border border-black/5 rounded-xl shadow-sm text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+            <div className="w-2 h-2 bg-black rounded-full animate-pulse"></div>
+            Tier: {business?.subscription_plan || "Free"}
+          </div>
         </div>
 
-        {/* Current Plan Card */}
-        {subscription && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 mb-8"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div
-                  className={`w-16 h-16 bg-gradient-to-r ${getPlanColor(
-                    subscription.plan
-                  )} rounded-full flex items-center justify-center`}
-                >
-                  <Crown className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {subscription.plan} Plan
-                  </h2>
-                  <p className="text-gray-600">Active subscription</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-600">Next billing</div>
-                <div className="font-semibold text-gray-900">
-                  {new Date(
-                    subscription.current_period_end
-                  ).toLocaleDateString()}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Current Plan
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {getCurrentPlanName()}
-                </p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <Crown className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
+        <div className="bg-black text-white p-12 rounded-2xl mb-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-12 opacity-10">
+            <Crown className="w-48 h-48" />
           </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">AI Credits</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {getCurrentAICredits()}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <Sparkles className="w-6 h-6 text-blue-600" />
-              </div>
+          <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-12">
+            <div>
+              <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4">Current Status</p>
+              <h2 className="text-4xl font-bold mb-4 capitalize">{business?.subscription_plan || "Free"} Plan</h2>
+              <p className="text-sm text-white/60">Your subscription is active and in good standing.</p>
             </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Max Slideshows
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {getCurrentMaxSlideshows()}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Staff Members
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {getCurrentMaxStaffMembers()}
-                </p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-xl">
-                <Shield className="w-6 h-6 text-orange-600" />
-              </div>
+            <div className="text-center md:text-right">
+              <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Next Billing Date</p>
+              <p className="text-2xl font-bold">Jan 20, 2026</p>
             </div>
           </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">
-            Your Plan Features
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {getPlanFeatures(getCurrentPlanName()).map((feature, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                <span className="text-gray-700">{feature}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {[
+            { label: "AI Credits", val: "100", icon: Sparkles },
+            { label: "Slideshows", val: "Unlimited", icon: TrendingUp },
+            { label: "Staff Seats", val: "5", icon: Shield },
+            { label: "Broadcasting", val: "Active", icon: Zap },
+          ].map((s, i) => (
+            <div key={i} className="bg-white border border-black/5 p-8 rounded-2xl shadow-sm">
+              <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mb-6">
+                <s.icon className="w-5 h-5 text-black/20" />
+              </div>
+              <p className="text-xs font-bold text-black/30 uppercase tracking-widest mb-1">{s.label}</p>
+              <p className="text-2xl font-bold">{s.val}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white border border-black/5 p-12 rounded-2xl shadow-sm mb-12">
+          <h3 className="text-xl font-bold mb-10">Plan Features</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((f, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-black/20 border border-black/5">
+                  <Check className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-medium">{f}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Future Features */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 border border-blue-200">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-blue-600" />
-            Coming Soon
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg p-4 border border-blue-100">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <CreditCard className="w-4 h-4 text-blue-600" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { label: "Billing History", icon: CreditCard, desc: "Manage your invoices and payment methods." },
+            { label: "Usage Stats", icon: BarChart3, desc: "Detailed breakdown of your resource consumption." },
+            { label: "Export Data", icon: FileText, desc: "Download your account data and billing reports." },
+          ].map((item, i) => (
+            <div key={i} className="bg-gray-50 p-8 rounded-2xl border border-black/5 hover:bg-white transition-all cursor-pointer group shadow-sm">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center border border-black/5 group-hover:bg-black transition-all">
+                  <item.icon className="w-5 h-5 text-black/20 group-hover:text-white" />
                 </div>
-                <h4 className="font-medium text-gray-900">
-                  Billing & Invoices
-                </h4>
+                <h4 className="font-bold">{item.label}</h4>
               </div>
-              <p className="text-sm text-gray-600">
-                View invoices, payment history, and manage billing information
-              </p>
+              <p className="text-sm text-black/40 leading-relaxed">{item.desc}</p>
             </div>
-
-            <div className="bg-white rounded-lg p-4 border border-blue-100">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                </div>
-                <h4 className="font-medium text-gray-900">
-                  Transaction History
-                </h4>
-              </div>
-              <p className="text-sm text-gray-600">
-                Detailed transaction logs and payment tracking
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg p-4 border border-blue-100">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
-                </div>
-                <h4 className="font-medium text-gray-900">Usage Analytics</h4>
-              </div>
-              <p className="text-sm text-gray-600">
-                Track feature usage and performance metrics
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </ClientLayout>

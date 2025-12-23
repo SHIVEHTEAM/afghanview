@@ -114,8 +114,7 @@ export default function AdminSlides() {
       console.error("Error fetching slides:", error);
       // Show error to user
       alert(
-        `Error fetching slides: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error fetching slides: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     } finally {
@@ -250,11 +249,16 @@ export default function AdminSlides() {
       // Remove images property if present
       if (slideshowData.images) delete slideshowData.images;
 
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
       // Call the slideshow creation API
       const response = await fetch("/api/slideshows", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify(slideshowData),
       });
@@ -278,8 +282,7 @@ export default function AdminSlides() {
     } catch (error) {
       console.error("Error creating slideshow:", error);
       alert(
-        `Error creating slideshow: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error creating slideshow: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -893,8 +896,8 @@ export default function AdminSlides() {
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
                   {searchTerm ||
-                  selectedType !== "all" ||
-                  selectedStatus !== "all"
+                    selectedType !== "all" ||
+                    selectedStatus !== "all"
                     ? "Try adjusting your filters or search terms."
                     : "Get started by creating a new slide."}
                 </p>

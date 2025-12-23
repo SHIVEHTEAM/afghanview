@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+import Head from "next/head";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { BusinessType } from "@/types/business";
 import ClientLayout from "@/components/client/ClientLayout";
 import { SlideshowsTab } from "@/components/client/dashboard/tabs/SlideshowsTab";
 import { DashboardModals } from "@/components/client/dashboard/modals/DashboardModals";
-import { FileText } from "lucide-react";
+import { FileText, Sparkles, RefreshCw, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Business {
   id: string;
@@ -13,12 +15,12 @@ interface Business {
   type: BusinessType;
   description?: string;
   created_at: string;
-  user_id?: string; // Add user_id field for business ownership
+  user_id?: string;
 }
 
 interface Slideshow {
   id: string;
-  title: string; // Changed from name to title
+  title: string;
   description?: string;
   business_id: string;
   business_type: BusinessType;
@@ -44,11 +46,9 @@ export default function ClientDashboard() {
     try {
       setLoading(true);
 
-      // 1. Try to find business where user is staff
-      const { data: staffMember, error: staffError } = await supabase
+      const { data: staffMember } = await supabase
         .from("business_staff")
-        .select(
-          `
+        .select(`
           business:businesses!inner(
             id,
             name,
@@ -56,23 +56,20 @@ export default function ClientDashboard() {
             description,
             created_at
           )
-        `
-        )
+        `)
         .eq("user_id", user.id)
         .eq("is_active", true)
         .maybeSingle();
 
       let foundBusiness = null;
       if (staffMember?.business) {
-        // Handle both array and object
         foundBusiness = Array.isArray(staffMember.business)
           ? staffMember.business[0]
           : staffMember.business;
       }
 
-      // 2. If not found as staff, try as owner
       if (!foundBusiness) {
-        const { data: userBusiness, error: businessError } = await supabase
+        const { data: userBusiness } = await supabase
           .from("businesses")
           .select("id, name, type, description, created_at, user_id")
           .eq("user_id", user.id)
@@ -84,7 +81,6 @@ export default function ClientDashboard() {
         }
       }
 
-      // 3. Only create if business is truly not found
       let businessId: string | null = null;
       if (!foundBusiness) {
         const { data: newBusiness, error: createError } = await supabase
@@ -92,7 +88,7 @@ export default function ClientDashboard() {
           .insert({
             name: `${user.first_name || "User"}'s Business`,
             user_id: user.id,
-            type: "restaurant", // default type
+            type: "restaurant",
             description: `${user.first_name || "User"}'s Business - restaurant`,
           })
           .select()
@@ -104,7 +100,6 @@ export default function ClientDashboard() {
         }
       }
 
-      // Set business state
       if (foundBusiness) {
         setBusiness(foundBusiness);
         businessId = foundBusiness.id;
@@ -113,7 +108,6 @@ export default function ClientDashboard() {
         businessId = null;
       }
 
-      // Fetch slideshows if business exists
       if (businessId) {
         const { data: slideshowData, error } = await supabase
           .from("slideshows")
@@ -125,7 +119,6 @@ export default function ClientDashboard() {
           console.error("Error fetching slideshows:", error);
           setSlideshows([]);
         } else {
-          // Add business_type to each slideshow
           const slideshowsWithBusinessType = (slideshowData || []).map(
             (slideshow) => ({
               ...slideshow,
@@ -146,7 +139,6 @@ export default function ClientDashboard() {
     }
   };
 
-  // Fetch user's business and slideshows
   useEffect(() => {
     fetchData();
   }, [user?.id]);
@@ -154,11 +146,14 @@ export default function ClientDashboard() {
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading dashboard...</p>
-          </div>
+        <Head>
+          <title>Loading... // Shivehview</title>
+        </Head>
+        <div className="flex flex-col items-center justify-center py-48 min-h-[70vh]">
+          <div className="w-12 h-12 border-2 border-black/5 border-t-black rounded-full animate-spin"></div>
+          <p className="mt-8 text-sm font-medium text-black/40">
+            Loading your dashboard...
+          </p>
         </div>
       </ClientLayout>
     );
@@ -167,48 +162,95 @@ export default function ClientDashboard() {
   if (!business) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              No Business Found
+        <Head>
+          <title>Business Set Up Required // Shivehview</title>
+        </Head>
+        <div className="flex items-center justify-center py-48 min-h-[70vh]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-md p-12 bg-white rounded-3xl shadow-xl border border-black/5"
+          >
+            <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-8">
+              <AlertCircle className="w-8 h-8 text-black/20" />
+            </div>
+            <h2 className="text-2xl font-bold text-black mb-4">
+              Business Required
             </h2>
-            <p className="text-gray-600 mb-4">
-              You don't have access to any business yet.
+            <p className="text-sm text-black/50 mb-8 leading-relaxed">
+              We couldn't find a business associated with your account. Please refresh or contact support if this persists.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="w-full bg-black text-white px-8 py-4 rounded-xl font-bold transition-all hover:bg-black/90"
             >
-              Refresh Page
+              Refresh Dashboard
             </button>
-          </div>
+          </motion.div>
         </div>
       </ClientLayout>
     );
   }
 
-  // Convert slideshows to the format expected by SlideshowsTab
   const formattedSlideshows = slideshows.map((slideshow) => ({
     ...slideshow,
-    name: slideshow.title, // SlideshowsTab expects 'name' instead of 'title'
+    name: slideshow.title,
     images: slideshow.content?.images || slideshow.content?.slides || [],
   }));
 
   return (
     <ClientLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Head>
+        <title>Dashboard // Shivehview</title>
+      </Head>
+
+      <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.first_name || "User"}!
-          </h1>
-          <p className="text-gray-600">
-            Manage your slideshows and business content
-          </p>
+        <div className="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <h1 className="text-3xl font-bold text-black tracking-tight">
+              Welcome, {user?.first_name || "User"}
+            </h1>
+            <p className="text-sm text-black/40 mt-1">
+              Manage your content and active TV units across your business.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="px-4 py-2 bg-gray-50 rounded-xl border border-black/5 flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-black"></div>
+              <span className="text-xs font-bold text-black uppercase tracking-wider">System Active</span>
+            </div>
+            <button
+              onClick={fetchData}
+              className="p-3 bg-white border border-black/5 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
+            >
+              <RefreshCw className={`w-4 h-4 text-black/40 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white p-8 rounded-2xl border border-black/5 shadow-sm">
+            <p className="text-xs font-bold text-black/40 uppercase tracking-widest mb-2">Total Modules</p>
+            <p className="text-4xl font-bold text-black">{formattedSlideshows.length}</p>
+          </div>
+          <div className="bg-white p-8 rounded-2xl border border-black/5 shadow-sm">
+            <p className="text-xs font-bold text-black/40 uppercase tracking-widest mb-2">Active Displays</p>
+            <p className="text-4xl font-bold text-black">--</p>
+          </div>
+          <div className="bg-white p-8 rounded-2xl border border-black/5 shadow-sm">
+            <p className="text-xs font-bold text-black/40 uppercase tracking-widest mb-2">Network Health</p>
+            <p className="text-4xl font-bold text-black">100%</p>
+          </div>
+        </div>
+
+        {/* Main Workspace */}
+        <div className="bg-white rounded-2xl border border-black/5 p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-lg font-bold text-black">Modules</h2>
+          </div>
           <SlideshowsTab
             slideshows={formattedSlideshows}
             business={business}
@@ -217,7 +259,6 @@ export default function ClientDashboard() {
         </div>
       </div>
 
-      {/* Dashboard Modals - Handles slideshow creation and wizards */}
       <DashboardModals
         businessId={business?.id}
         onSlideshowCreated={fetchData}

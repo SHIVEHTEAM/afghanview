@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "../../../../lib/supabase";
 import { useSlideshowStore } from "../../../../stores/slideshowStore";
 import { DeleteConfirmationModal } from "../../../common";
-import { SimpleImageViewer } from "../../../slideshow";
+import { SimpleImageViewer, SlideshowPlayer } from "../../../slideshow";
 import SlideshowCreator from "../../../slideshow-creator/SlideshowCreator";
 import ImageSlideshowWizard from "../../../slideshow-creator/image/ImageSlideshowWizard";
 import VideoSlideshowWizard from "../../../slideshow-creator/video/VideoSlideshowWizard";
@@ -12,6 +13,7 @@ import MenuSlideshowWizard from "../../../slideshow-creator/menu/MenuSlideshowWi
 import DealsSlideshowWizard from "../../../slideshow-creator/deals/DealsSlideshowWizard";
 import TextSlideshowWizard from "../../../slideshow-creator/text/TextSlideshowWizard";
 import AiAllInOneWizard from "../../../slideshow-creator/ai-all-in-one/AiAllInOneWizard";
+import { PropertyListingSlideshowWizard } from "../../../slideshow-creator/property-listing";
 import { QuickMusicSetup } from "../../../slideshow-creator/shared";
 import SuccessMessage from "../../../ui/SuccessMessage";
 import { useToast } from "../../../ui/Toast";
@@ -286,6 +288,28 @@ export function DashboardModals({
           aspectRatio: data.settings?.aspectRatio || "16:9",
           quality: data.settings?.quality || "high",
         };
+      } else if (wizardType === "property-listing") {
+        console.log("Processing property slideshow data:", data);
+        if (!data.slides || !Array.isArray(data.slides)) {
+          throw new Error("Property slides data is missing");
+        }
+        mediaItems = data.slides;
+        slideshowSettings = {
+          defaultDuration: data.settings?.duration || 6000,
+          duration: data.settings?.duration || 6000,
+          transition: data.settings?.transition || "fade",
+          transitionDuration: data.settings?.transitionDuration || 1000,
+          backgroundMusic: data.settings?.backgroundMusic || "",
+          musicVolume: data.settings?.musicVolume || 50,
+          musicLoop: data.settings?.musicLoop || true,
+          autoPlay: data.settings?.autoPlay || true,
+          showControls: data.settings?.showControls || true,
+          showProgress: data.settings?.showProgress || true,
+          loopSlideshow: data.settings?.loopSlideshow || true,
+          shuffleSlides: data.settings?.shuffleSlides || false,
+          aspectRatio: data.settings?.aspectRatio || "16:9",
+          quality: data.settings?.quality || "high",
+        };
       }
 
       // Generate slug for public link
@@ -314,10 +338,15 @@ export function DashboardModals({
       console.log("Sending request body to API:", requestBody);
       console.log("Data.slides content:", data.slides);
 
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
       const response = await fetch("/api/slideshows", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify(requestBody),
       });
@@ -421,17 +450,47 @@ export function DashboardModals({
           aspectRatio: data.settings?.aspectRatio || "16:9",
           quality: data.settings?.quality || "high",
         };
+      } else if (editWizardType === "property-listing") {
+        console.log("Processing property slideshow edit data:", data);
+        mediaItems = data.slides || [];
+        slideshowSettings = {
+          defaultDuration: data.settings?.duration || 6000,
+          duration: data.settings?.duration || 6000,
+          transition: data.settings?.transition || "fade",
+          transitionDuration: data.settings?.transitionDuration || 1000,
+          backgroundMusic: data.settings?.backgroundMusic || "",
+          musicVolume: data.settings?.musicVolume || 50,
+          musicLoop: data.settings?.musicLoop || true,
+          autoPlay: data.settings?.autoPlay || true,
+          showControls: data.settings?.showControls || true,
+          showProgress: data.settings?.showProgress || true,
+          loopSlideshow: data.settings?.loopSlideshow || true,
+          shuffleSlides: data.settings?.shuffleSlides || false,
+          aspectRatio: data.settings?.aspectRatio || "16:9",
+          quality: data.settings?.quality || "high",
+        };
       }
+
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
 
       // Update the slideshow via API
       const response = await fetch(`/api/slideshows/${editingSlideshow.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({
           name: slideshowName,
-          slides: mediaItems,
+          content: {
+            slides: mediaItems,
+            properties: data.properties,
+            theme: data.theme,
+            layout: data.layout,
+            type: editWizardType
+          },
           settings: slideshowSettings,
         }),
       });
@@ -470,15 +529,18 @@ export function DashboardModals({
     if (!selectedSlideshowId) return;
 
     try {
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
       const response = await fetch(`/api/slideshows/${selectedSlideshowId}`, {
         method: "DELETE",
+        headers: {
+          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
+        },
       });
 
       if (response.ok) {
-        // const updatedSlideshows = savedSlideshows.filter( // This line was removed from the original file
-        //   (slideshow: any) => slideshow.id !== selectedSlideshowId
-        // ); // This line was removed from the original file
-        // setSavedSlideshows(updatedSlideshows); // This line was removed from the original file
         showSuccess("Slideshow deleted successfully!");
       } else {
         console.error("Failed to delete slideshow");
@@ -553,36 +615,27 @@ export function DashboardModals({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="bg-white rounded-3xl max-w-7xl w-full h-[90vh] overflow-hidden shadow-2xl border border-gray-100 flex flex-col"
+            className="bg-white rounded-[2.5rem] max-w-7xl w-full h-[90vh] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 flex flex-col"
           >
-            <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white p-8 relative overflow-hidden flex-shrink-0">
-              {/* Enhanced Background Pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16 animate-pulse"></div>
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white rounded-full translate-x-12 -translate-y-12 animate-pulse delay-1000"></div>
-                <div className="absolute bottom-0 left-1/4 w-20 h-20 bg-white rounded-full -translate-x-10 translate-y-10 animate-pulse delay-500"></div>
-              </div>
-
-              <div className="flex items-center justify-between mb-4 relative z-10">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm border border-white/20">
-                    <h2 className="text-2xl font-bold capitalize">
-                      {wizardType.replace("-", " ")} Slideshow
-                    </h2>
-                  </div>
+            <div className="bg-white px-10 py-8 relative overflow-hidden flex-shrink-0 border-b border-black/5">
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex flex-col">
+                  <h2 className="text-3xl font-bold capitalize tracking-tight text-black leading-tight">
+                    {wizardType.replace("-", " ")} Creator
+                  </h2>
+                  <p className="text-black/40 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">
+                    Template Configuration
+                  </p>
                 </div>
                 <button
                   onClick={() => setShowSlideshowWizard(false)}
-                  className="p-3 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 backdrop-blur-sm hover:scale-110"
+                  className="p-3 text-black/20 hover:text-black bg-gray-50 hover:bg-gray-100 rounded-full transition-all duration-300"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <p className="text-white/90 text-lg font-medium relative z-10">
-                Create your {wizardType.replace("-", " ")} slideshow step by
-                step
-              </p>
+
             </div>
 
             <div className="flex-1 flex flex-col min-h-0">
@@ -590,7 +643,7 @@ export function DashboardModals({
                 <ImageSlideshowWizard
                   step={0}
                   formData={{}}
-                  updateFormData={() => {}}
+                  updateFormData={() => { }}
                   onComplete={handleWizardComplete}
                 />
               )}
@@ -598,7 +651,7 @@ export function DashboardModals({
                 <VideoSlideshowWizard
                   step={0}
                   formData={{}}
-                  updateFormData={() => {}}
+                  updateFormData={() => { }}
                   onComplete={handleWizardComplete}
                 />
               )}
@@ -606,7 +659,7 @@ export function DashboardModals({
                 <AiFactsSlideshowWizard
                   step={0}
                   formData={{}}
-                  updateFormData={() => {}}
+                  updateFormData={() => { }}
                   onComplete={handleWizardComplete}
                   onBack={() => setShowSlideshowWizard(false)}
                 />
@@ -621,7 +674,7 @@ export function DashboardModals({
                 <MenuSlideshowWizard
                   step={0}
                   formData={{}}
-                  updateFormData={() => {}}
+                  updateFormData={() => { }}
                   onComplete={handleWizardComplete}
                 />
               )}
@@ -629,7 +682,7 @@ export function DashboardModals({
                 <DealsSlideshowWizard
                   step={0}
                   formData={{}}
-                  updateFormData={() => {}}
+                  updateFormData={() => { }}
                   onComplete={handleWizardComplete}
                 />
               )}
@@ -637,7 +690,15 @@ export function DashboardModals({
                 <TextSlideshowWizard
                   step={0}
                   formData={{}}
-                  updateFormData={() => {}}
+                  updateFormData={() => { }}
+                  onComplete={handleWizardComplete}
+                />
+              )}
+              {wizardType === "property-listing" && (
+                <PropertyListingSlideshowWizard
+                  step={0}
+                  formData={{}}
+                  updateFormData={() => { }}
                   onComplete={handleWizardComplete}
                 />
               )}
@@ -654,26 +715,22 @@ export function DashboardModals({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="bg-white rounded-3xl max-w-7xl w-full max-h-[95vh] overflow-hidden shadow-2xl border border-gray-100 flex flex-col"
+            className="bg-white rounded-[2.5rem] max-w-7xl w-full h-[90vh] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 flex flex-col"
           >
-            <div className="bg-gradient-to-r from-green-600 via-blue-600 to-indigo-600 text-white p-8 relative overflow-hidden flex-shrink-0">
-              {/* Background Pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white rounded-full translate-x-12 -translate-y-12"></div>
-                <div className="absolute bottom-0 left-1/4 w-20 h-20 bg-white rounded-full -translate-x-10 translate-y-10"></div>
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                    <h2 className="text-2xl font-bold capitalize">
-                      Edit {editWizardType.replace("-", " ")} Slideshow
-                    </h2>
+            <div className="bg-white px-10 py-8 relative overflow-hidden flex-shrink-0 border-b border-black/5">
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex flex-col">
+                  <h2 className="text-3xl font-bold capitalize tracking-tight text-black leading-tight">
+                    Edit {editWizardType.replace("-", " ")}
+                  </h2>
+                  <div className="flex items-center gap-3 mt-2">
+                    <p className="text-black/40 text-[10px] font-bold uppercase tracking-[0.3em]">
+                      Editing Module
+                    </p>
+                    <span className="text-[10px] font-bold text-black/20 uppercase tracking-widest border-l border-black/10 pl-3">
+                      {editingSlideshow?.name}
+                    </span>
                   </div>
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm backdrop-blur-sm">
-                    {editingSlideshow?.name}
-                  </span>
                 </div>
                 <button
                   onClick={() => {
@@ -681,18 +738,16 @@ export function DashboardModals({
                     setEditingSlideshow(null);
                     setEditWizardType("");
                   }}
-                  className="p-3 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 backdrop-blur-sm"
+                  className="p-3 text-black/20 hover:text-black bg-gray-50 hover:bg-gray-100 rounded-full transition-all duration-300"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <p className="text-white/80 text-lg">
-                Update your {editWizardType.replace("-", " ")} slideshow
-              </p>
+
             </div>
 
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               {editWizardType === "image" && editingSlideshow && (
                 <ImageSlideshowWizard
                   step={0}
@@ -701,7 +756,7 @@ export function DashboardModals({
                     images: editingSlideshow.images || [],
                     settings: editingSlideshow.settings || {},
                   }}
-                  updateFormData={() => {}}
+                  updateFormData={() => { }}
                   onComplete={handleEditWizardComplete}
                   isEditing={true}
                   initialData={{
@@ -711,6 +766,30 @@ export function DashboardModals({
                   }}
                 />
               )}
+              {editWizardType === "property-listing" && editingSlideshow && (
+                <PropertyListingSlideshowWizard
+                  step={0}
+                  isEditing={true}
+                  initialData={{
+                    name: editingSlideshow.name,
+                    settings: editingSlideshow.settings,
+                    properties: editingSlideshow.content?.properties ||
+                      (editingSlideshow.content?.slides || []).map((s: any) => s.content?.property).filter(Boolean) ||
+                      [], // Fallback: reconstruct from slides
+                    theme: editingSlideshow.content?.theme,
+                    layout: editingSlideshow.content?.layout,
+                  }}
+                  formData={{
+                    name: editingSlideshow.name,
+                    settings: editingSlideshow.settings,
+                    properties: editingSlideshow.content?.properties ||
+                      (editingSlideshow.content?.slides || []).map((s: any) => s.content?.property).filter(Boolean) ||
+                      [],
+                  }}
+                  updateFormData={() => { }}
+                  onComplete={handleEditWizardComplete}
+                />
+              )}
             </div>
           </motion.div>
         </div>
@@ -718,58 +797,74 @@ export function DashboardModals({
 
       {/* Slideshow Viewer Modal */}
       {showViewer && currentSlideshow && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold">
-                Preview: {currentSlideshow.name}
-              </h3>
-              <div className="flex items-center gap-2">
-                <button
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-[3rem] max-w-5xl w-full overflow-hidden shadow-2xl shadow-black/20 border border-black/5"
+          >
+            <div className="px-10 py-8 border-b border-black/5 flex justify-between items-center bg-white">
+              <div className="flex flex-col">
+                <h3 className="text-2xl font-bold tracking-tight text-black uppercase">
+                  Preview Terminal
+                </h3>
+                <p className="text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mt-1">
+                  Active Feed // {currentSlideshow.name}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => {
                     setShowViewer(false);
                     setCurrentSlideshow(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  title="Close"
+                  className="p-3 text-black/20 hover:text-black bg-gray-50 hover:bg-gray-100 rounded-full transition-all duration-300"
+                  title="Terminate Session"
                 >
-                  <X className="w-5 h-5" />
-                </button>
+                  <X className="w-6 h-6" />
+                </motion.button>
               </div>
             </div>
-            <div className="aspect-video">
-              <SimpleImageViewer
-                images={currentSlideshow.images || []}
-                settings={{
-                  duration: currentSlideshow.settings?.defaultDuration || 5000,
-                  transition: currentSlideshow.settings?.transition || "fade",
-                  autoPlay: currentSlideshow.settings?.autoPlay || true,
-                  showControls: true,
-                  tvMode: false,
-                  // Add music settings from the new multi-track system
-                  backgroundMusic: currentSlideshow.settings?.music_playlist_id
-                    ? `playlist:${currentSlideshow.settings.music_playlist_id}`
-                    : currentSlideshow.settings?.background_music ||
-                      (typeof currentSlideshow.settings?.backgroundMusic ===
-                      "string"
-                        ? currentSlideshow.settings.backgroundMusic
-                        : undefined),
-                  musicVolume:
-                    currentSlideshow.settings?.music_volume ||
-                    currentSlideshow.settings?.musicVolume ||
-                    50,
-                  musicLoop:
-                    currentSlideshow.settings?.music_loop ??
-                    currentSlideshow.settings?.musicLoop ??
-                    true,
-                }}
-                onClose={() => {
+
+            <div className="p-8">
+              <div className="aspect-video rounded-[2rem] overflow-hidden bg-black border border-black/10 shadow-inner group relative">
+                <SlideshowPlayer
+                  slideshow={{
+                    id: currentSlideshow.id,
+                    name: currentSlideshow.name || "Untitled Slideshow",
+                    images:
+                      currentSlideshow.content?.slides &&
+                        Array.isArray(currentSlideshow.content.slides) &&
+                        currentSlideshow.content.slides.length > 0
+                        ? currentSlideshow.content.slides
+                        : currentSlideshow.images || [],
+                    settings: currentSlideshow.settings as any,
+                  }}
+                  autoPlay={currentSlideshow.settings?.autoPlay ?? true}
+                  showControls={true}
+                />
+              </div>
+            </div>
+
+            <div className="px-10 py-8 bg-gray-50/50 border-t border-black/5 flex justify-end items-center gap-4">
+              <span className="text-[10px] font-bold text-black/30 uppercase tracking-widest mr-auto">
+                Signal status: optimal
+              </span>
+              <motion.button
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
                   setShowViewer(false);
                   setCurrentSlideshow(null);
                 }}
-              />
+                className="px-8 py-4 bg-black text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-black/90 transition-all shadow-lg shadow-black/10"
+              >
+                Close Terminal
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 

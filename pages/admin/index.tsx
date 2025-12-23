@@ -215,8 +215,8 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <Head>
-        <title>Admin Dashboard - AfghanView</title>
-        <meta name="description" content="Admin dashboard for AfghanView" />
+        <title>Admin Dashboard - Shivehview</title>
+        <meta name="description" content="Admin dashboard for Shivehview" />
       </Head>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

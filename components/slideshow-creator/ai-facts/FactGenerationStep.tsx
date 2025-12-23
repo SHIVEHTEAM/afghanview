@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import { Loader2, Zap, RefreshCw, ArrowRight, Info } from "lucide-react";
-import { Fact, TajikCulturePrompt } from "./types";
-import { AFGHAN_CULTURE_PROMPTS, DEFAULT_SETTINGS } from "./constants";
+import { Loader2, Zap, RefreshCw, ArrowRight, Info, CheckCircle, Flame } from "lucide-react";
+import { Fact } from "./types";
+import { DEFAULT_SETTINGS } from "./constants";
 import { generateFact } from "./utils";
 import PromptSelector from "./PromptSelector";
-import FactCard from "./FactCard";
 import { useToastNotifications } from "../../../lib/toast-utils";
 
 interface FactGenerationStepProps {
-  onComplete: (facts: Fact[], settings: any) => void;
+  onComplete: (facts: Fact[], settings: Record<string, unknown>) => void;
   onBack: () => void;
 }
 
@@ -20,63 +19,23 @@ export default function FactGenerationStep({
   const [currentFact, setCurrentFact] = useState<Fact | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<string>("");
-  const [customPrompt, setCustomPrompt] = useState("");
-  const [showCustomPrompt, setShowCustomPrompt] = useState(false);
-  const [copiedFact, setCopiedFact] = useState<string | null>(null);
   const [selectedFacts, setSelectedFacts] = useState<Set<string>>(new Set());
   const toast = useToastNotifications();
 
-  const handlePromptSelected = (prompt: string) => {
-    setSelectedPrompt(prompt);
-  };
+  const handlePromptSelected = (prompt: string) => { setSelectedPrompt(prompt); };
 
   const handleGenerateFact = async () => {
-    if (!selectedPrompt) {
-      toast.showWarning("Please select or enter a prompt.");
-      return;
-    }
+    if (!selectedPrompt) { toast.showWarning("Input required."); return; }
     setIsGenerating(true);
     try {
-      // Enhance prompt for poetry/quote/language requests
-      let enhancedPrompt = selectedPrompt;
-      const lowerPrompt = selectedPrompt.toLowerCase();
-      // Detect if user wants a poem or quote
-      const wantsPoem =
-        /poem|شعر|شاعر|شعری|شاعری|شعر فارسی|شعر دری|شعر پشتو|شعر از/i.test(
-          selectedPrompt
-        );
-      const wantsQuote =
-        /quote|نقل قول|سخن|گفته|فرمایش|فرمایشات|قول|حکمت|مقوله/i.test(
-          selectedPrompt
-        );
-      // Detect if user wants a specific language
-      const wantsPersian = /persian|فارسی|dari|دری/i.test(selectedPrompt);
-      const wantsPashto = /pashto|پشتو/i.test(selectedPrompt);
-      // If poem or quote and language is specified, add strict instructions
-      if ((wantsPoem || wantsQuote) && (wantsPersian || wantsPashto)) {
-        if (wantsPersian) {
-          enhancedPrompt += `\n\nIMPORTANT: Only answer with the actual poem or quote in Persian (فارسی) script. Do NOT translate to English. Do NOT summarize. Only output the poem or quote itself. If you don't know, say 'I don't know.'`;
-        } else if (wantsPashto) {
-          enhancedPrompt += `\n\nIMPORTANT: Only answer with the actual poem or quote in Pashto (پشتو) script. Do NOT translate to English. Do NOT summarize. Only output the poem or quote itself. If you don't know, say 'I don't know.'`;
-        }
-      } else if (wantsPoem || wantsQuote) {
-        // If poem/quote but no language, ask for original language
-        enhancedPrompt += `\n\nIMPORTANT: Only answer with the actual poem or quote in its original language/script. Do NOT translate to English. Do NOT summarize. Only output the poem or quote itself. If you don't know, say 'I don't know.'`;
-      } else if (wantsPersian) {
-        // If just Persian requested
-        enhancedPrompt += `\n\nIMPORTANT: Only answer in Persian (فارسی) script. Do NOT translate to English. If you don't know, say 'I don't know.'`;
-      } else if (wantsPashto) {
-        // If just Pashto requested
-        enhancedPrompt += `\n\nIMPORTANT: Only answer in Pashto (پشتو) script. Do NOT translate to English. If you don't know, say 'I don't know.'`;
-      }
-      const data = await generateFact(enhancedPrompt);
+      const data = await generateFact(selectedPrompt);
       const newFact: Fact = {
         id: Date.now().toString(),
         text: data.fact,
-        category: "AI Fact",
+        category: "AI Insight",
         timestamp: new Date(),
         prompt: selectedPrompt,
-        backgroundColor: data.backgroundColor || "#1f2937",
+        backgroundColor: "#000000",
         fontColor: "#ffffff",
         fontSize: 28,
         emoji: data.emoji,
@@ -84,324 +43,106 @@ export default function FactGenerationStep({
       setCurrentFact(newFact);
       setFacts((prev) => [newFact, ...prev]);
       setSelectedFacts((prev) => new Set([...prev, newFact.id]));
-    } catch (error: any) {
-      // Handle apologetic responses specifically
-      if (error.message?.includes("apologetic") || error.status === 422) {
-        toast.showWarning(
-          "The AI couldn't generate a good response for this prompt. Please try a different topic or write a custom prompt."
-        );
-      } else {
-        toast.showError(
-          `Error generating fact: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
-      }
+    } catch (error: unknown) {
+      toast.showError("Generation Failed.");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleQuickGenerate = async () => {
-    setIsGenerating(true);
-
-    // List of fallback prompts that are more general and likely to work
-    const fallbackPrompts = [
-      "Share an interesting fact about Afghan culture",
-      "Tell a story about Afghan hospitality",
-      "Describe a traditional Afghan dish",
-      "Share a famous Afghan proverb",
-      "Describe a beautiful place in Afghanistan",
-      "Tell about Afghan music or poetry",
-      "Share a fact about Afghan history",
-      "Describe an Afghan tradition or celebration",
-    ];
-
-    for (let i = 0; i < fallbackPrompts.length; i++) {
-      try {
-        const data = await generateFact(fallbackPrompts[i]);
-        const newFact: Fact = {
-          id: Date.now().toString() + i,
-          text: data.fact,
-          category: "AI Fact",
-          timestamp: new Date(),
-          prompt: fallbackPrompts[i],
-          backgroundColor: data.backgroundColor || "#1f2937",
-          fontColor: "#ffffff",
-          fontSize: 28,
-          emoji: data.emoji,
-        };
-        setCurrentFact(newFact);
-        setFacts((prev) => [newFact, ...prev]);
-        setSelectedFacts((prev) => new Set([...prev, newFact.id]));
-        break; // Success! Stop trying
-      } catch (error: any) {
-        // If this is the last attempt, show an error
-        if (i === fallbackPrompts.length - 1) {
-          toast.showError(
-            "Could not generate any facts. Please try again later or use a custom prompt."
-          );
-        }
-        // Otherwise, continue to the next prompt
-        continue;
-      }
-    }
-
-    setIsGenerating(false);
-  };
-
-  const handleFactToggle = (factId: string) => {
-    const newSelected = new Set(selectedFacts);
-    if (newSelected.has(factId)) {
-      newSelected.delete(factId);
-    } else {
-      newSelected.add(factId);
-    }
-    setSelectedFacts(newSelected);
-  };
-
-  const handleSelectAll = () => {
-    setSelectedFacts(new Set(facts.map((f) => f.id)));
-  };
-
-  const handleSelectNone = () => {
-    setSelectedFacts(new Set());
-  };
-
   const handleContinue = () => {
-    const selectedFactsArray = facts.filter((f) => selectedFacts.has(f.id));
-
-    if (selectedFactsArray.length === 0) {
-      // If no facts are selected, use all generated facts
-      if (facts.length > 0) {
-        onComplete(facts, DEFAULT_SETTINGS);
-      } else {
-        // If no facts generated, show a message
-        toast.showError(
-          "Please generate at least one fact before continuing to settings."
-        );
-        return;
-      }
+    const selected = facts.filter((f) => selectedFacts.has(f.id));
+    if (selected.length === 0) {
+      if (facts.length > 0) onComplete(facts, DEFAULT_SETTINGS);
+      else toast.showError("No data generated.");
     } else {
-      onComplete(selectedFactsArray, DEFAULT_SETTINGS);
+      onComplete(selected, DEFAULT_SETTINGS);
     }
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">
-            AI Facts Slideshow Creator
-          </h2>
-          <div className="text-sm text-gray-600">
-            {selectedFacts.size} facts selected
-          </div>
+    <div className="flex flex-col h-full bg-white">
+      <div className="p-10 border-b border-black/5 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-black mb-1">AI Intelligence Pipeline</h2>
+          <p className="text-sm text-black/40">Synthesizing cultural and historical insights</p>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
+          {selectedFacts.size} Units Synchronized
         </div>
       </div>
 
-      {/* Main content - Compact layout */}
-      <div className="flex-1 flex">
-        {/* Left Panel - Compact prompts */}
-        <div className="w-1/2 border-r border-gray-200 p-4">
-          <div className="mb-4">
-            <h3 className="font-medium text-gray-800 mb-3">
-              Choose an Afghan Culture Topic
-            </h3>
-            <PromptSelector onPromptSelected={handlePromptSelected} />
-          </div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Control Center */}
+        <div className="w-[450px] border-r border-black/5 p-10 overflow-y-auto custom-scrollbar">
+          <PromptSelector onPromptSelected={handlePromptSelected} />
 
-          {/* Generate Buttons */}
-          <div className="space-y-2 mb-4">
+          <div className="mt-10 space-y-4">
             <button
               onClick={handleGenerateFact}
               disabled={isGenerating || !selectedPrompt}
-              className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-lg font-medium hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-5 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-black/20 hover:bg-black/90 transition-all disabled:opacity-20 flex items-center justify-center gap-4"
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Zap className="w-4 h-4" />
-                  Generate Fact
-                </>
-              )}
+              {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Flame className="w-5 h-5" />}
+              {isGenerating ? "Synthesizing..." : "Initialize Synthesis"}
             </button>
 
-            <button
-              onClick={handleQuickGenerate}
-              disabled={isGenerating}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Trying different prompts...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4" />
-                  Quick Generate (Auto-retry)
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Progress */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Progress
-              </span>
-              <span className="text-sm text-gray-500">{facts.length}/10</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all"
-                style={{
-                  width: `${Math.min((facts.length / 10) * 100, 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-xs text-blue-800">
-                <p className="font-medium mb-1">How it works:</p>
-                <p>1. Choose a topic or write custom prompt</p>
-                <p>2. Click "Generate Fact" for specific prompts</p>
-                <p>3. Use "Quick Generate" to auto-try different topics</p>
-                <p>4. Select the facts you want to include</p>
-                <p>5. Click "Continue to Settings" when ready</p>
-                <p className="mt-2 text-blue-700 font-medium">
-                  💡 Tip: If a prompt fails, try "Quick Generate" or write a
-                  custom prompt!
-                </p>
-              </div>
+            <div className="p-6 bg-gray-50 rounded-2xl border border-black/5 flex items-start gap-4">
+              <Info className="w-5 h-5 text-black/20 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-black/40 font-bold uppercase tracking-widest leading-relaxed">
+                Synthesis protocol analyzes patterns to generate validated cultural insights for display modules.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Right Panel - Compact facts display */}
-        <div className="w-1/2 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-gray-800">
-              Generated Facts ({facts.length}) - FIXED SCROLLING
-            </h3>
-            {facts.length > 0 && (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSelectAll}
-                  className="text-xs text-amber-600 hover:text-amber-700"
-                >
-                  Select All
-                </button>
-                <button
-                  onClick={handleSelectNone}
-                  className="text-xs text-gray-600 hover:text-gray-700"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
-          </div>
+        {/* Output Stream */}
+        <div className="flex-1 p-10 bg-gray-50/30 overflow-y-auto custom-scrollbar">
+          <h3 className="text-[10px] font-black text-black/20 uppercase tracking-[0.2em] mb-8">Generated Data Stream</h3>
 
-          {/* Compact facts grid */}
-          <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
-            {currentFact && (
-              <div className="border-2 border-amber-500 rounded-lg p-3 bg-amber-50">
-                <div className="text-sm font-medium text-amber-800 mb-1">
-                  {currentFact.category}
+          <div className="space-y-6">
+            {facts.length === 0 && (
+              <div className="py-40 text-center">
+                <div className="w-20 h-20 bg-white border border-black/5 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-black/[0.02]">
+                  <Zap className="w-8 h-8 text-black/10" />
                 </div>
-                <div className="text-xs text-gray-600 mb-2">
-                  {currentFact.text.substring(0, 100)}...
-                </div>
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedFacts.has(currentFact.id)}
-                      onChange={() => handleFactToggle(currentFact.id)}
-                      className="rounded"
-                    />
-                    Select
-                  </label>
-                </div>
+                <p className="text-[10px] font-black text-black/20 uppercase tracking-widest">Awaiting Command Input...</p>
               </div>
             )}
 
-            {facts.slice(1).map((fact) => (
-              <div
-                key={fact.id}
-                className="border border-gray-200 rounded-lg p-3"
-              >
-                <div className="text-sm font-medium text-gray-800 mb-1">
-                  {fact.category}
-                </div>
-                <div className="text-xs text-gray-600 mb-2">
-                  {fact.text.substring(0, 100)}...
-                </div>
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedFacts.has(fact.id)}
-                      onChange={() => handleFactToggle(fact.id)}
-                      className="rounded"
-                    />
-                    Select
+            {facts.map((fact) => (
+              <div key={fact.id} className={`p-8 rounded-3xl border transition-all ${selectedFacts.has(fact.id) ? "bg-white border-black shadow-2xl" : "bg-white border-black/5 opacity-50"}`}>
+                <div className="flex items-start justify-between mb-6">
+                  <div className="inline-flex items-center px-3 py-1 bg-black text-white text-[8px] font-black uppercase tracking-widest rounded-lg">
+                    {fact.category}
+                  </div>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" checked={selectedFacts.has(fact.id)} onChange={() => {
+                      const newS = new Set(selectedFacts);
+                      if (newS.has(fact.id)) newS.delete(fact.id); else newS.add(fact.id);
+                      setSelectedFacts(newS);
+                    }} className="hidden" />
+                    <div className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${selectedFacts.has(fact.id) ? "bg-black border-black text-white" : "bg-white border-black/10 text-transparent"}`}>
+                      <CheckCircle className="w-4 h-4" />
+                    </div>
                   </label>
+                </div>
+                <p className="text-lg font-bold text-black leading-relaxed">{fact.text}</p>
+                <div className="mt-8 flex items-center justify-between">
+                  <span className="text-[8px] font-bold text-black/20 uppercase tracking-widest">Timestamp: {new Date(fact.timestamp).toLocaleTimeString()}</span>
                 </div>
               </div>
             ))}
-
-            {facts.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                <span className="text-4xl">✨</span>
-                <p className="text-sm font-medium mb-1">
-                  No facts generated yet
-                </p>
-                <p className="text-xs">
-                  Choose a topic and generate your first fact!
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Footer - Always visible */}
-      <div
-        className="p-4 border-t border-gray-200 bg-gray-50"
-        style={{ position: "relative", zIndex: 10 }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            {selectedFacts.size} facts selected • {facts.length}/10 generated
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={onBack}
-              className="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all shadow-sm"
-            >
-              Back
-            </button>
-            <button
-              onClick={handleContinue}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold shadow-md hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2"
-            >
-              Continue to Settings
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+      <div className="p-8 border-t border-black/5 flex items-center justify-between">
+        <button onClick={onBack} className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-black/40 hover:text-black transition-colors">Abort</button>
+        <button onClick={handleContinue} className="px-10 py-4 bg-black text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black/90 transition-all flex items-center gap-4">
+          Lock Manifest & Continue
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

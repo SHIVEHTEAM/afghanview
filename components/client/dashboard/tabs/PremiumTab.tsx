@@ -180,28 +180,24 @@ export function PremiumTab() {
       title: "10x Faster Creation",
       description:
         "AI-powered tools help you create stunning slideshows in minutes, not hours.",
-      color: "from-blue-500 to-cyan-500",
     },
     {
       icon: <TrendingUp className="w-8 h-8" />,
       title: "Boost Engagement",
       description:
         "Interactive content and advanced features increase customer engagement by 300%.",
-      color: "from-green-500 to-emerald-500",
     },
     {
       icon: <Award className="w-8 h-8" />,
       title: "Professional Quality",
       description:
         "Access to premium themes and tools that make your content look professional.",
-      color: "from-purple-500 to-pink-500",
     },
     {
       icon: <Target className="w-8 h-8" />,
       title: "Targeted Content",
       description:
         "Create personalized content for different audiences and locations.",
-      color: "from-orange-500 to-red-500",
     },
   ];
 
@@ -210,7 +206,7 @@ export function PremiumTab() {
       name: "Ahmad Karimi",
       role: "Restaurant Owner",
       content:
-        "AfghanView Premium transformed our restaurant's digital signage. The AI content generation saves us hours every week!",
+        "Shivehview Premium transformed our restaurant's digital signage. The AI content generation saves us hours every week!",
       rating: 5,
       avatar: "AK",
     },
@@ -238,51 +234,46 @@ export function PremiumTab() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center"
+        className="text-center pt-10"
       >
         <motion.div
-          initial={{ scale: 0.8 }}
+          initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="w-24 h-24 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl"
+          className="w-24 h-24 bg-black rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-black/20"
         >
           <Crown className="w-12 h-12 text-white" />
         </motion.div>
-        <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 via-purple-800 to-blue-800 bg-clip-text text-transparent mb-4">
-          Unlock Premium Features
+        <h1 className="text-5xl lg:text-7xl font-bold text-black mb-6 tracking-tighter">
+          Elevate Your Brand
         </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          Take your slideshows to the next level with AI-powered content
-          generation, unlimited creations, team collaboration, and advanced
-          analytics.
+        <p className="text-xl text-black/40 max-w-2xl mx-auto leading-relaxed font-medium">
+          Scale your content strategy with limitless assets, intelligent automation, and deep telemetry.
         </p>
       </motion.div>
 
-      {/* Benefits Grid */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
       >
         {benefits.map((benefit, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 + index * 0.1 }}
-            whileHover={{ y: -8 }}
-            className="bg-white rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 text-center"
+            transition={{ delay: 0.1 * index }}
+            whileHover={{ y: -4 }}
+            className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/[0.03] border border-black/5 text-center group"
           >
             <div
-              className={`w-16 h-16 bg-gradient-to-br ${benefit.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}
+              className="w-20 h-20 bg-gray-50 rounded-[1.8rem] flex items-center justify-center mx-auto mb-8 border border-black/5 group-hover:bg-black group-hover:text-white transition-all duration-300 shadow-sm"
             >
-              {benefit.icon}
+              {React.cloneElement(benefit.icon as React.ReactElement, { className: "w-8 h-8" })}
             </div>
-            <h3 className="text-lg font-bold text-gray-800 mb-2">
+            <h3 className="text-xl font-bold text-black mb-3 tracking-tight">
               {benefit.title}
             </h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <p className="text-black/40 text-[11px] font-bold uppercase tracking-widest leading-relaxed">
               {benefit.description}
             </p>
           </motion.div>
@@ -297,125 +288,103 @@ export function PremiumTab() {
         className="space-y-8"
       >
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Choose Your Plan
+          <h2 className="text-3xl font-bold text-black tracking-tight mb-4">
+            Network Scalability
           </h2>
-          <p className="text-gray-600 mb-8">
-            Start free and upgrade when you're ready
+          <p className="text-[10px] font-bold text-black/40 uppercase tracking-[0.3em] mb-12">
+            Select Your Computational Tier
           </p>
 
           {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex items-center justify-center gap-6 mb-16">
             <span
-              className={`text-sm font-medium ${
-                selectedPlan === "monthly" ? "text-gray-800" : "text-gray-500"
-              }`}
+              className={`text-[10px] uppercase tracking-widest font-bold transition-colors ${selectedPlan === "monthly" ? "text-black" : "text-black/20"
+                }`}
             >
-              Monthly
+              Interval Single
             </span>
-            <motion.button
+            <button
               onClick={() =>
                 setSelectedPlan(
                   selectedPlan === "monthly" ? "yearly" : "monthly"
                 )
               }
-              className={`relative w-16 h-8 rounded-full transition-colors duration-300 ${
-                selectedPlan === "yearly"
-                  ? "bg-gradient-to-r from-purple-500 to-blue-500"
-                  : "bg-gray-300"
-              }`}
+              className={`relative w-16 h-8 rounded-full transition-all duration-500 p-1 ${selectedPlan === "yearly"
+                ? "bg-black"
+                : "bg-black/10"
+                }`}
             >
               <motion.div
                 layout
-                className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-md"
-                animate={{ x: selectedPlan === "yearly" ? 32 : 4 }}
+                className="w-6 h-6 bg-white rounded-full shadow-lg"
+                animate={{ x: selectedPlan === "yearly" ? 32 : 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
-            </motion.button>
-            <span
-              className={`text-sm font-medium ${
-                selectedPlan === "yearly" ? "text-gray-800" : "text-gray-500"
-              }`}
-            >
-              Yearly
-              <span className="ml-2 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
-                Save 20%
+            </button>
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-[10px] uppercase tracking-widest font-bold transition-colors ${selectedPlan === "yearly" ? "text-black" : "text-black/20"
+                  }`}
+              >
+                Interval Annual
               </span>
-            </span>
+              <span className="bg-black text-white px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest">
+                -20%
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-5xl mx-auto">
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 + index * 0.1 }}
-              whileHover={{ y: -8 }}
-              className={`relative bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 ${
-                plan.popular
-                  ? "border-purple-500 shadow-purple-100"
-                  : "border-gray-100"
-              }`}
+              transition={{ delay: 0.1 * index }}
+              whileHover={{ y: -4 }}
+              className={`relative bg-white rounded-[3rem] p-12 shadow-2xl shadow-black/[0.03] border transition-all duration-300 ${plan.popular
+                ? "border-black border-2"
+                : "border-black/5"
+                }`}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                    Most Popular
+                <div className="absolute -top-4 left-10">
+                  <span className="bg-black text-white px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-xl">
+                    Optimized Tier
                   </span>
                 </div>
               )}
 
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                  {plan.name}
-                </h3>
-                <div className="mb-4">
-                  {plan.price[selectedPlan as keyof typeof plan.price] === 0 ? (
-                    <span className="text-4xl font-bold text-gray-800">
-                      Free
-                    </span>
-                  ) : (
-                    <div>
-                      <span className="text-4xl font-bold text-gray-800">
-                        ${plan.price[selectedPlan as keyof typeof plan.price]}
-                      </span>
-                      <span className="text-gray-600 ml-2">
-                        /{selectedPlan === "monthly" ? "month" : "year"}
-                      </span>
-                    </div>
-                  )}
+              <div className="flex items-end justify-between mb-12">
+                <div>
+                  <h3 className="text-3xl font-bold text-black mb-2 tracking-tight">
+                    {plan.name}
+                  </h3>
+                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-widest">
+                    {plan.name === "Pro" ? "Scaling Operations" : "Full Core Integration"}
+                  </p>
                 </div>
-                <p className="text-gray-600 text-sm">
-                  {plan.name === "Free"
-                    ? "Perfect for getting started"
-                    : plan.name === "Pro"
-                    ? "Perfect for growing businesses"
-                    : "Perfect for large organizations"}
-                </p>
+                <div className="text-right">
+                  <div className="flex items-baseline justify-end">
+                    <span className="text-4xl font-bold text-black tracking-tighter">
+                      ${plan.price[selectedPlan as keyof typeof plan.price]}
+                    </span>
+                    <span className="text-[10px] font-bold text-black/20 uppercase tracking-widest ml-2">
+                      /{selectedPlan === "monthly" ? "MO" : "YR"}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4 mb-8">
-                <h4 className="font-semibold text-gray-800 mb-3">
-                  What's included:
-                </h4>
+              <div className="space-y-5 mb-12">
+                <p className="text-[10px] font-bold text-black uppercase tracking-[0.2em] mb-6">Capabilities Overview</p>
                 {plan.features.map((feature, featureIndex) => (
-                  <div key={featureIndex} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-green-600" />
+                  <div key={featureIndex} className="flex items-center gap-4">
+                    <div className="w-5 h-5 bg-black rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-black/10">
+                      <Check className="w-3 h-3 text-white" />
                     </div>
-                    <span className="text-sm text-gray-700">{feature}</span>
-                  </div>
-                ))}
-                {plan.limitations.map((limitation, limitationIndex) => (
-                  <div
-                    key={limitationIndex}
-                    className="flex items-center gap-3"
-                  >
-                    <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <X className="w-3 h-3 text-red-600" />
-                    </div>
-                    <span className="text-sm text-gray-500">{limitation}</span>
+                    <span className="text-[11px] font-bold text-black/60 uppercase tracking-wide">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -428,18 +397,12 @@ export function PremiumTab() {
                     setShowUpgradeModal(true);
                   }
                 }}
-                className={`w-full py-4 px-6 rounded-2xl font-semibold transition-all duration-300 ${
-                  plan.popular
-                    ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
-                    : plan.name === "Free"
-                    ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    : "bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800"
-                }`}
+                className={`w-full py-5 px-8 rounded-2xl font-bold transition-all duration-300 text-xs uppercase tracking-widest shadow-xl ${plan.popular
+                  ? "bg-black text-white hover:bg-black/90 shadow-black/20"
+                  : "bg-gray-100 text-black hover:bg-gray-200"
+                  }`}
               >
-                {plan.name === "Free" ? "Current Plan" : "Get Started"}
-                {plan.name !== "Free" && (
-                  <ArrowRight className="w-4 h-4 inline ml-2" />
-                )}
+                Initialize {plan.name} Tier
               </motion.button>
             </motion.div>
           ))}
@@ -453,39 +416,41 @@ export function PremiumTab() {
         transition={{ delay: 0.7 }}
         className="space-y-8"
       >
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Premium Features
+        <div className="text-center pt-20">
+          <h2 className="text-3xl font-bold text-black tracking-tight mb-4">
+            Advanced Protocols
           </h2>
-          <p className="text-gray-600">
-            Discover what makes AfghanView Premium special
+          <p className="text-[10px] font-bold text-black/40 uppercase tracking-[0.3em]">
+            Deep Level Functional Extensions
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 + index * 0.05 }}
+              transition={{ delay: 0.05 * index }}
               whileHover={{ y: -4 }}
-              className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+              className="bg-white rounded-[2rem] p-8 shadow-2xl shadow-black/[0.03] border border-black/5 hover:bg-gray-50/50 transition-all duration-300 group"
             >
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl flex items-center justify-center mb-4">
-                {feature.icon}
+              <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 border border-black/5 group-hover:bg-black group-hover:text-white transition-all">
+                {React.cloneElement(feature.icon as React.ReactElement, { className: "w-6 h-6" })}
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              <h3 className="text-lg font-bold text-black mb-2 tracking-tight">
                 {feature.title}
               </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <p className="text-black/40 text-[11px] font-bold uppercase tracking-widest leading-relaxed">
                 {feature.description}
               </p>
               {feature.premium && (
-                <div className="mt-4 flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-yellow-500" />
-                  <span className="text-xs font-medium text-yellow-600">
-                    Premium Feature
+                <div className="mt-6 pt-6 border-t border-black/5 flex items-center gap-2">
+                  <div className="p-1 bg-black rounded-md">
+                    <Crown className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-[9px] font-bold text-black uppercase tracking-widest">
+                    Enterprise Protocol
                   </span>
                 </div>
               )}
@@ -501,43 +466,40 @@ export function PremiumTab() {
         transition={{ delay: 0.9 }}
         className="space-y-8"
       >
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            What Our Users Say
+        <div className="text-center pt-20">
+          <h2 className="text-3xl font-bold text-black tracking-tight mb-4">
+            User Validation
           </h2>
-          <p className="text-gray-600">Join thousands of satisfied customers</p>
+          <p className="text-[10px] font-bold text-black/40 uppercase tracking-[0.3em]">Verified Network Sentiments</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 + index * 0.1 }}
               whileHover={{ y: -4 }}
-              className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+              className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/[0.03] border border-black/5"
             >
-              <div className="flex items-center gap-1 mb-4">
+              <div className="flex items-center gap-1 mb-6">
                 {[...Array(testimonial.rating)].map((_, i) => (
                   <Star
                     key={i}
-                    className="w-4 h-4 text-yellow-400 fill-current"
+                    className="w-4 h-4 text-black fill-current"
                   />
                 ))}
               </div>
-              <p className="text-gray-700 mb-4 leading-relaxed">
+              <p className="text-black/60 font-medium italic mb-10 leading-relaxed">
                 "{testimonial.content}"
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+              <div className="flex items-center gap-4 pt-6 border-t border-black/5">
+                <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-bold shadow-xl shadow-black/20">
                   {testimonial.avatar}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800">
+                  <p className="font-bold text-black tracking-tight">
                     {testimonial.name}
                   </p>
-                  <p className="text-sm text-gray-600">{testimonial.role}</p>
+                  <p className="text-[10px] font-bold text-black/20 uppercase tracking-widest">{testimonial.role}</p>
                 </div>
               </div>
             </motion.div>
@@ -547,42 +509,44 @@ export function PremiumTab() {
 
       {/* CTA Section */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.1 }}
-        className="bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 rounded-3xl p-8 lg:p-12 text-center text-white"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-black rounded-[4rem] p-16 lg:p-24 text-center text-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] relative overflow-hidden"
       >
-        <motion.div
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 1.2 }}
-          className="w-20 h-20 bg-white bg-opacity-20 rounded-3xl flex items-center justify-center mx-auto mb-6"
-        >
-          <Rocket className="w-10 h-10 text-white" />
-        </motion.div>
-        <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-          Ready to Transform Your Business?
-        </h2>
-        <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-          Join thousands of businesses that have already upgraded to AfghanView
-          Premium and are seeing incredible results.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowUpgradeModal(true)}
-            className="bg-white text-purple-600 px-8 py-4 rounded-2xl font-semibold hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl"
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full -ml-48 -mb-48 blur-3xl"></div>
+
+        <div className="relative z-10">
+          <motion.div
+            initial={{ y: 20 }}
+            animate={{ y: 0 }}
+            className="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-black/20"
           >
-            Start Free Trial
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="border-2 border-white text-white px-8 py-4 rounded-2xl font-semibold hover:bg-white hover:text-purple-600 transition-all duration-300"
-          >
-            View Demo
-          </motion.button>
+            <Rocket className="w-10 h-10 text-black" />
+          </motion.div>
+          <h2 className="text-4xl lg:text-6xl font-bold mb-6 tracking-tighter">
+            Initialize Full Stack Growth
+          </h2>
+          <p className="text-xl text-white/40 mb-12 max-w-2xl mx-auto font-medium leading-relaxed">
+            Join the elite network of businesses leveraging our core AI architecture for high-performance visual communication.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <motion.button
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowUpgradeModal(true)}
+              className="bg-white text-black px-12 py-5 rounded-[2rem] font-bold text-sm uppercase tracking-widest hover:bg-gray-50 transition-all shadow-2xl shadow-black/20"
+            >
+              Start Core Trial
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="border border-white/20 text-white px-12 py-5 rounded-[2rem] font-bold text-sm uppercase tracking-widest hover:bg-white/5 transition-all"
+            >
+              View Architecture
+            </motion.button>
+          </div>
         </div>
       </motion.div>
 
@@ -596,42 +560,43 @@ export function PremiumTab() {
           onClick={() => setShowUpgradeModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-white rounded-[3rem] p-12 max-w-xl w-full shadow-2xl shadow-black/20 border border-black/5 relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.02] rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Crown className="w-8 h-8 text-white" />
+              <div className="w-20 h-20 bg-black rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-black/20">
+                <Crown className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                Upgrade to Premium
+              <h3 className="text-3xl font-bold text-black tracking-tight mb-4">
+                Access Tier Protocol
               </h3>
-              <p className="text-gray-600 mb-8">
-                You'll be redirected to our secure payment processor to complete
-                your upgrade.
+              <p className="text-black/40 text-[11px] font-bold uppercase tracking-widest mb-12 max-w-xs mx-auto">
+                Initiating payment gateway for secure account verification.
               </p>
-              <div className="flex gap-3">
+
+              <div className="flex gap-4">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setShowUpgradeModal(false)}
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                  className="flex-1 bg-gray-50 text-black/40 py-5 rounded-2xl hover:bg-black/5 transition-all text-xs font-bold uppercase tracking-widest"
                 >
-                  Cancel
+                  Abort
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => {
-                    // Redirect to payment page
                     window.location.href = "/pricing";
                   }}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 px-4 rounded-xl hover:from-purple-600 hover:to-blue-600 transition-all duration-200 font-medium"
+                  className="flex-2 bg-black text-white py-5 px-10 rounded-2xl hover:bg-black/90 transition-all text-xs font-bold uppercase tracking-widest shadow-xl shadow-black/10"
                 >
-                  Continue
+                  Confirm Sync
                 </motion.button>
               </div>
             </div>

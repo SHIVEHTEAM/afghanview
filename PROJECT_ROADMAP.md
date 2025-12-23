@@ -1,8 +1,8 @@
-# 🚀 AfghanView Project Roadmap
+# 🚀 Shivehview Project Roadmap
 
 ## 📊 **Project Overview**
 
-**AfghanView** is a cloud-based visual display platform for Afghan restaurants across the US. It transforms Smart TVs into auto-playing cultural slideshows showcasing Afghanistan's beauty, history, poetry, and cuisine, while allowing restaurants to add their own promotional content.
+**Shivehview** is a cloud-based visual display platform for Afghan restaurants across the US. It transforms Smart TVs into auto-playing cultural slideshows showcasing Afghanistan's beauty, history, poetry, and cuisine, while allowing restaurants to add their own promotional content.
 
 ---
 
@@ -270,7 +270,7 @@
 
 **Current Status:** ✅ **PRODUCTION READY**
 
-The AfghanView platform is now fully functional with all core features implemented:
+The Shivehview platform is now fully functional with all core features implemented:
 
 - ✅ Complete authentication system
 - ✅ Staff management with email invitations

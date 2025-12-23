@@ -191,7 +191,7 @@ export default function AdminBilling() {
         <title>Billing Management - Admin Dashboard</title>
         <meta
           name="description"
-          content="Manage billing and invoices on AfghanView"
+          content="Manage billing and invoices on Shivehview"
         />
       </Head>
 

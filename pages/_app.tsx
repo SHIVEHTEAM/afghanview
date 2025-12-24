@@ -1,4 +1,5 @@
 import type { AppProps } from "next/app";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "../lib/auth";
 import { ToastProvider } from "../components/ui/Toast";
 import "../lib/alert-replacer"; // Replace all alert() calls with toast notifications
@@ -9,6 +10,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <AuthProvider>
       <ToastProvider>
         <Component {...pageProps} />
+        <Analytics />
       </ToastProvider>
     </AuthProvider>
   );
